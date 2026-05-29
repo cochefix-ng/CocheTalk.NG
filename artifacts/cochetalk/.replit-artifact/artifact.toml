@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "CocheTalk.NG"
+version = "1.0.0"
+id = "artifacts/cochetalk"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 26107
+
+[services.development]
+run = "pnpm --filter @workspace/cochetalk run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cochetalk", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/cochetalk", "run", "serve" ]
+
+[services.env]
+PORT = "26107"
+BASE_PATH = "/"
