@@ -6,6 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export * from './diagnoseRequest';
-export * from './diagnoseResponse';
-export * from './healthStatus';
+export interface DiagnoseResponse {
+  result: string;
+}

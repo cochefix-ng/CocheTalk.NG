@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: diagnose
+    description: AI vehicle diagnostics
 paths:
   /healthz:
     get:
@@ -24,6 +26,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /diagnose:
+    post:
+      operationId: diagnoseVehicle
+      tags: [diagnose]
+      summary: AI vehicle diagnostics
+      description: Uses Gemini AI to diagnose a vehicle issue from a text description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiagnoseRequest"
+      responses:
+        "200":
+          description: Diagnosis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagnoseResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +54,17 @@ components:
           type: string
       required:
         - status
-
+    DiagnoseRequest:
+      type: object
+      properties:
+        description:
+          type: string
+      required:
+        - description
+    DiagnoseResponse:
+      type: object
+      properties:
+        result:
+          type: string
+      required:
+        - result
