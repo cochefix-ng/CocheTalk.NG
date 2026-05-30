@@ -152,6 +152,7 @@ export interface AppContextType extends AppState {
   createListing: (data: Omit<MarketplaceListing, 'id' | 'userId' | 'userName' | 'userRole' | 'userPhone' | 'isApproved' | 'isFeaturedBottom' | 'timestamp'>) => void;
   deleteListing: (id: number) => void;
   approveListing: (id: number, approved: boolean) => void;
+  featureListing: (id: number, featured: boolean) => void;
   addRating: (providerId: string, ratingValue: number, feedback: string) => void;
   toggleVerified: (userId: string, verified: boolean) => void;
   banUser: (userId: string, banned: boolean) => void;
@@ -715,6 +716,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state, save],
   );
 
+  const featureListing = useCallback(
+    (id: number, featured: boolean) => {
+      if (!state) return;
+      save({
+        ...state,
+        listings: state.listings.map((l) => (l.id === id ? { ...l, isFeaturedBottom: featured } : l)),
+      });
+    },
+    [state, save],
+  );
+
   const addRating = useCallback(
     (providerId: string, ratingValue: number, feedback: string) => {
       if (!state || !currentUser) return;
@@ -792,6 +804,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createListing,
       deleteListing,
       approveListing,
+      featureListing,
       addRating,
       toggleVerified,
       banUser,
@@ -814,6 +827,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createListing,
       deleteListing,
       approveListing,
+      featureListing,
       addRating,
       toggleVerified,
       banUser,

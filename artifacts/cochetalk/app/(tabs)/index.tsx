@@ -1,8 +1,10 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Dimensions,
   FlatList,
   Modal,
   Platform,
@@ -20,7 +22,127 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { QuestionCard } from '@/components/QuestionCard';
 import { useApp } from '@/context/AppContext';
+import type { MarketplaceListing } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+
+const SCREEN_W = Dimensions.get('window').width;
+const AD_BANNER_HEIGHT = 72;
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Parts: '#3B82F6',
+  Services: '#10B981',
+  'Car Sales': '#F59E0B',
+};
+
+function AdBannerSlider({ ads }: { ads: MarketplaceListing[] }) {
+  const colors = useColors();
+  const [index, setIndex] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const advance = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: -20, duration: 250, useNativeDriver: true }),
+    ]).start(() => {
+      setIndex((prev) => (prev + 1) % ads.length);
+      slideAnim.setValue(20);
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+      ]).start();
+    });
+  }, [ads.length, fadeAnim, slideAnim]);
+
+  useEffect(() => {
+    if (ads.length <= 1) return;
+    const timer = setInterval(advance, 4000);
+    return () => clearInterval(timer);
+  }, [advance, ads.length]);
+
+  if (ads.length === 0) return null;
+
+  const ad = ads[index];
+  const catColor = CATEGORY_COLORS[ad.category] ?? colors.primary;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.88}
+      onPress={() => router.push(`/seller/${encodeURIComponent(ad.userId)}`)}
+      style={[adStyles.wrapper, { backgroundColor: colors.card, borderColor: colors.border }]}
+    >
+      {/* Shimmer left accent */}
+      <View style={[adStyles.accent, { backgroundColor: catColor }]} />
+
+      <Animated.View style={[adStyles.content, { opacity: fadeAnim, transform: [{ translateX: slideAnim }] }]}>
+        <View style={adStyles.topRow}>
+          <View style={[adStyles.sponsoredBadge, { backgroundColor: catColor + '22' }]}>
+            <Feather name="star" size={9} color={catColor} />
+            <Text style={[adStyles.sponsoredText, { color: catColor }]}>Sponsored</Text>
+          </View>
+          <View style={[adStyles.catBadge, { backgroundColor: catColor + '18' }]}>
+            <Text style={[adStyles.catText, { color: catColor }]}>{ad.category}</Text>
+          </View>
+          <Text style={[adStyles.price, { color: colors.primary }]}>
+            ₦{ad.price.toLocaleString()}
+          </Text>
+        </View>
+        <Text style={[adStyles.title, { color: colors.foreground }]} numberOfLines={1}>
+          {ad.title}
+        </Text>
+        <View style={adStyles.bottomRow}>
+          <Feather name="map-pin" size={10} color={colors.mutedForeground} />
+          <Text style={[adStyles.location, { color: colors.mutedForeground }]} numberOfLines={1}>
+            {ad.location} · {ad.userName}
+          </Text>
+          {ads.length > 1 && (
+            <View style={adStyles.dots}>
+              {ads.map((_, i) => (
+                <View
+                  key={i}
+                  style={[adStyles.dot, { backgroundColor: i === index ? colors.primary : colors.border }]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      </Animated.View>
+
+      <Feather name="chevron-right" size={14} color={colors.mutedForeground} style={{ marginRight: 12 }} />
+    </TouchableOpacity>
+  );
+}
+
+const adStyles = StyleSheet.create({
+  wrapper: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: AD_BANNER_HEIGHT,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  accent: { width: 4, alignSelf: 'stretch' },
+  content: { flex: 1, paddingHorizontal: 12, paddingVertical: 10, justifyContent: 'space-between' },
+  topRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  sponsoredBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+  sponsoredText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
+  catBadge: { borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+  catText: { fontSize: 9, fontWeight: '600' },
+  price: { fontSize: 13, fontWeight: '700', marginLeft: 'auto' },
+  title: { fontSize: 13, fontWeight: '600', lineHeight: 17 },
+  bottomRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  location: { fontSize: 11, flex: 1 },
+  dots: { flexDirection: 'row', gap: 4, marginLeft: 4 },
+  dot: { width: 5, height: 5, borderRadius: 3 },
+});
 
 const FILTERS = ['Latest', 'Most Answered', 'Unanswered'];
 const VEHICLE_TYPES = ['Sedan', 'SUV', 'Hatchback', 'Pickup', 'Van', 'Bus', 'Other'];
@@ -42,7 +164,12 @@ type ConcernKey = (typeof CONCERNS)[number]['key'];
 
 export default function ForumScreen() {
   const colors = useColors();
-  const { questions, answers, currentUser, askQuestion, cmsConfig, isLoading } = useApp();
+  const { questions, answers, currentUser, askQuestion, cmsConfig, isLoading, listings } = useApp();
+
+  const featuredAds = useMemo(
+    () => listings.filter((l) => l.isApproved && l.isFeaturedBottom),
+    [listings],
+  );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -227,9 +354,20 @@ export default function ForumScreen() {
         showsVerticalScrollIndicator={false}
       />
 
+      {/* Sponsored ad banner — above tab bar */}
+      {featuredAds.length > 0 && (
+        <View style={[styles.adContainer, { backgroundColor: colors.background }]}>
+          <AdBannerSlider ads={featuredAds} />
+        </View>
+      )}
+
       {currentUser && (
         <TouchableOpacity
-          style={[styles.fab, { backgroundColor: colors.primary }]}
+          style={[
+            styles.fab,
+            { backgroundColor: colors.primary },
+            featuredAds.length > 0 && styles.fabWithAd,
+          ]}
           onPress={() => setShowAskModal(true)}
         >
           <Feather name="plus" size={24} color={colors.primaryForeground} />
@@ -375,11 +513,13 @@ const styles = StyleSheet.create({
   chip: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1 },
   chipText: { fontSize: 12, fontWeight: '500' },
   chipDivider: { width: 1, height: 20, backgroundColor: '#ccc', marginHorizontal: 4 },
-  listContent: { paddingTop: 10, paddingBottom: 100 },
+  listContent: { paddingTop: 10, paddingBottom: 160 },
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: '600' },
   emptyText: { fontSize: 14 },
+  adContainer: { position: 'absolute', bottom: Platform.OS === 'ios' ? 88 : 68, left: 0, right: 0 },
   fab: { position: 'absolute', bottom: Platform.OS === 'ios' ? 95 : 75, right: 20, width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  fabWithAd: { bottom: Platform.OS === 'ios' ? 175 : 155 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
   sheet: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%' },
   sheetHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginVertical: 10 },

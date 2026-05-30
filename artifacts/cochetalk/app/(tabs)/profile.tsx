@@ -35,13 +35,15 @@ function avgRating(ratings: { ratingValue: number }[]) {
 
 export default function ProfileScreen() {
   const colors = useColors();
-  const { users, currentUser, login, logout, questions, listings, ratings, toggleVerified, banUser, approveListing, updateCmsConfig, cmsConfig, isLoading } = useApp();
+  const { users, currentUser, login, logout, questions, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading } = useApp();
 
   const [showSwitchModal, setShowSwitchModal] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms'>('users');
   const [editAnnouncement, setEditAnnouncement] = useState(cmsConfig.announcementText);
 
   const pendingListings = listings.filter((l) => !l.isApproved);
+  const approvedListings = listings.filter((l) => l.isApproved);
+  const featuredCount = listings.filter((l) => l.isFeaturedBottom).length;
 
   const handleSaveAnnouncement = () => {
     updateCmsConfig({ announcementText: editAnnouncement });
@@ -281,23 +283,76 @@ export default function ProfileScreen() {
 
             {activeAdminTab === 'listings' && (
               <View>
-                {pendingListings.length === 0 ? (
-                  <View style={[styles.adminEmpty, { backgroundColor: colors.success + '15', borderColor: colors.success + '33' }]}>
-                    <Feather name="check-circle" size={18} color={colors.success} />
-                    <Text style={[styles.adminEmptyText, { color: colors.success }]}>All listings are approved</Text>
-                  </View>
-                ) : (
-                  pendingListings.map((l) => (
-                    <View key={l.id} style={[styles.adminListingItem, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
-                      <View style={styles.adminListingInfo}>
-                        <Text style={[styles.adminListingTitle, { color: colors.foreground }]} numberOfLines={1}>{l.title}</Text>
-                        <Text style={[styles.adminListingMeta, { color: colors.mutedForeground }]}>by {l.userName} · {l.category}</Text>
+                {/* Featured summary pill */}
+                <View style={[styles.featuredSummary, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '44' }]}>
+                  <Feather name="star" size={14} color={colors.primary} />
+                  <Text style={[styles.featuredSummaryText, { color: colors.primary }]}>
+                    {featuredCount} listing{featuredCount !== 1 ? 's' : ''} featured on Forum ad banner
+                  </Text>
+                </View>
+
+                {/* Pending listings */}
+                {pendingListings.length > 0 && (
+                  <>
+                    <Text style={[styles.listingsSectionLabel, { color: colors.mutedForeground }]}>PENDING APPROVAL</Text>
+                    {pendingListings.map((l) => (
+                      <View key={l.id} style={[styles.adminListingItem, { backgroundColor: colors.surfaceVariant, borderColor: colors.warning + '55' }]}>
+                        <View style={styles.adminListingInfo}>
+                          <Text style={[styles.adminListingTitle, { color: colors.foreground }]} numberOfLines={1}>{l.title}</Text>
+                          <Text style={[styles.adminListingMeta, { color: colors.mutedForeground }]}>by {l.userName} · {l.category}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                          <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: colors.success }]} onPress={() => approveListing(l.id, true)}>
+                            <Feather name="check" size={13} color="#fff" />
+                          </TouchableOpacity>
+                          <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: colors.destructive + 'CC' }]} onPress={() => deleteListing(l.id)}>
+                            <Feather name="trash-2" size={13} color="#fff" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                      <TouchableOpacity style={[styles.approveBtn, { backgroundColor: colors.success }]} onPress={() => approveListing(l.id, true)}>
-                        <Text style={styles.approveBtnText}>Approve</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))
+                    ))}
+                  </>
+                )}
+
+                {/* Approved listings */}
+                {approvedListings.length > 0 && (
+                  <>
+                    <Text style={[styles.listingsSectionLabel, { color: colors.mutedForeground, marginTop: pendingListings.length > 0 ? 14 : 0 }]}>APPROVED LISTINGS</Text>
+                    {approvedListings.map((l) => (
+                      <View key={l.id} style={[styles.adminListingItem, { backgroundColor: colors.surfaceVariant, borderColor: l.isFeaturedBottom ? colors.primary + '66' : colors.border }]}>
+                        <View style={styles.adminListingInfo}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            {l.isFeaturedBottom && (
+                              <View style={[styles.featuredBadge, { backgroundColor: colors.primary + '22' }]}>
+                                <Feather name="star" size={9} color={colors.primary} />
+                                <Text style={[styles.featuredBadgeText, { color: colors.primary }]}>Featured</Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={[styles.adminListingTitle, { color: colors.foreground }]} numberOfLines={1}>{l.title}</Text>
+                          <Text style={[styles.adminListingMeta, { color: colors.mutedForeground }]}>by {l.userName} · {l.category}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                          <TouchableOpacity
+                            style={[styles.adminActionBtn, { backgroundColor: l.isFeaturedBottom ? colors.primary : colors.muted, borderWidth: 1, borderColor: l.isFeaturedBottom ? colors.primary : colors.border }]}
+                            onPress={() => featureListing(l.id, !l.isFeaturedBottom)}
+                          >
+                            <Feather name="star" size={13} color={l.isFeaturedBottom ? '#fff' : colors.mutedForeground} />
+                          </TouchableOpacity>
+                          <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: colors.destructive + 'CC' }]} onPress={() => deleteListing(l.id)}>
+                            <Feather name="trash-2" size={13} color="#fff" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                  </>
+                )}
+
+                {pendingListings.length === 0 && approvedListings.length === 0 && (
+                  <View style={[styles.adminEmpty, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+                    <Feather name="shopping-bag" size={18} color={colors.mutedForeground} />
+                    <Text style={[styles.adminEmptyText, { color: colors.mutedForeground }]}>No listings yet</Text>
+                  </View>
                 )}
               </View>
             )}
@@ -420,6 +475,11 @@ const styles = StyleSheet.create({
   adminListingMeta: { fontSize: 11, marginTop: 2 },
   approveBtn: { borderRadius: 6, paddingHorizontal: 12, paddingVertical: 7 },
   approveBtnText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  featuredSummary: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 8, borderWidth: 1, padding: 10, marginBottom: 12 },
+  featuredSummaryText: { fontSize: 13, fontWeight: '600' },
+  listingsSectionLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 },
+  featuredBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginBottom: 2 },
+  featuredBadgeText: { fontSize: 10, fontWeight: '700' },
   cmsCard: { borderRadius: 10, borderWidth: 1, padding: 14, gap: 10 },
   cmsToggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cmsLabel: { fontSize: 14, fontWeight: '600' },
