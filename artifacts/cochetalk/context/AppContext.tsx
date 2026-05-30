@@ -77,7 +77,7 @@ export interface MarketplaceListing {
   userName: string;
   userRole: UserRole;
   userPhone: string;
-  category: 'Parts' | 'Services' | 'Accessories';
+  category: 'Parts' | 'Services' | 'Car Sales';
   location: string;
   isApproved: boolean;
   partsGrade: string;
@@ -85,6 +85,27 @@ export interface MarketplaceListing {
   partBrand: string;
   isFeaturedBottom: boolean;
   timestamp: number;
+  // Car Sales specific
+  carMake?: string;
+  carModel?: string;
+  carYear?: number;
+  carTrim?: string;
+  carBodyType?: string;
+  carExteriorColor?: string;
+  carInteriorColor?: string;
+  carEngineType?: string;
+  carTransmission?: string;
+  carFuelType?: string;
+  carMileage?: number;
+  carDriveType?: string;
+  carCondition?: string;
+  carAccidentHistory?: string;
+  carServiceHistory?: string;
+  carPreviousOwners?: number;
+  carRegistrationStatus?: string;
+  carCustomsPapers?: string;
+  carVin?: string;
+  carPlateNumber?: string;
 }
 
 export interface ProviderRating {
@@ -399,7 +420,7 @@ function createSeedState(): AppState {
       userName: 'Samson Okafor',
       userRole: 'Service Provider',
       userPhone: '+2348029876543',
-      category: 'Accessories',
+      category: 'Parts',
       location: 'Surulere, Lagos',
       isApproved: false,
       partsGrade: '',

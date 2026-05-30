@@ -23,7 +23,7 @@ function timeAgo(ts: number): string {
 const CATEGORY_COLORS: Record<string, string> = {
   Parts: '#3B82F6',
   Services: '#10B981',
-  Accessories: '#F59E0B',
+  'Car Sales': '#F59E0B',
 };
 
 interface Props {
@@ -33,9 +33,60 @@ interface Props {
   onDelete?: (id: number) => void;
 }
 
+function CarSalesMeta({ listing, colors }: { listing: MarketplaceListing; colors: ReturnType<typeof useColors> }) {
+  const specs = [
+    listing.carCondition && { icon: 'tag' as const, label: listing.carCondition },
+    listing.carTransmission && { icon: 'settings' as const, label: listing.carTransmission },
+    listing.carFuelType && { icon: 'droplet' as const, label: listing.carFuelType },
+    listing.carMileage != null && { icon: 'navigation' as const, label: `${listing.carMileage.toLocaleString()} km` },
+    listing.carEngineType && { icon: 'cpu' as const, label: listing.carEngineType.replace(' (Inline-4)', '') },
+    listing.carDriveType && { icon: 'sliders' as const, label: listing.carDriveType },
+  ].filter(Boolean) as { icon: React.ComponentProps<typeof Feather>['name']; label: string }[];
+
+  const docBadges = [
+    listing.carRegistrationStatus === 'Registered' && { label: 'Registered', color: '#10B981' },
+    listing.carCustomsPapers?.startsWith('Yes') && { label: 'Customs Papers', color: '#10B981' },
+    listing.carAccidentHistory === 'None' || listing.carAccidentHistory === undefined ? null : { label: 'Accident History', color: '#EF4444' },
+  ].filter(Boolean) as { label: string; color: string }[];
+
+  if (specs.length === 0 && docBadges.length === 0) return null;
+
+  return (
+    <View style={{ marginBottom: 8, gap: 6 }}>
+      {specs.length > 0 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {specs.map((s) => (
+            <View key={s.label} style={[carMetaStyles.spec, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+              <Feather name={s.icon} size={10} color={colors.mutedForeground} />
+              <Text style={[carMetaStyles.specText, { color: colors.mutedForeground }]}>{s.label}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      {docBadges.length > 0 && (
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          {docBadges.map((b) => (
+            <View key={b.label} style={[carMetaStyles.docBadge, { backgroundColor: b.color + '22' }]}>
+              <Text style={[carMetaStyles.docText, { color: b.color }]}>{b.label}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const carMetaStyles = StyleSheet.create({
+  spec: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 6, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 3 },
+  specText: { fontSize: 11, fontWeight: '500' },
+  docBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  docText: { fontSize: 11, fontWeight: '600' },
+});
+
 export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: Props) {
   const colors = useColors();
   const catColor = CATEGORY_COLORS[listing.category] ?? colors.primary;
+  const isCarSale = listing.category === 'Car Sales';
 
   const handleWhatsApp = () => {
     const phone = listing.userPhone.replace(/\D/g, '');
@@ -69,19 +120,21 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
         {listing.title}
       </Text>
 
-      <Text style={[styles.desc, { color: colors.mutedForeground }]} numberOfLines={2}>
-        {listing.description}
-      </Text>
+      {listing.description ? (
+        <Text style={[styles.desc, { color: colors.mutedForeground }]} numberOfLines={isCarSale ? 1 : 2}>
+          {listing.description}
+        </Text>
+      ) : null}
 
-      {(listing.partBrand || listing.application || listing.partsGrade) && (
-        <View style={styles.metaRow}>
-          {listing.partBrand ? (
-            <Text style={[styles.metaItem, { color: colors.mutedForeground }]}>Brand: {listing.partBrand}</Text>
-          ) : null}
-          {listing.partsGrade ? (
-            <Text style={[styles.metaItem, { color: colors.mutedForeground }]}>Grade: {listing.partsGrade}</Text>
-          ) : null}
-        </View>
+      {isCarSale ? (
+        <CarSalesMeta listing={listing} colors={colors} />
+      ) : (
+        (listing.partBrand || listing.partsGrade) ? (
+          <View style={styles.metaRow}>
+            {listing.partBrand ? <Text style={[styles.metaItem, { color: colors.mutedForeground }]}>Brand: {listing.partBrand}</Text> : null}
+            {listing.partsGrade ? <Text style={[styles.metaItem, { color: colors.mutedForeground }]}>Grade: {listing.partsGrade}</Text> : null}
+          </View>
+        ) : null
       )}
 
       <View style={styles.footerRow}>
