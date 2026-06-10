@@ -7,19 +7,22 @@ import { Feather } from '@expo/vector-icons';
 import React from 'react';
 import { Platform, StyleSheet, View, useColorScheme } from 'react-native';
 
+import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
-function NativeTabLayout() {
+function NativeTabLayout({ hideProTab }: { hideProTab: boolean }) {
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: 'bubble.left.and.bubble.right', selected: 'bubble.left.and.bubble.right.fill' }} />
         <Label>Forum</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="pro">
-        <Icon sf={{ default: 'lock.shield', selected: 'lock.shield.fill' }} />
-        <Label>Pro</Label>
-      </NativeTabs.Trigger>
+      {!hideProTab && (
+        <NativeTabs.Trigger name="pro">
+          <Icon sf={{ default: 'lock.shield', selected: 'lock.shield.fill' }} />
+          <Label>Pro</Label>
+        </NativeTabs.Trigger>
+      )}
       <NativeTabs.Trigger name="marketplace">
         <Icon sf={{ default: 'cart', selected: 'cart.fill' }} />
         <Label>Market</Label>
@@ -36,7 +39,7 @@ function NativeTabLayout() {
   );
 }
 
-function ClassicTabLayout() {
+function ClassicTabLayout({ hideProTab }: { hideProTab: boolean }) {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -85,6 +88,7 @@ function ClassicTabLayout() {
         name="pro"
         options={{
           title: 'Pro',
+          tabBarButton: hideProTab ? () => null : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="lock.shield" tintColor={color} size={22} />
@@ -134,8 +138,11 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
+  const { currentUser } = useApp();
+  const hideProTab = currentUser?.role === 'Car Owner';
+
   if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
+    return <NativeTabLayout hideProTab={hideProTab} />;
   }
-  return <ClassicTabLayout />;
+  return <ClassicTabLayout hideProTab={hideProTab} />;
 }
