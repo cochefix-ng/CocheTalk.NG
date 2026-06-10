@@ -157,6 +157,9 @@ export interface AppContextType extends AppState {
   toggleVerified: (userId: string, verified: boolean) => void;
   banUser: (userId: string, banned: boolean) => void;
   updateCmsConfig: (config: Partial<CmsConfig>) => void;
+  adminAddUser: (data: Omit<User, 'isBanned' | 'verified'>) => void;
+  adminUpdateUser: (userId: string, data: Partial<Omit<User, 'id'>>) => void;
+  adminDeleteUser: (userId: string) => void;
 }
 
 const STORAGE_KEY = 'cochetalk_state_v1';
@@ -786,6 +789,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state, save],
   );
 
+  const adminAddUser = useCallback(
+    (data: Omit<User, 'isBanned' | 'verified'>) => {
+      if (!state) return;
+      const newUser: User = { ...data, verified: false, isBanned: false };
+      save({ ...state, users: [...state.users, newUser] });
+    },
+    [state, save],
+  );
+
+  const adminUpdateUser = useCallback(
+    (userId: string, data: Partial<Omit<User, 'id'>>) => {
+      if (!state) return;
+      save({
+        ...state,
+        users: state.users.map((u) => (u.id === userId ? { ...u, ...data } : u)),
+      });
+    },
+    [state, save],
+  );
+
+  const adminDeleteUser = useCallback(
+    (userId: string) => {
+      if (!state) return;
+      save({
+        ...state,
+        users: state.users.filter((u) => u.id !== userId),
+        questions: state.questions.filter((q) => q.userId !== userId),
+        answers: state.answers.filter((a) => a.userId !== userId),
+        listings: state.listings.filter((l) => l.userId !== userId),
+        ratings: state.ratings.filter((r) => r.providerId !== userId && r.raterId !== userId),
+        currentUserId: state.currentUserId === userId ? 'admin@cochetalk.com' : state.currentUserId,
+      });
+    },
+    [state, save],
+  );
+
   const value = useMemo<AppContextType>(
     () => ({
       ...(state ?? createSeedState()),
@@ -809,6 +848,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toggleVerified,
       banUser,
       updateCmsConfig,
+      adminAddUser,
+      adminUpdateUser,
+      adminDeleteUser,
     }),
     [
       state,
@@ -832,6 +874,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toggleVerified,
       banUser,
       updateCmsConfig,
+      adminAddUser,
+      adminUpdateUser,
+      adminDeleteUser,
     ],
   );
 

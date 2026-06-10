@@ -2,7 +2,9 @@ import { Feather } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useApp } from '@/context/AppContext';
-import type { User } from '@/context/AppContext';
+import type { User, UserRole } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import {
   exportActivitiesReport,
@@ -41,12 +43,92 @@ function avgRating(ratings: { ratingValue: number }[]) {
 
 export default function ProfileScreen() {
   const colors = useColors();
-  const { users, currentUser, login, logout, questions, answers, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading } = useApp();
+  const { users, currentUser, login, logout, questions, answers, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser } = useApp();
 
   const [showSwitchModal, setShowSwitchModal] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms' | 'export'>('users');
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [editAnnouncement, setEditAnnouncement] = useState(cmsConfig.announcementText);
+
+  type UserForm = {
+    name: string;
+    email: string;
+    role: UserRole;
+    phone: string;
+    location: string;
+    specialization: string;
+    businessName: string;
+    experience: string;
+    verified: boolean;
+  };
+
+  const blankForm: UserForm = {
+    name: '', email: '', role: 'Car Owner', phone: '', location: '',
+    specialization: '', businessName: '', experience: '0', verified: false,
+  };
+
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [userForm, setUserForm] = useState<UserForm>(blankForm);
+
+  function openAddUser() {
+    setEditingUserId(null);
+    setUserForm(blankForm);
+    setShowUserModal(true);
+  }
+
+  function openEditUser(u: User) {
+    setEditingUserId(u.id);
+    setUserForm({
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      phone: u.phone ?? '',
+      location: u.location ?? '',
+      specialization: u.specialization ?? '',
+      businessName: u.businessName ?? '',
+      experience: String(u.experience ?? 0),
+      verified: u.verified,
+    });
+    setShowUserModal(true);
+  }
+
+  function saveUserForm() {
+    const name = userForm.name.trim();
+    const email = userForm.email.trim().toLowerCase();
+    if (!name) { Alert.alert('Validation', 'Full name is required.'); return; }
+    if (!email.includes('@')) { Alert.alert('Validation', 'Enter a valid email address.'); return; }
+    if (!editingUserId && users.some((u) => u.id === email)) {
+      Alert.alert('Duplicate Email', 'A user with this email already exists.'); return;
+    }
+    const data = {
+      name,
+      email,
+      role: userForm.role,
+      phone: userForm.phone.trim(),
+      location: userForm.location.trim(),
+      specialization: userForm.role === 'Service Provider' ? userForm.specialization.trim() : '',
+      businessName: userForm.role === 'Service Provider' ? userForm.businessName.trim() : '',
+      experience: userForm.role === 'Service Provider' ? (parseInt(userForm.experience, 10) || 0) : 0,
+    };
+    if (editingUserId) {
+      adminUpdateUser(editingUserId, { ...data, verified: userForm.role === 'Service Provider' ? userForm.verified : false });
+    } else {
+      adminAddUser({ ...data, id: email });
+    }
+    setShowUserModal(false);
+  }
+
+  function confirmDeleteUser(u: User) {
+    Alert.alert(
+      'Delete User',
+      `Permanently delete "${u.name}"? This will also remove all their questions, answers, and listings.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => adminDeleteUser(u.id) },
+      ],
+    );
+  }
 
   const pendingListings = listings.filter((l) => !l.isApproved);
   const approvedListings = listings.filter((l) => l.isApproved);
@@ -266,27 +348,50 @@ export default function ProfileScreen() {
 
             {activeAdminTab === 'users' && (
               <View>
-                {users.filter((u) => u.role !== 'Admin').map((u) => (
-                  <View key={u.id} style={[styles.adminUserItem, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
-                    <View style={[styles.userAvatar, { backgroundColor: colors.primary + '33' }]}>
-                      <Text style={[styles.userAvatarText, { color: colors.primary }]}>{u.name.charAt(0)}</Text>
+                {/* Add User button */}
+                <TouchableOpacity
+                  style={[styles.addUserBtn, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '44' }]}
+                  onPress={openAddUser}
+                >
+                  <Feather name="user-plus" size={15} color={colors.primary} />
+                  <Text style={[styles.addUserBtnText, { color: colors.primary }]}>Add New User</Text>
+                </TouchableOpacity>
+
+                {users.map((u) => (
+                  <View key={u.id} style={[styles.adminUserItem, { backgroundColor: colors.surfaceVariant, borderColor: u.role === 'Admin' ? colors.destructive + '44' : colors.border }]}>
+                    <View style={[styles.userAvatar, { backgroundColor: u.role === 'Admin' ? colors.destructive + '33' : colors.primary + '33' }]}>
+                      <Text style={[styles.userAvatarText, { color: u.role === 'Admin' ? colors.destructive : colors.primary }]}>{u.name.charAt(0)}</Text>
                     </View>
                     <View style={styles.adminUserInfo}>
                       <View style={styles.nameRow}>
                         <Text style={[styles.adminUserName, { color: colors.foreground }]}>{u.name}</Text>
                         {u.isBanned && <View style={[styles.bannedBadge, { backgroundColor: colors.destructive }]}><Text style={styles.bannedText}>Banned</Text></View>}
+                        {u.role === 'Admin' && <View style={[styles.bannedBadge, { backgroundColor: colors.destructive + 'CC' }]}><Text style={styles.bannedText}>Admin</Text></View>}
                       </View>
-                      <Text style={[styles.adminUserRole, { color: colors.mutedForeground }]}>{u.specialization || u.role}</Text>
+                      <Text style={[styles.adminUserRole, { color: colors.mutedForeground }]} numberOfLines={1}>
+                        {u.specialization ? `${u.role} · ${u.specialization}` : u.role}
+                        {u.location ? ` · ${u.location}` : ''}
+                      </Text>
                     </View>
                     <View style={styles.adminActions}>
                       {u.role === 'Service Provider' && (
                         <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: u.verified ? colors.success + '22' : colors.muted }]} onPress={() => toggleVerified(u.id, !u.verified)}>
-                          <Text style={[styles.adminActionText, { color: u.verified ? colors.success : colors.mutedForeground }]}>{u.verified ? 'Verified' : 'Verify'}</Text>
+                          <Feather name={u.verified ? 'check-circle' : 'circle'} size={12} color={u.verified ? colors.success : colors.mutedForeground} />
                         </TouchableOpacity>
                       )}
-                      <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: u.isBanned ? colors.success + '22' : colors.destructive + '22' }]} onPress={() => handleBan(u)}>
-                        <Text style={[styles.adminActionText, { color: u.isBanned ? colors.success : colors.destructive }]}>{u.isBanned ? 'Unban' : 'Ban'}</Text>
+                      {u.role !== 'Admin' && (
+                        <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: u.isBanned ? colors.success + '22' : colors.warning + '22' }]} onPress={() => handleBan(u)}>
+                          <Feather name={u.isBanned ? 'unlock' : 'slash'} size={12} color={u.isBanned ? colors.success : colors.warning} />
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: colors.primary + '22' }]} onPress={() => openEditUser(u)}>
+                        <Feather name="edit-2" size={12} color={colors.primary} />
                       </TouchableOpacity>
+                      {u.id !== currentUser?.id && (
+                        <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: colors.destructive + '22' }]} onPress={() => confirmDeleteUser(u)}>
+                          <Feather name="trash-2" size={12} color={colors.destructive} />
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
                 ))}
@@ -523,6 +628,157 @@ export default function ProfileScreen() {
           ))}
         </View>
       </Modal>
+
+      {/* ── User Add / Edit Modal ── */}
+      <Modal visible={showUserModal} animationType="slide" transparent onRequestClose={() => setShowUserModal(false)}>
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowUserModal(false)} />
+          <View style={[styles.userModalSheet, { backgroundColor: colors.card }]}>
+            {/* Header */}
+            <View style={[styles.userModalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.userModalTitle, { color: colors.foreground }]}>
+                {editingUserId ? 'Edit User' : 'Add New User'}
+              </Text>
+              <TouchableOpacity onPress={() => setShowUserModal(false)}>
+                <Feather name="x" size={20} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.userModalBody} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {/* Full Name */}
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Full Name *</Text>
+              <TextInput
+                style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="e.g. Ade Bello"
+                placeholderTextColor={colors.mutedForeground}
+                value={userForm.name}
+                onChangeText={(v) => setUserForm((f) => ({ ...f, name: v }))}
+              />
+
+              {/* Email */}
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Email Address * {editingUserId ? '(cannot change)' : ''}</Text>
+              <TextInput
+                style={[styles.fieldInput, { backgroundColor: editingUserId ? colors.muted + '88' : colors.muted, borderColor: colors.border, color: editingUserId ? colors.mutedForeground : colors.foreground }]}
+                placeholder="user@example.com"
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                editable={!editingUserId}
+                value={userForm.email}
+                onChangeText={(v) => setUserForm((f) => ({ ...f, email: v }))}
+              />
+
+              {/* Role */}
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Role *</Text>
+              <View style={styles.rolePicker}>
+                {(['Car Owner', 'Service Provider', 'Admin'] as UserRole[]).map((r) => (
+                  <TouchableOpacity
+                    key={r}
+                    style={[
+                      styles.roleOption,
+                      { borderColor: userForm.role === r ? colors.primary : colors.border, backgroundColor: userForm.role === r ? colors.primary + '18' : colors.muted },
+                    ]}
+                    onPress={() => setUserForm((f) => ({ ...f, role: r }))}
+                  >
+                    <Text style={[styles.roleOptionText, { color: userForm.role === r ? colors.primary : colors.mutedForeground }]}>{r}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Phone */}
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Phone Number</Text>
+              <TextInput
+                style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="+2348001234567"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="phone-pad"
+                value={userForm.phone}
+                onChangeText={(v) => setUserForm((f) => ({ ...f, phone: v }))}
+              />
+
+              {/* Location */}
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Location / Workspace Coordinates</Text>
+              <TextInput
+                style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="e.g. Victoria Island, Lagos"
+                placeholderTextColor={colors.mutedForeground}
+                value={userForm.location}
+                onChangeText={(v) => setUserForm((f) => ({ ...f, location: v }))}
+              />
+
+              {/* Service Provider fields */}
+              {userForm.role === 'Service Provider' && (
+                <>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Specialization</Text>
+                  <TextInput
+                    style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                    placeholder="e.g. Engine / Transmission"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={userForm.specialization}
+                    onChangeText={(v) => setUserForm((f) => ({ ...f, specialization: v }))}
+                  />
+
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Business Name</Text>
+                  <TextInput
+                    style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                    placeholder="e.g. BelloAuto Garage"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={userForm.businessName}
+                    onChangeText={(v) => setUserForm((f) => ({ ...f, businessName: v }))}
+                  />
+
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Years of Experience</Text>
+                  <TextInput
+                    style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                    placeholder="0"
+                    placeholderTextColor={colors.mutedForeground}
+                    keyboardType="numeric"
+                    value={userForm.experience}
+                    onChangeText={(v) => setUserForm((f) => ({ ...f, experience: v.replace(/[^0-9]/g, '') }))}
+                  />
+
+                  <View style={styles.verifiedToggleRow}>
+                    <View>
+                      <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginBottom: 2 }]}>Verified Provider</Text>
+                      <Text style={[styles.verifiedToggleSub, { color: colors.mutedForeground }]}>Shows verified badge on their profile</Text>
+                    </View>
+                    <Switch
+                      value={userForm.verified}
+                      onValueChange={(v) => setUserForm((f) => ({ ...f, verified: v }))}
+                      trackColor={{ false: colors.muted, true: colors.success + '88' }}
+                      thumbColor={userForm.verified ? colors.success : colors.mutedForeground}
+                    />
+                  </View>
+                </>
+              )}
+
+              <View style={{ height: 16 }} />
+            </ScrollView>
+
+            {/* Footer buttons */}
+            <View style={[styles.userModalFooter, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={[styles.userModalCancelBtn, { borderColor: colors.border }]}
+                onPress={() => setShowUserModal(false)}
+              >
+                <Text style={[styles.userModalCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.userModalSaveBtn, { backgroundColor: colors.primary }]}
+                onPress={saveUserForm}
+              >
+                <Feather name={editingUserId ? 'save' : 'user-plus'} size={14} color={colors.primaryForeground} />
+                <Text style={[styles.userModalSaveText, { color: colors.primaryForeground }]}>
+                  {editingUserId ? 'Save Changes' : 'Create User'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -597,6 +853,25 @@ const styles = StyleSheet.create({
   cmsInput: { borderRadius: 8, borderWidth: 1, padding: 10, fontSize: 13, minHeight: 70 },
   cmsBtn: { borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
   cmsBtnText: { fontSize: 13, fontWeight: '700' },
+  addUserBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 11, marginBottom: 10 },
+  addUserBtnText: { fontSize: 14, fontWeight: '700' },
+  modalBackdrop: { flex: 1, justifyContent: 'flex-end' },
+  userModalSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%' },
+  userModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1 },
+  userModalTitle: { fontSize: 18, fontWeight: '700' },
+  userModalBody: { paddingHorizontal: 20, paddingTop: 16 },
+  fieldLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, marginBottom: 6, marginTop: 12 },
+  fieldInput: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 11, fontSize: 14 },
+  rolePicker: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
+  roleOption: { borderRadius: 8, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8, flexShrink: 1 },
+  roleOptionText: { fontSize: 13, fontWeight: '600' },
+  verifiedToggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
+  verifiedToggleSub: { fontSize: 12 },
+  userModalFooter: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingVertical: 16, borderTopWidth: 1 },
+  userModalCancelBtn: { flex: 1, borderRadius: 10, borderWidth: 1, alignItems: 'center', paddingVertical: 12 },
+  userModalCancelText: { fontSize: 14, fontWeight: '600' },
+  userModalSaveBtn: { flex: 2, flexDirection: 'row', borderRadius: 10, alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12 },
+  userModalSaveText: { fontSize: 14, fontWeight: '700' },
   exportSection: { gap: 10 },
   exportHeading: { fontSize: 12, lineHeight: 17, marginBottom: 4 },
   exportCard: { flexDirection: 'row', gap: 12, borderRadius: 12, borderWidth: 1, padding: 14 },
