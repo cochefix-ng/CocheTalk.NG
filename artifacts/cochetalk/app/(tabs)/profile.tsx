@@ -17,6 +17,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/context/AppContext';
 import type { User } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import {
+  exportActivitiesReport,
+  exportAnalyticsReport,
+  exportListingsReport,
+  exportUsersReport,
+} from '@/utils/exportUtils';
 
 function StarRating({ value, max = 5, size = 16, color }: { value: number; max?: number; size?: number; color: string }) {
   return (
@@ -35,10 +41,11 @@ function avgRating(ratings: { ratingValue: number }[]) {
 
 export default function ProfileScreen() {
   const colors = useColors();
-  const { users, currentUser, login, logout, questions, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading } = useApp();
+  const { users, currentUser, login, logout, questions, answers, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading } = useApp();
 
   const [showSwitchModal, setShowSwitchModal] = useState(false);
-  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms'>('users');
+  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms' | 'export'>('users');
+  const [exportingId, setExportingId] = useState<string | null>(null);
   const [editAnnouncement, setEditAnnouncement] = useState(cmsConfig.announcementText);
 
   const pendingListings = listings.filter((l) => !l.isApproved);
@@ -239,14 +246,19 @@ export default function ProfileScreen() {
             </View>
 
             <View style={[styles.adminTabs, { borderColor: colors.border }]}>
-              {(['users', 'listings', 'cms'] as const).map((tab) => (
+              {([
+                { key: 'users', label: 'Users' },
+                { key: 'listings', label: 'Listings' },
+                { key: 'cms', label: 'CMS' },
+                { key: 'export', label: 'Export' },
+              ] as const).map(({ key, label }) => (
                 <TouchableOpacity
-                  key={tab}
-                  style={[styles.adminTab, activeAdminTab === tab && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
-                  onPress={() => setActiveAdminTab(tab)}
+                  key={key}
+                  style={[styles.adminTab, activeAdminTab === key && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+                  onPress={() => setActiveAdminTab(key)}
                 >
-                  <Text style={[styles.adminTabText, { color: activeAdminTab === tab ? colors.primary : colors.mutedForeground }]}>
-                    {tab === 'users' ? 'Users' : tab === 'listings' ? 'Listings' : 'CMS'}
+                  <Text style={[styles.adminTabText, { color: activeAdminTab === key ? colors.primary : colors.mutedForeground }]}>
+                    {label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -384,6 +396,105 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
             )}
+
+            {activeAdminTab === 'export' && (
+              <View style={styles.exportSection}>
+                <Text style={[styles.exportHeading, { color: colors.mutedForeground }]}>
+                  Download platform data as CSV files. All data reflects the current live state.
+                </Text>
+
+                {[
+                  {
+                    id: 'users',
+                    icon: 'users' as const,
+                    title: 'Users Report',
+                    desc: 'All user accounts with role, verification status, ban status, activity counts, and average rating.',
+                    color: colors.proCircle,
+                    rows: users.length,
+                    unit: 'users',
+                    onExport: () => exportUsersReport(users, questions, answers, listings, ratings),
+                  },
+                  {
+                    id: 'activities',
+                    icon: 'activity' as const,
+                    title: 'Activities Report',
+                    desc: 'All questions, answers, marketplace listings, and provider ratings with full details.',
+                    color: colors.primary,
+                    rows: questions.length + answers.length + listings.length + ratings.length,
+                    unit: 'records',
+                    onExport: () => exportActivitiesReport(questions, answers, listings, ratings),
+                  },
+                  {
+                    id: 'analytics',
+                    icon: 'bar-chart-2' as const,
+                    title: 'Analytics Summary',
+                    desc: 'Platform-wide totals, engagement stats, marketplace value, top contributors, and category breakdowns.',
+                    color: colors.success,
+                    rows: null,
+                    unit: null,
+                    onExport: () => exportAnalyticsReport(users, questions, answers, listings, ratings),
+                  },
+                  {
+                    id: 'listings',
+                    icon: 'shopping-bag' as const,
+                    title: 'Listings Report',
+                    desc: 'Full listing details including category-specific fields, approval status, featured flag, and pricing.',
+                    color: colors.warning,
+                    rows: listings.length,
+                    unit: 'listings',
+                    onExport: () => exportListingsReport(listings),
+                  },
+                ].map((card) => (
+                  <View
+                    key={card.id}
+                    style={[styles.exportCard, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
+                  >
+                    <View style={[styles.exportIconWrap, { backgroundColor: card.color + '1A' }]}>
+                      <Feather name={card.icon} size={20} color={card.color} />
+                    </View>
+                    <View style={styles.exportCardBody}>
+                      <View style={styles.exportCardTop}>
+                        <Text style={[styles.exportCardTitle, { color: colors.foreground }]}>{card.title}</Text>
+                        {card.rows != null && (
+                          <View style={[styles.exportBadge, { backgroundColor: card.color + '1A' }]}>
+                            <Text style={[styles.exportBadgeText, { color: card.color }]}>
+                              {card.rows} {card.unit}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={[styles.exportCardDesc, { color: colors.mutedForeground }]}>{card.desc}</Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.exportBtn,
+                          { backgroundColor: exportingId === card.id ? card.color + '33' : card.color },
+                        ]}
+                        disabled={exportingId !== null}
+                        onPress={async () => {
+                          setExportingId(card.id);
+                          try {
+                            await card.onExport();
+                          } catch (e) {
+                            Alert.alert('Export Failed', 'Could not generate the export file. Please try again.');
+                          } finally {
+                            setExportingId(null);
+                          }
+                        }}
+                      >
+                        {exportingId === card.id ? (
+                          <Text style={[styles.exportBtnText, { color: '#fff' }]}>Generating…</Text>
+                        ) : (
+                          <>
+                            <Feather name="download" size={13} color="#fff" />
+                            <Text style={[styles.exportBtnText, { color: '#fff' }]}>Download CSV</Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
@@ -486,6 +597,18 @@ const styles = StyleSheet.create({
   cmsInput: { borderRadius: 8, borderWidth: 1, padding: 10, fontSize: 13, minHeight: 70 },
   cmsBtn: { borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
   cmsBtnText: { fontSize: 13, fontWeight: '700' },
+  exportSection: { gap: 10 },
+  exportHeading: { fontSize: 12, lineHeight: 17, marginBottom: 4 },
+  exportCard: { flexDirection: 'row', gap: 12, borderRadius: 12, borderWidth: 1, padding: 14 },
+  exportIconWrap: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  exportCardBody: { flex: 1, gap: 6 },
+  exportCardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  exportCardTitle: { fontSize: 14, fontWeight: '700', flex: 1 },
+  exportBadge: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
+  exportBadgeText: { fontSize: 11, fontWeight: '600' },
+  exportCardDesc: { fontSize: 12, lineHeight: 17 },
+  exportBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8, paddingVertical: 9, marginTop: 2 },
+  exportBtnText: { fontSize: 13, fontWeight: '700' },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
   switchSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40, gap: 8 },
   switchTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
