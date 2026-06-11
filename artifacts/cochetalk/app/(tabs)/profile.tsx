@@ -239,7 +239,7 @@ export default function ProfileScreen() {
                   {u.verified && <Feather name="check-circle" size={13} color={colors.verified} />}
                 </View>
                 <Text style={[styles.userRole, { color: colors.mutedForeground }]}>
-                  {u.specialization ? `${u.role} — ${u.specialization}` : u.role}
+                  {u.specialization?.length > 0 ? `${u.role} — ${u.specialization.join(', ')}` : u.role}
                 </Text>
               </View>
               <Feather name="log-in" size={16} color={colors.primary} />
@@ -300,10 +300,10 @@ export default function ProfileScreen() {
 
           {currentUser.role === 'Service Provider' && (
             <>
-              {currentUser.specialization ? (
+              {currentUser.specialization.length > 0 ? (
                 <View style={styles.infoRow}>
                   <Feather name="tool" size={13} color={colors.mutedForeground} />
-                  <Text style={[styles.infoText, { color: colors.mutedForeground }]}>{currentUser.specialization}</Text>
+                  <Text style={[styles.infoText, { color: colors.mutedForeground }]}>{currentUser.specialization.join(', ')}</Text>
                 </View>
               ) : null}
               {currentUser.businessName ? (

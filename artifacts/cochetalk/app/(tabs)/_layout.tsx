@@ -88,7 +88,7 @@ function ClassicTabLayout({ hideProTab }: { hideProTab: boolean }) {
         name="pro"
         options={{
           title: 'Pro',
-          tabBarButton: hideProTab ? () => null : undefined,
+          href: hideProTab ? null : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="lock.shield" tintColor={color} size={22} />
