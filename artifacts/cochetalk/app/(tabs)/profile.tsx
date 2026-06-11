@@ -43,7 +43,7 @@ function avgRating(ratings: { ratingValue: number }[]) {
 
 export default function ProfileScreen() {
   const colors = useColors();
-  const { users, currentUser, login, logout, questions, answers, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser } = useApp();
+  const { users, currentUser, login, logout, questions, answers, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser, editProfile } = useApp();
 
   const [showSwitchModal, setShowSwitchModal] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms' | 'export'>('users');
@@ -126,6 +126,61 @@ export default function ProfileScreen() {
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Delete', style: 'destructive', onPress: () => adminDeleteUser(u.id) },
+      ],
+    );
+  }
+
+  // ── Self-edit (one-time) ──────────────────────────────────────────
+  type SelfEditForm = {
+    name: string;
+    phone: string;
+    location: string;
+    specialization: string;
+    businessName: string;
+    experience: string;
+  };
+
+  const [showSelfEditModal, setShowSelfEditModal] = useState(false);
+  const [selfEditForm, setSelfEditForm] = useState<SelfEditForm>({
+    name: '', phone: '', location: '', specialization: '', businessName: '', experience: '0',
+  });
+
+  function openSelfEdit() {
+    if (!currentUser) return;
+    setSelfEditForm({
+      name: currentUser.name,
+      phone: currentUser.phone ?? '',
+      location: currentUser.location ?? '',
+      specialization: currentUser.specialization ?? '',
+      businessName: currentUser.businessName ?? '',
+      experience: String(currentUser.experience ?? 0),
+    });
+    setShowSelfEditModal(true);
+  }
+
+  function saveSelfEdit() {
+    const name = selfEditForm.name.trim();
+    if (!name) { Alert.alert('Required', 'Your name cannot be empty.'); return; }
+    Alert.alert(
+      'Confirm One-Time Edit',
+      'You can only edit your profile once. This cannot be undone. Save now?',
+      [
+        { text: 'Go Back', style: 'cancel' },
+        {
+          text: 'Save Forever',
+          style: 'destructive',
+          onPress: () => {
+            editProfile({
+              name,
+              phone: selfEditForm.phone.trim(),
+              location: selfEditForm.location.trim(),
+              specialization: selfEditForm.specialization.trim(),
+              businessName: selfEditForm.businessName.trim(),
+              experience: parseInt(selfEditForm.experience, 10) || 0,
+            });
+            setShowSelfEditModal(false);
+          },
+        },
       ],
     );
   }
@@ -274,6 +329,26 @@ export default function ProfileScreen() {
             </>
           )}
         </View>
+
+        {/* One-time edit profile button */}
+        {currentUser.hasEditedProfile ? (
+          <View style={[styles.editProfileUsed, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+            <Feather name="lock" size={13} color={colors.mutedForeground} />
+            <Text style={[styles.editProfileUsedText, { color: colors.mutedForeground }]}>Profile edit already used</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.editProfileBtn, { backgroundColor: colors.primary + '14', borderColor: colors.primary + '44' }]}
+            onPress={openSelfEdit}
+          >
+            <Feather name="edit-3" size={15} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.editProfileBtnTitle, { color: colors.primary }]}>Edit My Profile</Text>
+              <Text style={[styles.editProfileBtnSub, { color: colors.primary + 'AA' }]}>One-time only · cannot be undone</Text>
+            </View>
+            <Feather name="chevron-right" size={15} color={colors.primary + '88'} />
+          </TouchableOpacity>
+        )}
 
         <View style={styles.statsRow}>
           {[
@@ -629,6 +704,108 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      {/* ── One-Time Self-Edit Modal ── */}
+      <Modal visible={showSelfEditModal} animationType="slide" transparent onRequestClose={() => setShowSelfEditModal(false)}>
+        <KeyboardAvoidingView style={styles.modalBackdrop} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowSelfEditModal(false)} />
+          <View style={[styles.userModalSheet, { backgroundColor: colors.card }]}>
+            <View style={[styles.userModalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.userModalTitle, { color: colors.foreground }]}>Edit My Profile</Text>
+              <TouchableOpacity onPress={() => setShowSelfEditModal(false)}>
+                <Feather name="x" size={20} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+
+            {/* One-time warning banner */}
+            <View style={[styles.oneTimeWarning, { backgroundColor: colors.warning + '18', borderColor: colors.warning + '44' }]}>
+              <Feather name="alert-triangle" size={14} color={colors.warning} />
+              <Text style={[styles.oneTimeWarningText, { color: colors.warning }]}>
+                This is your one and only profile edit. Once saved, this option is gone permanently.
+              </Text>
+            </View>
+
+            <ScrollView style={styles.userModalBody} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Full Name *</Text>
+              <TextInput
+                style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="Your full name"
+                placeholderTextColor={colors.mutedForeground}
+                value={selfEditForm.name}
+                onChangeText={(v) => setSelfEditForm((f) => ({ ...f, name: v }))}
+              />
+
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Phone Number</Text>
+              <TextInput
+                style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="+2348001234567"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="phone-pad"
+                value={selfEditForm.phone}
+                onChangeText={(v) => setSelfEditForm((f) => ({ ...f, phone: v }))}
+              />
+
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Location</Text>
+              <TextInput
+                style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="e.g. Ikeja, Lagos"
+                placeholderTextColor={colors.mutedForeground}
+                value={selfEditForm.location}
+                onChangeText={(v) => setSelfEditForm((f) => ({ ...f, location: v }))}
+              />
+
+              {currentUser?.role === 'Service Provider' && (
+                <>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Specialization</Text>
+                  <TextInput
+                    style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                    placeholder="e.g. Engine / Transmission"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={selfEditForm.specialization}
+                    onChangeText={(v) => setSelfEditForm((f) => ({ ...f, specialization: v }))}
+                  />
+
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Business Name</Text>
+                  <TextInput
+                    style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                    placeholder="e.g. BelloAuto Garage"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={selfEditForm.businessName}
+                    onChangeText={(v) => setSelfEditForm((f) => ({ ...f, businessName: v }))}
+                  />
+
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Years of Experience</Text>
+                  <TextInput
+                    style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                    placeholder="0"
+                    placeholderTextColor={colors.mutedForeground}
+                    keyboardType="numeric"
+                    value={selfEditForm.experience}
+                    onChangeText={(v) => setSelfEditForm((f) => ({ ...f, experience: v.replace(/[^0-9]/g, '') }))}
+                  />
+                </>
+              )}
+              <View style={{ height: 16 }} />
+            </ScrollView>
+
+            <View style={[styles.userModalFooter, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={[styles.userModalCancelBtn, { borderColor: colors.border }]}
+                onPress={() => setShowSelfEditModal(false)}
+              >
+                <Text style={[styles.userModalCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.userModalSaveBtn, { backgroundColor: colors.warning }]}
+                onPress={saveSelfEdit}
+              >
+                <Feather name="save" size={14} color="#fff" />
+                <Text style={[styles.userModalSaveText, { color: '#fff' }]}>Save Profile</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* ── User Add / Edit Modal ── */}
       <Modal visible={showUserModal} animationType="slide" transparent onRequestClose={() => setShowUserModal(false)}>
         <KeyboardAvoidingView
@@ -853,6 +1030,13 @@ const styles = StyleSheet.create({
   cmsInput: { borderRadius: 8, borderWidth: 1, padding: 10, fontSize: 13, minHeight: 70 },
   cmsBtn: { borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
   cmsBtnText: { fontSize: 13, fontWeight: '700' },
+  editProfileBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 12 },
+  editProfileBtnTitle: { fontSize: 14, fontWeight: '700' },
+  editProfileBtnSub: { fontSize: 11, marginTop: 1 },
+  editProfileUsed: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 12 },
+  editProfileUsedText: { fontSize: 13, fontWeight: '500' },
+  oneTimeWarning: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderWidth: 1, marginHorizontal: 20, marginTop: 14, borderRadius: 10, padding: 12 },
+  oneTimeWarningText: { flex: 1, fontSize: 13, lineHeight: 18, fontWeight: '500' },
   addUserBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 11, marginBottom: 10 },
   addUserBtnText: { fontSize: 14, fontWeight: '700' },
   modalBackdrop: { flex: 1, justifyContent: 'flex-end' },

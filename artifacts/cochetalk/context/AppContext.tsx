@@ -15,6 +15,7 @@ export interface User {
   experience: number;
   location: string;
   isBanned: boolean;
+  hasEditedProfile?: boolean;
 }
 
 export interface Question {
@@ -160,6 +161,7 @@ export interface AppContextType extends AppState {
   adminAddUser: (data: Omit<User, 'isBanned' | 'verified'>) => void;
   adminUpdateUser: (userId: string, data: Partial<Omit<User, 'id'>>) => void;
   adminDeleteUser: (userId: string) => void;
+  editProfile: (data: Pick<User, 'name' | 'phone' | 'location' | 'specialization' | 'businessName' | 'experience'>) => void;
 }
 
 const STORAGE_KEY = 'cochetalk_state_v1';
@@ -809,6 +811,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state, save],
   );
 
+  const editProfile = useCallback(
+    (data: Pick<User, 'name' | 'phone' | 'location' | 'specialization' | 'businessName' | 'experience'>) => {
+      if (!state || !currentUser) return;
+      save({
+        ...state,
+        users: state.users.map((u) =>
+          u.id === currentUser.id ? { ...u, ...data, hasEditedProfile: true } : u,
+        ),
+      });
+    },
+    [state, currentUser, save],
+  );
+
   const adminDeleteUser = useCallback(
     (userId: string) => {
       if (!state) return;
@@ -851,6 +866,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       adminAddUser,
       adminUpdateUser,
       adminDeleteUser,
+      editProfile,
     }),
     [
       state,
@@ -877,6 +893,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       adminAddUser,
       adminUpdateUser,
       adminDeleteUser,
+      editProfile,
     ],
   );
 
