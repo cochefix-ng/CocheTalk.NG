@@ -48,6 +48,7 @@ export default function ProfileScreen() {
   const [showSwitchModal, setShowSwitchModal] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms' | 'export'>('users');
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [newTagInput, setNewTagInput] = useState('');
   const [editAnnouncement, setEditAnnouncement] = useState(cmsConfig.announcementText);
 
   type UserForm = {
@@ -56,7 +57,7 @@ export default function ProfileScreen() {
     role: UserRole;
     phone: string;
     location: string;
-    specialization: string;
+    specialization: string[];
     businessName: string;
     experience: string;
     verified: boolean;
@@ -64,7 +65,7 @@ export default function ProfileScreen() {
 
   const blankForm: UserForm = {
     name: '', email: '', role: 'Car Owner', phone: '', location: '',
-    specialization: '', businessName: '', experience: '0', verified: false,
+    specialization: [], businessName: '', experience: '0', verified: false,
   };
 
   const [showUserModal, setShowUserModal] = useState(false);
@@ -85,7 +86,7 @@ export default function ProfileScreen() {
       role: u.role,
       phone: u.phone ?? '',
       location: u.location ?? '',
-      specialization: u.specialization ?? '',
+      specialization: u.specialization ?? [],
       businessName: u.businessName ?? '',
       experience: String(u.experience ?? 0),
       verified: u.verified,
@@ -107,7 +108,7 @@ export default function ProfileScreen() {
       role: userForm.role,
       phone: userForm.phone.trim(),
       location: userForm.location.trim(),
-      specialization: userForm.role === 'Service Provider' ? userForm.specialization.trim() : '',
+      specialization: userForm.role === 'Service Provider' ? userForm.specialization : [],
       businessName: userForm.role === 'Service Provider' ? userForm.businessName.trim() : '',
       experience: userForm.role === 'Service Provider' ? (parseInt(userForm.experience, 10) || 0) : 0,
     };
@@ -135,14 +136,14 @@ export default function ProfileScreen() {
     name: string;
     phone: string;
     location: string;
-    specialization: string;
+    specialization: string[];
     businessName: string;
     experience: string;
   };
 
   const [showSelfEditModal, setShowSelfEditModal] = useState(false);
   const [selfEditForm, setSelfEditForm] = useState<SelfEditForm>({
-    name: '', phone: '', location: '', specialization: '', businessName: '', experience: '0',
+    name: '', phone: '', location: '', specialization: [], businessName: '', experience: '0',
   });
 
   function openSelfEdit() {
@@ -151,7 +152,7 @@ export default function ProfileScreen() {
       name: currentUser.name,
       phone: currentUser.phone ?? '',
       location: currentUser.location ?? '',
-      specialization: currentUser.specialization ?? '',
+      specialization: currentUser.specialization ?? [],
       businessName: currentUser.businessName ?? '',
       experience: String(currentUser.experience ?? 0),
     });
@@ -174,7 +175,7 @@ export default function ProfileScreen() {
               name,
               phone: selfEditForm.phone.trim(),
               location: selfEditForm.location.trim(),
-              specialization: selfEditForm.specialization.trim(),
+              specialization: selfEditForm.specialization,
               businessName: selfEditForm.businessName.trim(),
               experience: parseInt(selfEditForm.experience, 10) || 0,
             });
@@ -550,31 +551,93 @@ export default function ProfileScreen() {
             )}
 
             {activeAdminTab === 'cms' && (
-              <View style={[styles.cmsCard, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
-                <View style={styles.cmsToggleRow}>
-                  <Text style={[styles.cmsLabel, { color: colors.foreground }]}>Announcement Banner</Text>
-                  <Switch
-                    value={cmsConfig.announcementActive}
-                    onValueChange={(v) => updateCmsConfig({ announcementActive: v })}
-                    trackColor={{ false: colors.muted, true: colors.primary + '88' }}
-                    thumbColor={cmsConfig.announcementActive ? colors.primary : colors.mutedForeground}
+              <>
+                {/* Announcement */}
+                <View style={[styles.cmsCard, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
+                  <View style={styles.cmsToggleRow}>
+                    <Text style={[styles.cmsLabel, { color: colors.foreground }]}>Announcement Banner</Text>
+                    <Switch
+                      value={cmsConfig.announcementActive}
+                      onValueChange={(v) => updateCmsConfig({ announcementActive: v })}
+                      trackColor={{ false: colors.muted, true: colors.primary + '88' }}
+                      thumbColor={cmsConfig.announcementActive ? colors.primary : colors.mutedForeground}
+                    />
+                  </View>
+                  <TextInput
+                    style={[styles.cmsInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                    value={editAnnouncement}
+                    onChangeText={setEditAnnouncement}
+                    multiline
+                    numberOfLines={3}
+                    textAlignVertical="top"
                   />
+                  <TouchableOpacity
+                    style={[styles.cmsBtn, { backgroundColor: colors.primary }]}
+                    onPress={handleSaveAnnouncement}
+                  >
+                    <Text style={[styles.cmsBtnText, { color: colors.primaryForeground }]}>Save Announcement</Text>
+                  </TouchableOpacity>
                 </View>
-                <TextInput
-                  style={[styles.cmsInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
-                  value={editAnnouncement}
-                  onChangeText={setEditAnnouncement}
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                />
-                <TouchableOpacity
-                  style={[styles.cmsBtn, { backgroundColor: colors.primary }]}
-                  onPress={handleSaveAnnouncement}
-                >
-                  <Text style={[styles.cmsBtnText, { color: colors.primaryForeground }]}>Save Announcement</Text>
-                </TouchableOpacity>
-              </View>
+
+                {/* Specialization Tags */}
+                <View style={[styles.cmsCard, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
+                  <Text style={[styles.cmsLabel, { color: colors.foreground }]}>Specialization Tags</Text>
+                  <Text style={[styles.cmsTagsSubtitle, { color: colors.mutedForeground }]}>
+                    These tags appear as options when users or admins set a Service Provider's specialization.
+                  </Text>
+
+                  {/* Existing tags */}
+                  <View style={styles.tagGrid}>
+                    {(cmsConfig.specializationTags ?? []).map((tag) => (
+                      <View
+                        key={tag}
+                        style={[styles.cmsTagPill, { backgroundColor: colors.muted, borderColor: colors.border }]}
+                      >
+                        <Text style={[styles.cmsTagPillText, { color: colors.foreground }]}>{tag}</Text>
+                        <TouchableOpacity
+                          hitSlop={8}
+                          onPress={() =>
+                            updateCmsConfig({
+                              specializationTags: (cmsConfig.specializationTags ?? []).filter((t) => t !== tag),
+                            })
+                          }
+                        >
+                          <Feather name="x" size={12} color={colors.destructive} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Add new tag */}
+                  <View style={styles.cmsTagAddRow}>
+                    <TextInput
+                      style={[styles.cmsTagAddInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground, flex: 1 }]}
+                      placeholder="New tag…"
+                      placeholderTextColor={colors.mutedForeground}
+                      value={newTagInput}
+                      onChangeText={setNewTagInput}
+                      onSubmitEditing={() => {
+                        const t = newTagInput.trim();
+                        if (!t || (cmsConfig.specializationTags ?? []).includes(t)) return;
+                        updateCmsConfig({ specializationTags: [...(cmsConfig.specializationTags ?? []), t] });
+                        setNewTagInput('');
+                      }}
+                      returnKeyType="done"
+                    />
+                    <TouchableOpacity
+                      style={[styles.cmsTagAddBtn, { backgroundColor: colors.primary }]}
+                      onPress={() => {
+                        const t = newTagInput.trim();
+                        if (!t || (cmsConfig.specializationTags ?? []).includes(t)) return;
+                        updateCmsConfig({ specializationTags: [...(cmsConfig.specializationTags ?? []), t] });
+                        setNewTagInput('');
+                      }}
+                    >
+                      <Feather name="plus" size={16} color={colors.primaryForeground} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
             )}
 
             {activeAdminTab === 'export' && (
@@ -756,13 +819,26 @@ export default function ProfileScreen() {
               {currentUser?.role === 'Service Provider' && (
                 <>
                   <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Specialization</Text>
-                  <TextInput
-                    style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
-                    placeholder="e.g. Engine / Transmission"
-                    placeholderTextColor={colors.mutedForeground}
-                    value={selfEditForm.specialization}
-                    onChangeText={(v) => setSelfEditForm((f) => ({ ...f, specialization: v }))}
-                  />
+                  <View style={styles.tagGrid}>
+                    {(cmsConfig.specializationTags ?? []).map((tag) => {
+                      const selected = selfEditForm.specialization.includes(tag);
+                      return (
+                        <TouchableOpacity
+                          key={tag}
+                          style={[styles.tagChip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary + '18' : colors.muted }]}
+                          onPress={() => setSelfEditForm((f) => ({
+                            ...f,
+                            specialization: selected
+                              ? f.specialization.filter((t) => t !== tag)
+                              : [...f.specialization, tag],
+                          }))}
+                        >
+                          {selected && <Feather name="check" size={11} color={colors.primary} />}
+                          <Text style={[styles.tagChipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{tag}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
 
                   <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Business Name</Text>
                   <TextInput
@@ -890,13 +966,26 @@ export default function ProfileScreen() {
               {userForm.role === 'Service Provider' && (
                 <>
                   <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Specialization</Text>
-                  <TextInput
-                    style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
-                    placeholder="e.g. Engine / Transmission"
-                    placeholderTextColor={colors.mutedForeground}
-                    value={userForm.specialization}
-                    onChangeText={(v) => setUserForm((f) => ({ ...f, specialization: v }))}
-                  />
+                  <View style={styles.tagGrid}>
+                    {(cmsConfig.specializationTags ?? []).map((tag) => {
+                      const selected = userForm.specialization.includes(tag);
+                      return (
+                        <TouchableOpacity
+                          key={tag}
+                          style={[styles.tagChip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary + '18' : colors.muted }]}
+                          onPress={() => setUserForm((f) => ({
+                            ...f,
+                            specialization: selected
+                              ? f.specialization.filter((t) => t !== tag)
+                              : [...f.specialization, tag],
+                          }))}
+                        >
+                          {selected && <Feather name="check" size={11} color={colors.primary} />}
+                          <Text style={[styles.tagChipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{tag}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
 
                   <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Business Name</Text>
                   <TextInput
@@ -1024,12 +1113,21 @@ const styles = StyleSheet.create({
   listingsSectionLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 },
   featuredBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginBottom: 2 },
   featuredBadgeText: { fontSize: 10, fontWeight: '700' },
-  cmsCard: { borderRadius: 10, borderWidth: 1, padding: 14, gap: 10 },
+  cmsCard: { borderRadius: 10, borderWidth: 1, padding: 14, gap: 10, marginBottom: 10 },
   cmsToggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cmsLabel: { fontSize: 14, fontWeight: '600' },
+  cmsTagsSubtitle: { fontSize: 12, marginTop: -4 },
   cmsInput: { borderRadius: 8, borderWidth: 1, padding: 10, fontSize: 13, minHeight: 70 },
   cmsBtn: { borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
   cmsBtnText: { fontSize: 13, fontWeight: '700' },
+  cmsTagPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+  cmsTagPillText: { fontSize: 13, fontWeight: '500' },
+  cmsTagAddRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cmsTagAddInput: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13 },
+  cmsTagAddBtn: { borderRadius: 8, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  tagGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tagChip: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  tagChipText: { fontSize: 13, fontWeight: '500' },
   editProfileBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 12 },
   editProfileBtnTitle: { fontSize: 14, fontWeight: '700' },
   editProfileBtnSub: { fontSize: 11, marginTop: 1 },

@@ -85,7 +85,7 @@ export async function exportUsersReport(
       u.name,
       u.id,
       u.role,
-      u.specialization ?? '',
+      (u.specialization ?? []).join(', '),
       u.businessName ?? '',
       u.verified ? 'Yes' : 'No',
       u.isBanned ? 'Yes' : 'No',

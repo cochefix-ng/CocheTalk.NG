@@ -10,7 +10,7 @@ export interface User {
   role: UserRole;
   verified: boolean;
   phone: string;
-  specialization: string;
+  specialization: string[];
   businessName: string;
   experience: number;
   location: string;
@@ -124,6 +124,7 @@ export interface CmsConfig {
   announcementActive: boolean;
   featuredPartsLabel: string;
   featuredServicesLabel: string;
+  specializationTags: string[];
 }
 
 interface AppState {
@@ -164,7 +165,7 @@ export interface AppContextType extends AppState {
   editProfile: (data: Pick<User, 'name' | 'phone' | 'location' | 'specialization' | 'businessName' | 'experience'>) => void;
 }
 
-const STORAGE_KEY = 'cochetalk_state_v1';
+const STORAGE_KEY = 'cochetalk_state_v2';
 
 function createSeedState(): AppState {
   const now = Date.now();
@@ -178,7 +179,7 @@ function createSeedState(): AppState {
       role: 'Car Owner',
       verified: false,
       phone: '+2348031234567',
-      specialization: '',
+      specialization: [],
       businessName: '',
       experience: 0,
       location: 'Lagos Island',
@@ -191,7 +192,7 @@ function createSeedState(): AppState {
       role: 'Service Provider',
       verified: true,
       phone: '+2348101234567',
-      specialization: 'Engine / Transmission',
+      specialization: ['Engine', 'Transmission'],
       businessName: 'MechFix Auto',
       experience: 8,
       location: 'Victoria Island, Lagos',
@@ -204,7 +205,7 @@ function createSeedState(): AppState {
       role: 'Service Provider',
       verified: false,
       phone: '+2348029876543',
-      specialization: 'Electrical Systems',
+      specialization: ['Electrical Systems'],
       businessName: 'OkaforAuto',
       experience: 5,
       location: 'Surulere, Lagos',
@@ -217,7 +218,7 @@ function createSeedState(): AppState {
       role: 'Admin',
       verified: true,
       phone: '+2348099999999',
-      specialization: '',
+      specialization: [],
       businessName: '',
       experience: 0,
       location: 'Lagos',
@@ -474,6 +475,11 @@ function createSeedState(): AppState {
     announcementActive: true,
     featuredPartsLabel: 'Top Rated Parts',
     featuredServicesLabel: 'Verified Mechanic Services',
+    specializationTags: [
+      'Engine', 'Transmission', 'Electrical Systems', 'Brakes',
+      'Tyres & Suspension', 'Body & Paint', 'Air Conditioning',
+      'Welding', 'Diagnostics', 'General Repairs',
+    ],
   };
 
   return {
@@ -564,7 +570,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         userId: currentUser.id,
         userName: currentUser.name,
         userRole: currentUser.role,
-        userSpecialization: currentUser.specialization,
+        userSpecialization: currentUser.specialization.join(', '),
         userVerified: currentUser.verified,
         timestamp: Date.now(),
         upvotes: 0,
@@ -614,7 +620,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         userId: currentUser.id,
         userName: currentUser.name,
         userRole: currentUser.role,
-        userSpecialization: currentUser.specialization,
+        userSpecialization: currentUser.specialization.join(', '),
         userVerified: currentUser.verified,
         content,
         timestamp: Date.now(),
