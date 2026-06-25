@@ -5,12 +5,21 @@ import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
 import { Feather } from '@expo/vector-icons';
 import React from 'react';
-import { Platform, StyleSheet, View, useColorScheme } from 'react-native';
+import { Platform, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
-function NativeTabLayout({ hideProTab }: { hideProTab: boolean }) {
+function UnreadBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <View style={{ position: 'absolute', top: -4, right: -6, backgroundColor: '#EF4444', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
+      <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{count > 9 ? '9+' : count}</Text>
+    </View>
+  );
+}
+
+function NativeTabLayout({ hideProTab, unreadCount }: { hideProTab: boolean; unreadCount: number }) {
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
@@ -27,6 +36,10 @@ function NativeTabLayout({ hideProTab }: { hideProTab: boolean }) {
         <Icon sf={{ default: 'cart', selected: 'cart.fill' }} />
         <Label>Market</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="messages">
+        <Icon sf={{ default: 'message.badge', selected: 'message.badge.fill' }} />
+        <Label>{unreadCount > 0 ? `Messages (${unreadCount})` : 'Messages'}</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="clinic">
         <Icon sf={{ default: 'stethoscope', selected: 'stethoscope' }} />
         <Label>Clinic</Label>
@@ -39,7 +52,7 @@ function NativeTabLayout({ hideProTab }: { hideProTab: boolean }) {
   );
 }
 
-function ClassicTabLayout({ hideProTab }: { hideProTab: boolean }) {
+function ClassicTabLayout({ hideProTab, unreadCount }: { hideProTab: boolean; unreadCount: number }) {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -110,6 +123,22 @@ function ClassicTabLayout({ hideProTab }: { hideProTab: boolean }) {
         }}
       />
       <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Messages',
+          tabBarIcon: ({ color }) => (
+            <View style={{ position: 'relative' }}>
+              {isIOS ? (
+                <SymbolView name="message" tintColor={color} size={22} />
+              ) : (
+                <Feather name="message-circle" size={22} color={color} />
+              )}
+              <UnreadBadge count={unreadCount} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="clinic"
         options={{
           title: 'Clinic',
@@ -138,11 +167,11 @@ function ClassicTabLayout({ hideProTab }: { hideProTab: boolean }) {
 }
 
 export default function TabLayout() {
-  const { currentUser } = useApp();
+  const { currentUser, unreadCount } = useApp();
   const hideProTab = currentUser?.role === 'Car Owner';
 
   if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout hideProTab={hideProTab} />;
+    return <NativeTabLayout hideProTab={hideProTab} unreadCount={unreadCount} />;
   }
-  return <ClassicTabLayout hideProTab={hideProTab} />;
+  return <ClassicTabLayout hideProTab={hideProTab} unreadCount={unreadCount} />;
 }

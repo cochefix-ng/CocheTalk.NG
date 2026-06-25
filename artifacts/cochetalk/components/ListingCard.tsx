@@ -4,6 +4,7 @@ import React from 'react';
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import type { MarketplaceListing } from '@/context/AppContext';
+import { makeConvId, useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
 function formatPrice(price: number): string {
@@ -85,13 +86,24 @@ const carMetaStyles = StyleSheet.create({
 
 export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: Props) {
   const colors = useColors();
+  const { currentUser, users, conversations } = useApp();
   const catColor = CATEGORY_COLORS[listing.category] ?? colors.primary;
   const isCarSale = listing.category === 'Car Sales';
+
+  const seller = users.find((u) => u.id === listing.userId);
+  const whatsappEnabled = seller?.whatsappEnabled ?? false;
+  const isSelf = currentUser?.id === listing.userId;
 
   const handleWhatsApp = () => {
     const phone = listing.userPhone.replace(/\D/g, '');
     const msg = encodeURIComponent(`Hi ${listing.userName}, I'm interested in your listing: "${listing.title}" on CocheTalk.NG`);
     Linking.openURL(`https://wa.me/${phone}?text=${msg}`).catch(() => {});
+  };
+
+  const handleMessage = () => {
+    if (!currentUser) return;
+    const convId = makeConvId(currentUser.id, listing.userId);
+    router.push(`/conversation/${encodeURIComponent(convId)}`);
   };
 
   return (
@@ -157,14 +169,25 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
       </View>
 
       <View style={styles.actions}>
-        {listing.isApproved && (
-          <TouchableOpacity
-            style={[styles.whatsappBtn, { backgroundColor: '#25D366' }]}
-            onPress={handleWhatsApp}
-          >
-            <Feather name="message-circle" size={14} color="#fff" />
-            <Text style={styles.whatsappText}>Contact via WhatsApp</Text>
-          </TouchableOpacity>
+        {listing.isApproved && !isSelf && currentUser && (
+          <View style={styles.contactBtns}>
+            <TouchableOpacity
+              style={[styles.messageBtn, { backgroundColor: colors.primary }]}
+              onPress={handleMessage}
+            >
+              <Feather name="message-circle" size={14} color={colors.primaryForeground} />
+              <Text style={[styles.messageBtnText, { color: colors.primaryForeground }]}>Message</Text>
+            </TouchableOpacity>
+            {whatsappEnabled && (
+              <TouchableOpacity
+                style={[styles.whatsappBtnSmall, { borderColor: '#25D366' }]}
+                onPress={handleWhatsApp}
+              >
+                <Feather name="phone" size={13} color="#25D366" />
+                <Text style={styles.whatsappSmallText}>WhatsApp</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
 
         {isAdmin && onApprove && (
@@ -296,7 +319,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  whatsappBtn: {
+  contactBtns: { flex: 1, flexDirection: 'row', gap: 8, alignItems: 'center' },
+  messageBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -305,11 +329,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 9,
   },
-  whatsappText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
+  messageBtnText: { fontSize: 13, fontWeight: '600' },
+  whatsappBtnSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderWidth: 1,
   },
+  whatsappSmallText: { color: '#25D366', fontSize: 12, fontWeight: '600' },
   approveBtn: {
     borderWidth: 1,
     borderRadius: 8,

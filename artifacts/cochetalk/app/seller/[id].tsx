@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ListingCard } from '@/components/ListingCard';
 import { QuestionCard } from '@/components/QuestionCard';
-import { useApp } from '@/context/AppContext';
+import { makeConvId, useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
 function timeAgo(ts: number): string {
@@ -67,6 +67,7 @@ export default function SellerProfileScreen() {
 
   const myRating = currentUser ? sellerRatings.find((r) => r.raterId === currentUser.id) : null;
   const canRate = currentUser && currentUser.id !== id && seller?.role === 'Service Provider';
+  const canMessage = currentUser && currentUser.id !== id;
 
   if (!seller) {
     return (
@@ -143,10 +144,10 @@ export default function SellerProfileScreen() {
                 <Text style={[styles.detailText, { color: colors.mutedForeground }]}>{seller.location}</Text>
               </View>
             ) : null}
-            {seller.specialization ? (
+            {seller.specialization && seller.specialization.length > 0 ? (
               <View style={styles.detailRow}>
                 <Feather name="tool" size={13} color={colors.mutedForeground} />
-                <Text style={[styles.detailText, { color: colors.mutedForeground }]}>{seller.specialization}</Text>
+                <Text style={[styles.detailText, { color: colors.mutedForeground }]}>{seller.specialization.join(', ')}</Text>
               </View>
             ) : null}
             {seller.businessName ? (
@@ -163,13 +164,41 @@ export default function SellerProfileScreen() {
             ) : null}
           </View>
 
+          {canMessage && (
+            <View style={styles.contactBtns}>
+              <TouchableOpacity
+                style={[styles.messageBtn, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  const convId = makeConvId(currentUser!.id, seller.id);
+                  router.push(`/conversation/${encodeURIComponent(convId)}`);
+                }}
+              >
+                <Feather name="message-circle" size={14} color={colors.primaryForeground} />
+                <Text style={[styles.messageBtnText, { color: colors.primaryForeground }]}>Send Message</Text>
+              </TouchableOpacity>
+              {seller.whatsappEnabled && (
+                <TouchableOpacity
+                  style={[styles.whatsappBtn, { borderColor: '#25D366' }]}
+                  onPress={() => {
+                    const phone = seller.phone.replace(/\D/g, '');
+                    const msg = encodeURIComponent(`Hi ${seller.name}, I found you on CocheTalk.NG`);
+                    require('react-native').Linking.openURL(`https://wa.me/${phone}?text=${msg}`).catch(() => {});
+                  }}
+                >
+                  <Feather name="phone" size={13} color="#25D366" />
+                  <Text style={styles.whatsappBtnText}>WhatsApp</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
           {canRate && (
             <TouchableOpacity
-              style={[styles.rateBtn, { backgroundColor: colors.primary }]}
+              style={[styles.rateBtn, { backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.border }]}
               onPress={() => { setRatingValue(myRating?.ratingValue ?? 5); setRatingFeedback(myRating?.feedback ?? ''); setShowRateModal(true); }}
             >
-              <Feather name="star" size={14} color={colors.primaryForeground} />
-              <Text style={[styles.rateBtnText, { color: colors.primaryForeground }]}>
+              <Feather name="star" size={14} color={colors.foreground} />
+              <Text style={[styles.rateBtnText, { color: colors.foreground }]}>
                 {myRating ? 'Edit Your Review' : 'Rate this Provider'}
               </Text>
             </TouchableOpacity>
@@ -291,6 +320,11 @@ const styles = StyleSheet.create({
   detailsGrid: { width: '100%', gap: 6 },
   detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   detailText: { fontSize: 13 },
+  contactBtns: { flexDirection: 'row', gap: 8, width: '100%', marginBottom: 8 },
+  messageBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, paddingVertical: 11 },
+  messageBtnText: { fontSize: 14, fontWeight: '700' },
+  whatsappBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14, borderWidth: 1 },
+  whatsappBtnText: { color: '#25D366', fontSize: 13, fontWeight: '600' },
   rateBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, width: '100%', justifyContent: 'center', borderRadius: 10, paddingVertical: 11 },
   rateBtnText: { fontSize: 14, fontWeight: '700' },
   sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8, marginTop: 8 },

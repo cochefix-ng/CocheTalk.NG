@@ -16,6 +16,26 @@ export interface User {
   location: string;
   isBanned: boolean;
   hasEditedProfile?: boolean;
+  whatsappEnabled?: boolean;
+}
+
+export interface Message {
+  id: number;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: number;
+  read: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  participantIds: [string, string];
+  participantNames: [string, string];
+  lastMessage: string;
+  lastTimestamp: number;
+  unreadBy: string[];
 }
 
 export interface Question {
@@ -136,6 +156,8 @@ interface AppState {
   ratings: ProviderRating[];
   cmsConfig: CmsConfig;
   currentUserId: string | null;
+  messages: Message[];
+  conversations: Conversation[];
 }
 
 export interface AppContextType extends AppState {
@@ -163,9 +185,17 @@ export interface AppContextType extends AppState {
   adminUpdateUser: (userId: string, data: Partial<Omit<User, 'id'>>) => void;
   adminDeleteUser: (userId: string) => void;
   editProfile: (data: Pick<User, 'name' | 'phone' | 'location' | 'specialization' | 'businessName' | 'experience'>) => void;
+  sendMessage: (toUserId: string, toUserName: string, content: string) => void;
+  markConversationRead: (conversationId: string) => void;
+  adminToggleWhatsApp: (userId: string, enabled: boolean) => void;
+  unreadCount: number;
 }
 
-const STORAGE_KEY = 'cochetalk_state_v2';
+const STORAGE_KEY = 'cochetalk_state_v3';
+
+export function makeConvId(a: string, b: string): string {
+  return [a, b].sort().join('__');
+}
 
 function createSeedState(): AppState {
   const now = Date.now();
@@ -197,6 +227,7 @@ function createSeedState(): AppState {
       experience: 8,
       location: 'Victoria Island, Lagos',
       isBanned: false,
+      whatsappEnabled: true,
     },
     {
       id: 'samson@cochefix.com',
@@ -210,6 +241,7 @@ function createSeedState(): AppState {
       experience: 5,
       location: 'Surulere, Lagos',
       isBanned: false,
+      whatsappEnabled: false,
     },
     {
       id: 'admin@cochetalk.com',
@@ -482,6 +514,48 @@ function createSeedState(): AppState {
     ],
   };
 
+  const convId = makeConvId('bisi@cochefix.com', 'jose@cochefix.com');
+  const messages: Message[] = [
+    {
+      id: 1,
+      conversationId: convId,
+      senderId: 'bisi@cochefix.com',
+      senderName: 'Bisi Alao',
+      content: 'Hi Jose, I saw your listing for engine oil filter. Is it compatible with a 2019 Toyota Camry 2.5L?',
+      timestamp: now - DAY - 3600000,
+      read: true,
+    },
+    {
+      id: 2,
+      conversationId: convId,
+      senderId: 'jose@cochefix.com',
+      senderName: 'Jose Ramirez',
+      content: 'Yes! That filter fits the 2019 Camry 2.5L perfectly. I also have the drain plug washer if you need it. Come by MechFix Auto anytime.',
+      timestamp: now - DAY - 1800000,
+      read: true,
+    },
+    {
+      id: 3,
+      conversationId: convId,
+      senderId: 'bisi@cochefix.com',
+      senderName: 'Bisi Alao',
+      content: 'Great! How much for both the filter and the washer?',
+      timestamp: now - 7200000,
+      read: false,
+    },
+  ];
+
+  const conversations: Conversation[] = [
+    {
+      id: convId,
+      participantIds: ['bisi@cochefix.com', 'jose@cochefix.com'],
+      participantNames: ['Bisi Alao', 'Jose Ramirez'],
+      lastMessage: 'Great! How much for both the filter and the washer?',
+      lastTimestamp: now - 7200000,
+      unreadBy: ['jose@cochefix.com'],
+    },
+  ];
+
   return {
     users,
     questions,
@@ -491,6 +565,8 @@ function createSeedState(): AppState {
     ratings,
     cmsConfig,
     currentUserId: 'bisi@cochefix.com',
+    messages,
+    conversations,
   };
 }
 
@@ -817,6 +893,65 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state, save],
   );
 
+  const sendMessage = useCallback(
+    (toUserId: string, toUserName: string, content: string) => {
+      if (!state || !currentUser) return;
+      const cid = makeConvId(currentUser.id, toUserId);
+      const newMsg: Message = {
+        id: Date.now(),
+        conversationId: cid,
+        senderId: currentUser.id,
+        senderName: currentUser.name,
+        content,
+        timestamp: Date.now(),
+        read: false,
+      };
+      const existingConv = state.conversations.find((c) => c.id === cid);
+      const updatedConv: Conversation = existingConv
+        ? { ...existingConv, lastMessage: content, lastTimestamp: Date.now(), unreadBy: [toUserId] }
+        : {
+            id: cid,
+            participantIds: [currentUser.id, toUserId] as [string, string],
+            participantNames: [currentUser.name, toUserName] as [string, string],
+            lastMessage: content,
+            lastTimestamp: Date.now(),
+            unreadBy: [toUserId],
+          };
+      save({
+        ...state,
+        messages: [...state.messages, newMsg],
+        conversations: existingConv
+          ? state.conversations.map((c) => (c.id === cid ? updatedConv : c))
+          : [...state.conversations, updatedConv],
+      });
+    },
+    [state, currentUser, save],
+  );
+
+  const markConversationRead = useCallback(
+    (conversationId: string) => {
+      if (!state || !currentUser) return;
+      save({
+        ...state,
+        messages: state.messages.map((m) =>
+          m.conversationId === conversationId && m.senderId !== currentUser.id ? { ...m, read: true } : m,
+        ),
+        conversations: state.conversations.map((c) =>
+          c.id === conversationId ? { ...c, unreadBy: c.unreadBy.filter((uid) => uid !== currentUser.id) } : c,
+        ),
+      });
+    },
+    [state, currentUser, save],
+  );
+
+  const adminToggleWhatsApp = useCallback(
+    (userId: string, enabled: boolean) => {
+      if (!state) return;
+      save({ ...state, users: state.users.map((u) => (u.id === userId ? { ...u, whatsappEnabled: enabled } : u)) });
+    },
+    [state, save],
+  );
+
   const editProfile = useCallback(
     (data: Pick<User, 'name' | 'phone' | 'location' | 'specialization' | 'businessName' | 'experience'>) => {
       if (!state || !currentUser) return;
@@ -846,6 +981,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state, save],
   );
 
+  const unreadCount = useMemo(() => {
+    if (!currentUser || !state) return 0;
+    return (state.conversations ?? []).filter((c) => c.unreadBy.includes(currentUser.id)).length;
+  }, [state, currentUser]);
+
   const value = useMemo<AppContextType>(
     () => ({
       ...(state ?? createSeedState()),
@@ -873,6 +1013,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       adminUpdateUser,
       adminDeleteUser,
       editProfile,
+      sendMessage,
+      markConversationRead,
+      adminToggleWhatsApp,
+      unreadCount,
     }),
     [
       state,
@@ -900,6 +1044,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       adminUpdateUser,
       adminDeleteUser,
       editProfile,
+      sendMessage,
+      markConversationRead,
+      adminToggleWhatsApp,
+      unreadCount,
     ],
   );
 

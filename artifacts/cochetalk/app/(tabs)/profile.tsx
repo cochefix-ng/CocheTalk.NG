@@ -43,7 +43,7 @@ function avgRating(ratings: { ratingValue: number }[]) {
 
 export default function ProfileScreen() {
   const colors = useColors();
-  const { users, currentUser, login, logout, questions, answers, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser, editProfile } = useApp();
+  const { users, currentUser, login, logout, questions, answers, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser, editProfile, adminToggleWhatsApp } = useApp();
 
   const [showSwitchModal, setShowSwitchModal] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms' | 'export'>('users');
@@ -445,11 +445,19 @@ export default function ProfileScreen() {
                         {u.role === 'Admin' && <View style={[styles.bannedBadge, { backgroundColor: colors.destructive + 'CC' }]}><Text style={styles.bannedText}>Admin</Text></View>}
                       </View>
                       <Text style={[styles.adminUserRole, { color: colors.mutedForeground }]} numberOfLines={1}>
-                        {u.specialization ? `${u.role} · ${u.specialization}` : u.role}
+                        {u.specialization && u.specialization.length > 0 ? `${u.role} · ${u.specialization.join(', ')}` : u.role}
                         {u.location ? ` · ${u.location}` : ''}
                       </Text>
                     </View>
                     <View style={styles.adminActions}>
+                      {u.role === 'Service Provider' && (
+                        <TouchableOpacity
+                          style={[styles.adminActionBtn, { backgroundColor: u.whatsappEnabled ? '#25D36622' : colors.muted }]}
+                          onPress={() => adminToggleWhatsApp(u.id, !u.whatsappEnabled)}
+                        >
+                          <Feather name="phone" size={12} color={u.whatsappEnabled ? '#25D366' : colors.mutedForeground} />
+                        </TouchableOpacity>
+                      )}
                       {u.role === 'Service Provider' && (
                         <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: u.verified ? colors.success + '22' : colors.muted }]} onPress={() => toggleVerified(u.id, !u.verified)}>
                           <Feather name={u.verified ? 'check-circle' : 'circle'} size={12} color={u.verified ? colors.success : colors.mutedForeground} />
