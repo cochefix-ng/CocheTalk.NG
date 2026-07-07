@@ -145,6 +145,8 @@ export interface CmsConfig {
   featuredPartsLabel: string;
   featuredServicesLabel: string;
   specializationTags: string[];
+  forumLogoUri?: string;
+  loaderLogoUri?: string;
 }
 
 interface AppState {

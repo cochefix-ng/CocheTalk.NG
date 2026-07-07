@@ -1,7 +1,9 @@
 import { Feather } from '@expo/vector-icons';
 import React, { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -47,6 +49,33 @@ export default function ProfileScreen() {
 
   const [showSwitchModal, setShowSwitchModal] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms' | 'export'>('users');
+  const [logoUploading, setLogoUploading] = useState<'forum' | 'loader' | null>(null);
+
+  const pickLogo = async (field: 'forumLogoUri' | 'loaderLogoUri') => {
+    const key = field === 'forumLogoUri' ? 'forum' : 'loader';
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please allow access to your photo library to upload a logo.');
+      return;
+    }
+    setLogoUploading(key as 'forum' | 'loader');
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.4,
+        base64: true,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const uri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        updateCmsConfig({ [field]: uri });
+      }
+    } finally {
+      setLogoUploading(null);
+    }
+  };
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [newTagInput, setNewTagInput] = useState('');
   const [editAnnouncement, setEditAnnouncement] = useState(cmsConfig.announcementText);
@@ -560,6 +589,68 @@ export default function ProfileScreen() {
 
             {activeAdminTab === 'cms' && (
               <>
+                {/* Logo Management */}
+                <View style={[styles.cmsCard, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
+                  <Text style={[styles.cmsLabel, { color: colors.foreground }]}>Brand Logos</Text>
+                  <Text style={[styles.cmsTagsSubtitle, { color: colors.mutedForeground }]}>
+                    Upload custom logos. Tap "Change" to pick from your photo library, "Reset" to restore the default.
+                  </Text>
+
+                  {([
+                    {
+                      key: 'forum' as const,
+                      field: 'forumLogoUri' as const,
+                      label: 'Forum Header Logo',
+                      desc: 'Small square shown in the Forum tab header bar.',
+                      defaultEl: <View style={[styles.logoPreviewDefault, { backgroundColor: colors.primary }]} />,
+                    },
+                    {
+                      key: 'loader' as const,
+                      field: 'loaderLogoUri' as const,
+                      label: 'Loading Screen Logo',
+                      desc: 'Large icon shown on the splash screen when the app first opens.',
+                      defaultEl: <Text style={styles.logoPreviewEmoji}>🔧</Text>,
+                    },
+                  ] as const).map(({ key, field, label, desc, defaultEl }) => {
+                    const uri = cmsConfig[field];
+                    const isUploading = logoUploading === key;
+                    return (
+                      <View key={key} style={[styles.logoRow, { borderTopColor: colors.border }]}>
+                        <View style={[styles.logoPreviewWrap, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+                          {uri ? (
+                            <Image source={{ uri }} style={styles.logoPreviewImg} resizeMode="cover" />
+                          ) : defaultEl}
+                        </View>
+                        <View style={styles.logoRowBody}>
+                          <Text style={[styles.logoRowLabel, { color: colors.foreground }]}>{label}</Text>
+                          <Text style={[styles.logoRowDesc, { color: colors.mutedForeground }]}>{desc}</Text>
+                          <View style={styles.logoBtnRow}>
+                            <TouchableOpacity
+                              style={[styles.logoBtn, { backgroundColor: colors.primary }]}
+                              onPress={() => pickLogo(field)}
+                              disabled={isUploading}
+                            >
+                              <Feather name={isUploading ? 'loader' : 'upload'} size={12} color={colors.primaryForeground} />
+                              <Text style={[styles.logoBtnText, { color: colors.primaryForeground }]}>
+                                {isUploading ? 'Uploading…' : uri ? 'Change' : 'Upload'}
+                              </Text>
+                            </TouchableOpacity>
+                            {uri ? (
+                              <TouchableOpacity
+                                style={[styles.logoBtn, { backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.border }]}
+                                onPress={() => updateCmsConfig({ [field]: '' })}
+                              >
+                                <Feather name="rotate-ccw" size={12} color={colors.mutedForeground} />
+                                <Text style={[styles.logoBtnText, { color: colors.mutedForeground }]}>Reset</Text>
+                              </TouchableOpacity>
+                            ) : null}
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+
                 {/* Announcement */}
                 <View style={[styles.cmsCard, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
                   <View style={styles.cmsToggleRow}>
@@ -1122,6 +1213,17 @@ const styles = StyleSheet.create({
   featuredBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginBottom: 2 },
   featuredBadgeText: { fontSize: 10, fontWeight: '700' },
   cmsCard: { borderRadius: 10, borderWidth: 1, padding: 14, gap: 10, marginBottom: 10 },
+  logoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingTop: 12, borderTopWidth: 1 },
+  logoPreviewWrap: { width: 56, height: 56, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  logoPreviewDefault: { width: 34, height: 34, borderRadius: 6 },
+  logoPreviewEmoji: { fontSize: 26 },
+  logoPreviewImg: { width: 56, height: 56, borderRadius: 10 },
+  logoRowBody: { flex: 1, gap: 4 },
+  logoRowLabel: { fontSize: 13, fontWeight: '600' },
+  logoRowDesc: { fontSize: 11, lineHeight: 15 },
+  logoBtnRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  logoBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 7, paddingVertical: 6, paddingHorizontal: 10 },
+  logoBtnText: { fontSize: 12, fontWeight: '600' },
   cmsToggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cmsLabel: { fontSize: 14, fontWeight: '600' },
   cmsTagsSubtitle: { fontSize: 12, marginTop: -4 },

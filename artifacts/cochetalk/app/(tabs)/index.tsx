@@ -6,6 +6,7 @@ import {
   Animated,
   Dimensions,
   FlatList,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -263,7 +264,15 @@ export default function ForumScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <View style={styles.headerLeft}>
-          <View style={[styles.logoMark, { backgroundColor: colors.primary }]} />
+          {cmsConfig.forumLogoUri ? (
+            <Image
+              source={{ uri: cmsConfig.forumLogoUri }}
+              style={styles.logoMark}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.logoMark, { backgroundColor: colors.primary }]} />
+          )}
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>CocheTalk</Text>
         </View>
         <View style={styles.headerRight}>

@@ -2,11 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
+  Image,
   StyleSheet,
   Text,
   View,
   useColorScheme,
 } from 'react-native';
+
+import { useApp } from '@/context/AppContext';
 
 const MESSAGES = [
   'Brake issue solved in 5 mins',
@@ -45,6 +48,8 @@ const { width } = Dimensions.get('window');
 export function CommunityLoader({ onFinished }: Props) {
   const scheme = useColorScheme();
   const c = scheme === 'dark' ? DARK : LIGHT;
+  const { cmsConfig } = useApp();
+  const loaderLogoUri = cmsConfig?.loaderLogoUri;
 
   const overlayOpacity = useRef(new Animated.Value(1)).current;
   const logoScale = useRef(new Animated.Value(0.85)).current;
@@ -125,7 +130,15 @@ export function CommunityLoader({ onFinished }: Props) {
             { opacity: logoOpacity, transform: [{ scale: logoScale }] },
           ]}
         >
-          <Text style={styles.logoEmoji}>🔧</Text>
+          {loaderLogoUri ? (
+            <Image
+              source={{ uri: loaderLogoUri }}
+              style={styles.logoImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={styles.logoEmoji}>🔧</Text>
+          )}
         </Animated.View>
 
         <Animated.View style={{ opacity: logoOpacity, marginTop: 16 }}>
@@ -192,6 +205,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoEmoji: { fontSize: 40 },
+  logoImage: { width: 64, height: 64, borderRadius: 14 },
   appName: { fontSize: 30, fontWeight: '800', textAlign: 'center', letterSpacing: -0.5 },
   appTagline: { fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 4, letterSpacing: 0.2 },
   messageArea: { marginTop: 40, width: '100%', maxWidth: 320 },
