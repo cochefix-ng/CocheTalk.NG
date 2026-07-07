@@ -121,22 +121,32 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
         </View>
       )}
 
-      <View style={styles.headerRow}>
-        <View style={[styles.catBadge, { backgroundColor: catColor + '22' }]}>
-          <Text style={[styles.catText, { color: catColor }]}>{listing.category}</Text>
+      <TouchableOpacity
+        activeOpacity={0.75}
+        onPress={() => router.push(`/listing/${listing.id}`)}
+      >
+        <View style={styles.headerRow}>
+          <View style={[styles.catBadge, { backgroundColor: catColor + '22' }]}>
+            <Text style={[styles.catText, { color: catColor }]}>{listing.category}</Text>
+          </View>
+          <Text style={[styles.price, { color: colors.primary }]}>{formatPrice(listing.price)}</Text>
         </View>
-        <Text style={[styles.price, { color: colors.primary }]}>{formatPrice(listing.price)}</Text>
-      </View>
 
-      <Text style={[styles.title, { color: colors.cardForeground }]} numberOfLines={2}>
-        {listing.title}
-      </Text>
-
-      {listing.description ? (
-        <Text style={[styles.desc, { color: colors.mutedForeground }]} numberOfLines={isCarSale ? 1 : 2}>
-          {listing.description}
+        <Text style={[styles.title, { color: colors.cardForeground }]} numberOfLines={2}>
+          {listing.title}
         </Text>
-      ) : null}
+
+        {listing.description ? (
+          <Text style={[styles.desc, { color: colors.mutedForeground }]} numberOfLines={isCarSale ? 1 : 2}>
+            {listing.description}
+          </Text>
+        ) : null}
+
+        <View style={[styles.viewMore, { borderColor: colors.border }]}>
+          <Text style={[styles.viewMoreText, { color: colors.primary }]}>View full details</Text>
+          <Feather name="chevron-right" size={13} color={colors.primary} />
+        </View>
+      </TouchableOpacity>
 
       {isCarSale ? (
         <CarSalesMeta listing={listing} colors={colors} />
@@ -357,4 +367,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  viewMore: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingTop: 8,
+    marginTop: 4,
+    borderTopWidth: 1,
+    marginBottom: 10,
+  },
+  viewMoreText: { fontSize: 12, fontWeight: '600' },
 });

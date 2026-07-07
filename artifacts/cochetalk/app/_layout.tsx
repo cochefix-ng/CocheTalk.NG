@@ -33,6 +33,7 @@ function RootLayoutNav() {
       <Stack.Screen name="question/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="seller/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="conversation/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="listing/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }
