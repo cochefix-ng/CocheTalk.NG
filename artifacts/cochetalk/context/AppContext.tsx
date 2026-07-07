@@ -147,6 +147,8 @@ export interface CmsConfig {
   specializationTags: string[];
   forumLogoUri?: string;
   loaderLogoUri?: string;
+  marketplaceVisible: boolean;
+  clinicVisible: boolean;
 }
 
 interface AppState {
@@ -514,6 +516,8 @@ function createSeedState(): AppState {
       'Tyres & Suspension', 'Body & Paint', 'Air Conditioning',
       'Welding', 'Diagnostics', 'General Repairs',
     ],
+    marketplaceVisible: true,
+    clinicVisible: true,
   };
 
   const convId = makeConvId('bisi@cochefix.com', 'jose@cochefix.com');

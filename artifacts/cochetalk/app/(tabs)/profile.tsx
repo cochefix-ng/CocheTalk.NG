@@ -651,6 +651,31 @@ export default function ProfileScreen() {
                   })}
                 </View>
 
+                {/* Page Visibility */}
+                <View style={[styles.cmsCard, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
+                  <Text style={[styles.cmsLabel, { color: colors.foreground }]}>Page Visibility</Text>
+                  <Text style={[styles.cmsTagsSubtitle, { color: colors.mutedForeground }]}>
+                    Hide or show pages for all users. Admins always see every page.
+                  </Text>
+                  {([
+                    { key: 'marketplaceVisible' as const, label: 'Marketplace', desc: 'Parts, services & car sales listings' },
+                    { key: 'clinicVisible' as const, label: 'AI Vehicle Clinic', desc: 'AI-powered diagnostic tool' },
+                  ] as const).map(({ key, label, desc }) => (
+                    <View key={key} style={[styles.cmsToggleRow, { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10 }]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.cmsLabel, { color: colors.foreground }]}>{label}</Text>
+                        <Text style={[styles.cmsTagsSubtitle, { color: colors.mutedForeground, marginTop: 0 }]}>{desc}</Text>
+                      </View>
+                      <Switch
+                        value={cmsConfig[key]}
+                        onValueChange={(v) => updateCmsConfig({ [key]: v })}
+                        trackColor={{ false: colors.muted, true: colors.primary + '88' }}
+                        thumbColor={cmsConfig[key] ? colors.primary : colors.mutedForeground}
+                      />
+                    </View>
+                  ))}
+                </View>
+
                 {/* Announcement */}
                 <View style={[styles.cmsCard, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
                   <View style={styles.cmsToggleRow}>

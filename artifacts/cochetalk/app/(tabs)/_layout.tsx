@@ -19,7 +19,7 @@ function UnreadBadge({ count }: { count: number }) {
   );
 }
 
-function NativeTabLayout({ hideProTab, unreadCount }: { hideProTab: boolean; unreadCount: number }) {
+function NativeTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount }: { hideProTab: boolean; hideMarketplace: boolean; hideClinic: boolean; unreadCount: number }) {
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
@@ -32,18 +32,22 @@ function NativeTabLayout({ hideProTab, unreadCount }: { hideProTab: boolean; unr
           <Label>Pro</Label>
         </NativeTabs.Trigger>
       )}
-      <NativeTabs.Trigger name="marketplace">
-        <Icon sf={{ default: 'cart', selected: 'cart.fill' }} />
-        <Label>Market</Label>
-      </NativeTabs.Trigger>
+      {!hideMarketplace && (
+        <NativeTabs.Trigger name="marketplace">
+          <Icon sf={{ default: 'cart', selected: 'cart.fill' }} />
+          <Label>Market</Label>
+        </NativeTabs.Trigger>
+      )}
       <NativeTabs.Trigger name="messages">
         <Icon sf={{ default: 'message.badge', selected: 'message.badge.fill' }} />
         <Label>{unreadCount > 0 ? `Messages (${unreadCount})` : 'Messages'}</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="clinic">
-        <Icon sf={{ default: 'stethoscope', selected: 'stethoscope' }} />
-        <Label>Clinic</Label>
-      </NativeTabs.Trigger>
+      {!hideClinic && (
+        <NativeTabs.Trigger name="clinic">
+          <Icon sf={{ default: 'stethoscope', selected: 'stethoscope' }} />
+          <Label>Clinic</Label>
+        </NativeTabs.Trigger>
+      )}
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} />
         <Label>Profile</Label>
@@ -52,7 +56,7 @@ function NativeTabLayout({ hideProTab, unreadCount }: { hideProTab: boolean; unr
   );
 }
 
-function ClassicTabLayout({ hideProTab, unreadCount }: { hideProTab: boolean; unreadCount: number }) {
+function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount }: { hideProTab: boolean; hideMarketplace: boolean; hideClinic: boolean; unreadCount: number }) {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -114,6 +118,7 @@ function ClassicTabLayout({ hideProTab, unreadCount }: { hideProTab: boolean; un
         name="marketplace"
         options={{
           title: 'Market',
+          href: hideMarketplace ? null : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="cart" tintColor={color} size={22} />
@@ -142,6 +147,7 @@ function ClassicTabLayout({ hideProTab, unreadCount }: { hideProTab: boolean; un
         name="clinic"
         options={{
           title: 'Clinic',
+          href: hideClinic ? null : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="stethoscope" tintColor={color} size={22} />
@@ -167,11 +173,14 @@ function ClassicTabLayout({ hideProTab, unreadCount }: { hideProTab: boolean; un
 }
 
 export default function TabLayout() {
-  const { currentUser, unreadCount } = useApp();
+  const { currentUser, unreadCount, cmsConfig } = useApp();
+  const isAdmin = currentUser?.role === 'Admin';
   const hideProTab = currentUser?.role === 'Car Owner';
+  const hideMarketplace = !isAdmin && !cmsConfig.marketplaceVisible;
+  const hideClinic = !isAdmin && !cmsConfig.clinicVisible;
 
   if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout hideProTab={hideProTab} unreadCount={unreadCount} />;
+    return <NativeTabLayout hideProTab={hideProTab} hideMarketplace={hideMarketplace} hideClinic={hideClinic} unreadCount={unreadCount} />;
   }
-  return <ClassicTabLayout hideProTab={hideProTab} unreadCount={unreadCount} />;
+  return <ClassicTabLayout hideProTab={hideProTab} hideMarketplace={hideMarketplace} hideClinic={hideClinic} unreadCount={unreadCount} />;
 }
