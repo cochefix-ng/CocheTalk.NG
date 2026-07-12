@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import {
+  Alert,
   Linking,
   ScrollView,
   StyleSheet,
@@ -65,7 +66,9 @@ export default function ListingDetail() {
     const msg = encodeURIComponent(
       `Hi ${listing.userName}, I'm interested in your listing: "${listing.title}" on CocheTalk.NG`,
     );
-    Linking.openURL(`https://wa.me/${phone}?text=${msg}`).catch(() => {});
+    Linking.openURL(`https://wa.me/${phone}?text=${msg}`).catch(() => {
+      Alert.alert('Could Not Open WhatsApp', 'Please make sure WhatsApp is installed on your device.');
+    });
   };
 
   const handleMessage = () => {

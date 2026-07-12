@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import type { MarketplaceListing } from '@/context/AppContext';
 import { makeConvId, useApp } from '@/context/AppContext';
@@ -97,7 +97,9 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
   const handleWhatsApp = () => {
     const phone = listing.userPhone.replace(/\D/g, '');
     const msg = encodeURIComponent(`Hi ${listing.userName}, I'm interested in your listing: "${listing.title}" on CocheTalk.NG`);
-    Linking.openURL(`https://wa.me/${phone}?text=${msg}`).catch(() => {});
+    Linking.openURL(`https://wa.me/${phone}?text=${msg}`).catch(() => {
+      Alert.alert('Could Not Open WhatsApp', 'Please make sure WhatsApp is installed on your device.');
+    });
   };
 
   const handleMessage = () => {

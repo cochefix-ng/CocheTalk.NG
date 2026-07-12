@@ -11,3 +11,9 @@ id = "ejoLeZeeMz7XrCvj-NITE"
 uri = "file://replit.md"
 type = "text"
 title = "CocheTalk.NG — Developer README"
+
+[[outputs]]
+id = "h-wkBgoiQ2-4ZkA1Ms2Qp"
+uri = "file://DEVELOPER_README.md"
+type = "text"
+title = "CocheTalk.NG — Developer Reference"

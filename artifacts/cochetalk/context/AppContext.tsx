@@ -587,10 +587,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (raw) {
         try {
           setState(JSON.parse(raw) as AppState);
-        } catch {
+        } catch (err) {
+          // Stored data is corrupt or from an incompatible schema version.
+          // Log the error and fall back to seed data so the app stays usable.
+          console.error('[AppContext] Failed to parse persisted state — resetting to seed data.', err);
           setState(createSeedState());
         }
       } else {
+        // First launch: no stored state yet, populate with demo seed data.
         setState(createSeedState());
       }
       setIsLoading(false);
@@ -599,7 +603,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const save = useCallback((next: AppState) => {
     setState(next);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch((err) => {
+      // Persistence failure (e.g. storage quota exceeded). State is still live
+      // in memory for this session, but changes won't survive an app restart.
+      console.error('[AppContext] Failed to persist state to AsyncStorage.', err);
+    });
   }, []);
 
   const currentUser = useMemo(
