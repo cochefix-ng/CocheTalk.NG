@@ -69,19 +69,37 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         headerShown: false,
-        tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: isIOS ? 'transparent' : colors.background,
-          borderTopWidth: isWeb ? 1 : 0,
-          borderTopColor: colors.border,
-          elevation: 0,
-          ...(isWeb ? { height: 84 } : {}),
-        },
+        tabBarStyle: isWeb
+          ? {
+              position: 'absolute',
+              backgroundColor: colors.background,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              elevation: 0,
+              height: 84,
+            }
+          : {
+              position: 'absolute',
+              bottom: isIOS ? 24 : 16,
+              left: 16,
+              right: 16,
+              height: 64,
+              borderRadius: 28,
+              borderTopWidth: 0,
+              backgroundColor: isIOS ? 'transparent' : isDark ? '#1a1a1a' : '#ffffff',
+              elevation: 16,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: isDark ? 0.45 : 0.18,
+              shadowRadius: 16,
+              overflow: 'hidden',
+            },
+        tabBarItemStyle: isWeb ? {} : { paddingVertical: 4 },
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={100}
-              tint={isDark ? 'dark' : 'light'}
+              intensity={85}
+              tint={isDark ? 'systemChromeMaterialDark' : 'systemChromeMaterial'}
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
