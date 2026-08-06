@@ -237,6 +237,7 @@ export default function ForumScreen() {
       .map((q) => ({ kind: 'question' as const, data: q }));
 
     let dItems: FeedItem[] = discussions
+      .filter((d) => !d.isProCircle) // exclude Pro Circle-only discussions from public feed
       .filter((d) => {
         if (searchQuery) {
           const lq = searchQuery.toLowerCase();

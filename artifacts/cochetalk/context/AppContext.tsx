@@ -96,6 +96,8 @@ export interface DiscussionPost {
   content: string;
   tags: string;
   mediaUris?: string[];
+  /** true = visible only in Pro Circle; false/undefined = public forum */
+  isProCircle?: boolean;
   userId: string;
   userName: string;
   userRole: UserRole;
@@ -206,7 +208,7 @@ export interface AppContextType extends AppState {
   upvoteAnswer: (id: number) => void;
   acceptAnswer: (questionId: number, answerId: number) => void;
   addComment: (parentId: number, isAnswer: boolean, content: string) => void;
-  createDiscussion: (data: Pick<DiscussionPost, 'title' | 'content' | 'tags' | 'mediaUris'>) => void;
+  createDiscussion: (data: Pick<DiscussionPost, 'title' | 'content' | 'tags' | 'mediaUris' | 'isProCircle'>) => void;
   deleteDiscussion: (id: number) => void;
   upvoteDiscussion: (id: number) => void;
   addDiscussionComment: (postId: number, content: string) => void;
@@ -457,6 +459,7 @@ function createSeedState(): AppState {
         'After 5 years of getting overcharged at spare parts markets, I finally cracked the code. The key is to always visit at least 3 stalls before buying, and ask for the "mechanic price" even as a car owner. Most sellers have a 30–40% markup for walk-in buyers. Also, always bring the old part so they can see what grade you actually need — avoid letting them talk you into "grade A" when "tokunbo" works fine for non-critical parts.\n\nAnother tip: Ladipo market in Lagos has better prices for Japanese car parts, while Euro parts are often cheaper in Trade Fair. Share your own market tips below!',
       tags: 'Lagos mechanic,Tips,Spare Parts',
       mediaUris: [],
+      isProCircle: false,
       userId: 'bisi@cochefix.com',
       userName: 'Bisi Alao',
       userRole: 'Car Owner',
@@ -473,6 +476,7 @@ function createSeedState(): AppState {
         'I switched my 2016 Toyota Corolla from conventional 20W-50 to full synthetic 5W-30 six months ago. The difference is noticeable — engine runs quieter, especially in traffic, and oil consumption between changes has dropped significantly.\n\nIn our climate, engines run hot a lot of the time. Conventional oil breaks down faster and loses viscosity, which is why we see so much engine wear in high-mileage Nigerian cars. The extra ₦8,000–₦12,000 per oil change is easily recovered in longer engine life. Happy to share my brand recommendations if anyone is interested.',
       tags: 'Engine Oil,Toyota,Maintenance',
       mediaUris: [],
+      isProCircle: false,
       userId: 'jose@cochefix.com',
       userName: 'Jose Ramirez',
       userRole: 'Service Provider',
@@ -481,6 +485,41 @@ function createSeedState(): AppState {
       timestamp: now - DAY * 5,
       upvotes: 21,
       upvotedBy: ['bisi@cochefix.com'],
+    },
+    // Pro Circle discussions — mechanics only
+    {
+      id: 201,
+      title: 'How I handle customer disputes over labour charges in Lagos',
+      content:
+        'One of the hardest parts of running a shop in Lagos is managing customer expectations around labour. I have started issuing a simple written estimate before any job, broken down by parts and labour. It completely changed how customers respond when the final bill comes.\n\nI also stopped doing "quick checks" for free — I charge a small diagnostic fee (₦2,000–₦5,000) and deduct it from the repair bill if they proceed. This filters out tyre-kickers and means customers take the diagnosis seriously.\n\nAnyone else doing this? What do you include in your estimates?',
+      tags: 'Business,Workshop,Lagos mechanic',
+      mediaUris: [],
+      isProCircle: true,
+      userId: 'jose@cochefix.com',
+      userName: 'Jose Ramirez',
+      userRole: 'Service Provider',
+      userSpecialization: 'Engine / Transmission',
+      userVerified: true,
+      timestamp: now - DAY * 3,
+      upvotes: 18,
+      upvotedBy: ['samson@cochefix.com'],
+    },
+    {
+      id: 202,
+      title: 'Best OBD-II scanner for Nigerian cars — my honest review after 2 years',
+      content:
+        'I have used three different scanners in the past two years. Here is my honest take:\n\n1. **Launch X431 Pro** — best all-rounder for Japanese and Korean cars. Handles live data well. Expensive (₦180k+) but worth it if you see volume.\n2. **Autel MaxiCheck MX808** — solid for European brands, especially VW and Mercedes. About ₦120k.\n3. **Cheap Bluetooth adapters** — useless for anything beyond reading basic codes. Do not waste your money.\n\nFor most Lagos mechanics doing mainly Toyota and Honda, the Launch X431 Pro pays for itself in 2–3 months. The factory bi-directional control saved me many times when diagnosing intermittent faults.\n\nWhat scanners are you using?',
+      tags: 'Diagnostics,Engine,Tools',
+      mediaUris: [],
+      isProCircle: true,
+      userId: 'samson@cochefix.com',
+      userName: 'Samson Okafor',
+      userRole: 'Service Provider',
+      userSpecialization: 'Electrical Systems',
+      userVerified: false,
+      timestamp: now - DAY * 6,
+      upvotes: 26,
+      upvotedBy: ['jose@cochefix.com'],
     },
   ];
 
@@ -500,6 +539,22 @@ function createSeedState(): AppState {
       userName: 'Samson Okafor',
       content: 'Fully agree on synthetic. I switched my customers to Castrol Edge and the complaints about engine noise dropped dramatically.',
       timestamp: now - DAY * 4,
+    },
+    {
+      id: 1003,
+      postId: 201,
+      userId: 'samson@cochefix.com',
+      userName: 'Samson Okafor',
+      content: 'I started doing written estimates 6 months ago and it has been a game changer. Customers stop arguing about the price when it is in writing from the start.',
+      timestamp: now - DAY * 2,
+    },
+    {
+      id: 1004,
+      postId: 202,
+      userId: 'jose@cochefix.com',
+      userName: 'Jose Ramirez',
+      content: 'I use the Launch X431. Worth every naira. The bi-directional control feature alone saves me hours on transmission and ABS jobs.',
+      timestamp: now - DAY * 5,
     },
   ];
 
@@ -869,7 +924,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Discussion CRUD ──────────────────────────────────────────────────
 
   const createDiscussion = useCallback(
-    (data: Pick<DiscussionPost, 'title' | 'content' | 'tags' | 'mediaUris'>) => {
+    (data: Pick<DiscussionPost, 'title' | 'content' | 'tags' | 'mediaUris' | 'isProCircle'>) => {
       if (!state || !currentUser) return;
       const newPost: DiscussionPost = {
         ...data,

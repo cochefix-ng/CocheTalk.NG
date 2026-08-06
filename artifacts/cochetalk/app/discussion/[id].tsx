@@ -92,10 +92,17 @@ export default function DiscussionDetailScreen() {
         {/* Post body */}
         <View style={[styles.postCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {/* Type badge */}
-          <View style={[styles.typeBadge, { backgroundColor: colors.secondary + '22', borderColor: colors.secondary + '55' }]}>
-            <Feather name="book-open" size={10} color={colors.secondary} />
-            <Text style={[styles.typeBadgeText, { color: colors.secondary }]}>General Discussion</Text>
-          </View>
+          {post.isProCircle ? (
+            <View style={[styles.typeBadge, { backgroundColor: colors.proCircle + '22', borderColor: colors.proCircle + '55' }]}>
+              <Feather name="lock" size={10} color={colors.proCircle} />
+              <Text style={[styles.typeBadgeText, { color: colors.proCircle }]}>Pro Circle Discussion</Text>
+            </View>
+          ) : (
+            <View style={[styles.typeBadge, { backgroundColor: colors.secondary + '22', borderColor: colors.secondary + '55' }]}>
+              <Feather name="book-open" size={10} color={colors.secondary} />
+              <Text style={[styles.typeBadgeText, { color: colors.secondary }]}>General Discussion</Text>
+            </View>
+          )}
 
           {post.title ? (
             <Text style={[styles.postTitle, { color: colors.foreground }]}>{post.title}</Text>
