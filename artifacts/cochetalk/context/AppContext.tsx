@@ -89,6 +89,33 @@ export interface Comment {
   timestamp: number;
 }
 
+/** A General Discussion post — experiences, tips, knowledge sharing */
+export interface DiscussionPost {
+  id: number;
+  title?: string;
+  content: string;
+  tags: string;
+  mediaUris?: string[];
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  userSpecialization: string;
+  userVerified: boolean;
+  timestamp: number;
+  upvotes: number;
+  upvotedBy: string[];
+}
+
+/** Comment on a DiscussionPost */
+export interface DiscussionComment {
+  id: number;
+  postId: number;
+  userId: string;
+  userName: string;
+  content: string;
+  timestamp: number;
+}
+
 export interface MarketplaceListing {
   id: number;
   title: string;
@@ -156,6 +183,8 @@ interface AppState {
   questions: Question[];
   answers: Answer[];
   comments: Comment[];
+  discussions: DiscussionPost[];
+  discussionComments: DiscussionComment[];
   listings: MarketplaceListing[];
   ratings: ProviderRating[];
   cmsConfig: CmsConfig;
@@ -177,6 +206,10 @@ export interface AppContextType extends AppState {
   upvoteAnswer: (id: number) => void;
   acceptAnswer: (questionId: number, answerId: number) => void;
   addComment: (parentId: number, isAnswer: boolean, content: string) => void;
+  createDiscussion: (data: Pick<DiscussionPost, 'title' | 'content' | 'tags' | 'mediaUris'>) => void;
+  deleteDiscussion: (id: number) => void;
+  upvoteDiscussion: (id: number) => void;
+  addDiscussionComment: (postId: number, content: string) => void;
   createListing: (data: Omit<MarketplaceListing, 'id' | 'userId' | 'userName' | 'userRole' | 'userPhone' | 'isApproved' | 'isFeaturedBottom' | 'timestamp'>) => void;
   deleteListing: (id: number) => void;
   approveListing: (id: number, approved: boolean) => void;
@@ -195,7 +228,8 @@ export interface AppContextType extends AppState {
   unreadCount: number;
 }
 
-const STORAGE_KEY = 'cochetalk_state_v3';
+// Bump version to reset stored state and include discussions
+const STORAGE_KEY = 'cochetalk_state_v4';
 
 export function makeConvId(a: string, b: string): string {
   return [a, b].sort().join('__');
@@ -414,6 +448,61 @@ function createSeedState(): AppState {
     },
   ];
 
+  // Seed General Discussion posts
+  const discussions: DiscussionPost[] = [
+    {
+      id: 101,
+      title: 'How I saved ₦120k by learning to negotiate parts prices in Lagos',
+      content:
+        'After 5 years of getting overcharged at spare parts markets, I finally cracked the code. The key is to always visit at least 3 stalls before buying, and ask for the "mechanic price" even as a car owner. Most sellers have a 30–40% markup for walk-in buyers. Also, always bring the old part so they can see what grade you actually need — avoid letting them talk you into "grade A" when "tokunbo" works fine for non-critical parts.\n\nAnother tip: Ladipo market in Lagos has better prices for Japanese car parts, while Euro parts are often cheaper in Trade Fair. Share your own market tips below!',
+      tags: 'Lagos mechanic,Tips,Spare Parts',
+      mediaUris: [],
+      userId: 'bisi@cochefix.com',
+      userName: 'Bisi Alao',
+      userRole: 'Car Owner',
+      userSpecialization: '',
+      userVerified: false,
+      timestamp: now - DAY * 2,
+      upvotes: 14,
+      upvotedBy: ['jose@cochefix.com', 'samson@cochefix.com'],
+    },
+    {
+      id: 102,
+      title: 'Why synthetic oil is worth the extra cost in Nigerian heat',
+      content:
+        'I switched my 2016 Toyota Corolla from conventional 20W-50 to full synthetic 5W-30 six months ago. The difference is noticeable — engine runs quieter, especially in traffic, and oil consumption between changes has dropped significantly.\n\nIn our climate, engines run hot a lot of the time. Conventional oil breaks down faster and loses viscosity, which is why we see so much engine wear in high-mileage Nigerian cars. The extra ₦8,000–₦12,000 per oil change is easily recovered in longer engine life. Happy to share my brand recommendations if anyone is interested.',
+      tags: 'Engine Oil,Toyota,Maintenance',
+      mediaUris: [],
+      userId: 'jose@cochefix.com',
+      userName: 'Jose Ramirez',
+      userRole: 'Service Provider',
+      userSpecialization: 'Engine / Transmission',
+      userVerified: true,
+      timestamp: now - DAY * 5,
+      upvotes: 21,
+      upvotedBy: ['bisi@cochefix.com'],
+    },
+  ];
+
+  const discussionComments: DiscussionComment[] = [
+    {
+      id: 1001,
+      postId: 101,
+      userId: 'jose@cochefix.com',
+      userName: 'Jose Ramirez',
+      content: 'Great tips Bisi! I always tell my customers to bring the old part. Saves everyone time.',
+      timestamp: now - DAY * 1.5,
+    },
+    {
+      id: 1002,
+      postId: 102,
+      userId: 'samson@cochefix.com',
+      userName: 'Samson Okafor',
+      content: 'Fully agree on synthetic. I switched my customers to Castrol Edge and the complaints about engine noise dropped dramatically.',
+      timestamp: now - DAY * 4,
+    },
+  ];
+
   const listings: MarketplaceListing[] = [
     {
       id: 1,
@@ -567,6 +656,8 @@ function createSeedState(): AppState {
     questions,
     answers,
     comments,
+    discussions,
+    discussionComments,
     listings,
     ratings,
     cmsConfig,
@@ -586,15 +677,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
       if (raw) {
         try {
-          setState(JSON.parse(raw) as AppState);
+          const parsed = JSON.parse(raw) as AppState;
+          // Back-fill discussions/discussionComments for existing saved states
+          setState({
+            ...parsed,
+            discussions: parsed.discussions ?? [],
+            discussionComments: parsed.discussionComments ?? [],
+          });
         } catch (err) {
-          // Stored data is corrupt or from an incompatible schema version.
-          // Log the error and fall back to seed data so the app stays usable.
           console.error('[AppContext] Failed to parse persisted state — resetting to seed data.', err);
           setState(createSeedState());
         }
       } else {
-        // First launch: no stored state yet, populate with demo seed data.
         setState(createSeedState());
       }
       setIsLoading(false);
@@ -604,8 +698,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const save = useCallback((next: AppState) => {
     setState(next);
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch((err) => {
-      // Persistence failure (e.g. storage quota exceeded). State is still live
-      // in memory for this session, but changes won't survive an app restart.
       console.error('[AppContext] Failed to persist state to AsyncStorage.', err);
     });
   }, []);
@@ -773,6 +865,75 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
     [state, currentUser, save],
   );
+
+  // ── Discussion CRUD ──────────────────────────────────────────────────
+
+  const createDiscussion = useCallback(
+    (data: Pick<DiscussionPost, 'title' | 'content' | 'tags' | 'mediaUris'>) => {
+      if (!state || !currentUser) return;
+      const newPost: DiscussionPost = {
+        ...data,
+        id: Date.now(),
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentUser.role,
+        userSpecialization: currentUser.specialization.join(', '),
+        userVerified: currentUser.verified,
+        timestamp: Date.now(),
+        upvotes: 0,
+        upvotedBy: [],
+      };
+      save({ ...state, discussions: [newPost, ...(state.discussions ?? [])] });
+    },
+    [state, currentUser, save],
+  );
+
+  const deleteDiscussion = useCallback(
+    (id: number) => {
+      if (!state) return;
+      save({
+        ...state,
+        discussions: (state.discussions ?? []).filter((d) => d.id !== id),
+        discussionComments: (state.discussionComments ?? []).filter((c) => c.postId !== id),
+      });
+    },
+    [state, save],
+  );
+
+  const upvoteDiscussion = useCallback(
+    (id: number) => {
+      if (!state || !currentUser) return;
+      save({
+        ...state,
+        discussions: (state.discussions ?? []).map((d) => {
+          if (d.id !== id) return d;
+          const voted = d.upvotedBy.includes(currentUser.id);
+          return voted
+            ? { ...d, upvotes: d.upvotes - 1, upvotedBy: d.upvotedBy.filter((uid) => uid !== currentUser.id) }
+            : { ...d, upvotes: d.upvotes + 1, upvotedBy: [...d.upvotedBy, currentUser.id] };
+        }),
+      });
+    },
+    [state, currentUser, save],
+  );
+
+  const addDiscussionComment = useCallback(
+    (postId: number, content: string) => {
+      if (!state || !currentUser) return;
+      const newComment: DiscussionComment = {
+        id: Date.now(),
+        postId,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        content,
+        timestamp: Date.now(),
+      };
+      save({ ...state, discussionComments: [...(state.discussionComments ?? []), newComment] });
+    },
+    [state, currentUser, save],
+  );
+
+  // ── Marketplace ──────────────────────────────────────────────────────
 
   const createListing = useCallback(
     (
@@ -989,6 +1150,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         answers: state.answers.filter((a) => a.userId !== userId),
         listings: state.listings.filter((l) => l.userId !== userId),
         ratings: state.ratings.filter((r) => r.providerId !== userId && r.raterId !== userId),
+        discussions: (state.discussions ?? []).filter((d) => d.userId !== userId),
+        discussionComments: (state.discussionComments ?? []).filter((c) => c.userId !== userId),
         currentUserId: state.currentUserId === userId ? 'admin@cochetalk.com' : state.currentUserId,
       });
     },
@@ -1015,6 +1178,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       upvoteAnswer,
       acceptAnswer,
       addComment,
+      createDiscussion,
+      deleteDiscussion,
+      upvoteDiscussion,
+      addDiscussionComment,
       createListing,
       deleteListing,
       approveListing,
@@ -1046,6 +1213,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       upvoteAnswer,
       acceptAnswer,
       addComment,
+      createDiscussion,
+      deleteDiscussion,
+      upvoteDiscussion,
+      addDiscussionComment,
       createListing,
       deleteListing,
       approveListing,

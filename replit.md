@@ -26,7 +26,9 @@ Nigeria's vehicle aftersales platform — a React Native Expo app where car owne
   - `app/(tabs)/` — 5 tab screens: `index` (Forum), `pro` (Pro Circle), `marketplace`, `clinic`, `profile`
   - `app/question/[id].tsx` — Question detail with answers + comments
   - `app/seller/[id].tsx` — Seller/mechanic profile with listings + ratings
-  - `context/AppContext.tsx` — All state, seed data, CRUD actions, AsyncStorage persistence
+  - `context/AppContext.tsx` — All state, seed data, CRUD actions, AsyncStorage persistence (v4)
+  - `app/discussion/[id].tsx` — Discussion detail with replies, media lightbox, upvote, delete
+  - `components/DiscussionCard.tsx` — Reusable discussion list card (thumbnail + type badge)
   - `components/QuestionCard.tsx` — Reusable question list item
   - `components/ListingCard.tsx` — Reusable listing card with WhatsApp CTA
   - `constants/colors.ts` — CocheTalk brand tokens (VibrantTeal #00EBBA, CharcoalDark #121212)
@@ -47,6 +49,7 @@ Nigeria's vehicle aftersales platform — a React Native Expo app where car owne
 ## Product
 
 - **Q&A Forum** — Ask and answer vehicle questions with tag/concern filtering, upvotes, accepted answers
+- **General Discussion** — Share experiences, tips, and knowledge; supports optional title, required content, tags (preset + custom), and up to 4 media attachments (images/videos)
 - **Pro Circle** — Mechanics-only private forum for technical trade discussion
 - **Marketplace** — Parts, services, and accessories listings with WhatsApp contact CTA
 - **AI Vehicle Clinic** — Describe a vehicle problem, get a structured Gemini-powered diagnostic report
