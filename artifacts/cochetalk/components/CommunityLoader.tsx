@@ -24,7 +24,7 @@ const MESSAGES = [
 const LIGHT = {
   bg: '#FAFAFA',
   card: '#FFFFFF',
-  primary: '#00EBBA',
+  primary: '#26d367',
   foreground: '#121212',
   muted: '#6B7280',
   border: '#E5E7EB',
@@ -33,7 +33,7 @@ const LIGHT = {
 const DARK = {
   bg: '#121212',
   card: '#1E1E1E',
-  primary: '#00EBBA',
+  primary: '#26d367',
   foreground: '#F9FAFB',
   muted: '#9CA3AF',
   border: '#2A2A2A',
