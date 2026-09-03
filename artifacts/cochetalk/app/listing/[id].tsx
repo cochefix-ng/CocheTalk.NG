@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import {
   Alert,
+  Image,
   Linking,
   ScrollView,
   StyleSheet,
@@ -167,6 +168,17 @@ export default function ListingDetail() {
           </View>
         ) : null}
 
+        {isCarSale && listing.imageUris?.length ? (
+          <View style={[styles.section, { borderColor: colors.border }]}>
+            <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Vehicle Photos</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imageGallery}>
+              {listing.imageUris.map((uri) => (
+                <Image key={uri} source={{ uri }} style={styles.galleryImage} resizeMode="cover" />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+
         {/* Specs table */}
         {(isCarSale ? carSpecs : partsSpecs).length > 0 && (
           <View style={[styles.section, { borderColor: colors.border }]}>
@@ -298,6 +310,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   descText: { fontSize: 14, lineHeight: 22 },
+  imageGallery: { gap: 10 },
+  galleryImage: { width: 180, height: 135, borderRadius: 10 },
   specTable: { borderRadius: 10, borderWidth: 1, overflow: 'hidden' },
   specRow: {
     flexDirection: 'row',

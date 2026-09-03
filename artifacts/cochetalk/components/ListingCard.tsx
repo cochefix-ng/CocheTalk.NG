@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import type { MarketplaceListing } from '@/context/AppContext';
 import { makeConvId, useApp } from '@/context/AppContext';
@@ -127,6 +127,9 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
         activeOpacity={0.75}
         onPress={() => router.push(`/listing/${listing.id}`)}
       >
+        {isCarSale && listing.imageUris?.[0] ? (
+          <Image source={{ uri: listing.imageUris[0] }} style={styles.vehicleImage} resizeMode="cover" />
+        ) : null}
         <View style={styles.headerRow}>
           <View style={[styles.catBadge, { backgroundColor: catColor + '22' }]}>
             <Text style={[styles.catText, { color: catColor }]}>{listing.category}</Text>
@@ -246,6 +249,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 5,
   },
+  vehicleImage: { width: '100%', height: 150, borderRadius: 9, marginBottom: 10 },
   pendingBanner: {
     flexDirection: 'row',
     alignItems: 'center',

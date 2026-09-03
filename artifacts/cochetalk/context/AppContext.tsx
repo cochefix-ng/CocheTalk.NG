@@ -134,6 +134,7 @@ export interface MarketplaceListing {
   application: string;
   partBrand: string;
   partNumber?: string;
+  imageUris?: string[];
   isFeaturedBottom: boolean;
   timestamp: number;
   // Car Sales specific

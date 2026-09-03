@@ -1,7 +1,10 @@
 import { Feather } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useMemo, useState } from 'react';
 import {
+  Alert,
   FlatList,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -116,6 +119,7 @@ export default function MarketplaceScreen() {
   const [csCustomsPapers, setCsCustomsPapers] = useState('');
   const [csVin, setCsVin] = useState('');
   const [csPlateNumber, setCsPlateNumber] = useState('');
+  const [csImageUris, setCsImageUris] = useState<string[]>([]);
 
   const isAdmin = currentUser?.role === 'Admin';
 
@@ -140,10 +144,40 @@ export default function MarketplaceScreen() {
     setCsTransmission(''); setCsFuelType(''); setCsMileage(''); setCsDriveType('');
     setCsCondition(''); setCsAccidentHistory(''); setCsAccidentDetails('');
     setCsServiceHistory(''); setCsPreviousOwners(''); setCsRegStatus('');
-    setCsCustomsPapers(''); setCsVin(''); setCsPlateNumber('');
+    setCsCustomsPapers(''); setCsVin(''); setCsPlateNumber(''); setCsImageUris([]);
   };
 
   const isCarSales = lCategory === 'Car Sales';
+
+  const pickCarImages = async () => {
+    const remainingSlots = 8 - csImageUris.length;
+    if (remainingSlots <= 0) {
+      Alert.alert('Photo limit reached', 'You can add up to 8 vehicle photos.');
+      return;
+    }
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Allow photo library access to add vehicle photos.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: remainingSlots,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      const selectedUris = result.assets.map((asset) => asset.uri);
+      setCsImageUris((previous) => Array.from(new Set([...previous, ...selectedUris])).slice(0, 8));
+    }
+  };
+
+  const removeCarImage = (uri: string) => {
+    setCsImageUris((previous) => previous.filter((imageUri) => imageUri !== uri));
+  };
 
   const isFormValid = useMemo(() => {
     if (!lPrice.trim() || parseInt(lPrice.replace(/\D/g, ''), 10) <= 0) return false;
@@ -200,6 +234,7 @@ export default function MarketplaceScreen() {
         carCustomsPapers: csCustomsPapers || undefined,
         carVin: csVin.trim() || undefined,
         carPlateNumber: csPlateNumber.trim() || undefined,
+        imageUris: csImageUris,
       };
     } else {
       data = {
@@ -333,6 +368,34 @@ export default function MarketplaceScreen() {
 
                 <Text style={[styles.label, { color: colors.foreground }]}>Interior Color</Text>
                 <TextInput style={[styles.input, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]} placeholder="e.g. Black Leather" placeholderTextColor={colors.mutedForeground} value={csInteriorColor} onChangeText={setCsInteriorColor} />
+
+                <View style={styles.labelRow}>
+                  <Text style={[styles.label, { color: colors.foreground, marginTop: 14 }]}>Vehicle Photos</Text>
+                  <Text style={[styles.optionalBadge, { color: colors.mutedForeground }]}>optional – up to 8 photos</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.mediaPickerBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+                  onPress={pickCarImages}
+                >
+                  <Feather name="image" size={18} color={colors.mutedForeground} />
+                  <Text style={[styles.mediaPickerText, { color: colors.mutedForeground }]}>
+                    {csImageUris.length > 0
+                      ? `${csImageUris.length} photo${csImageUris.length > 1 ? 's' : ''} selected — tap to add more`
+                      : 'Tap to choose vehicle photos'}
+                  </Text>
+                </TouchableOpacity>
+                {csImageUris.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaPreviewRow} contentContainerStyle={{ gap: 8 }}>
+                    {csImageUris.map((uri) => (
+                      <View key={uri} style={styles.mediaPreviewItem}>
+                        <Image source={{ uri }} style={styles.mediaPreviewThumb} resizeMode="cover" />
+                        <TouchableOpacity style={styles.mediaRemoveBtn} onPress={() => removeCarImage(uri)}>
+                          <Feather name="x" size={12} color="#fff" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
 
                 <SectionHeader title="Technical Specs" colors={colors} />
 
@@ -547,6 +610,8 @@ const styles = StyleSheet.create({
   catOption: { borderRadius: 10, borderWidth: 1, paddingVertical: 10, alignItems: 'center' },
   catOptionText: { fontSize: 13, fontWeight: '600' },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: 14 },
+  labelRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  optionalBadge: { fontSize: 11, marginTop: 14 },
   input: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
   textarea: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, minHeight: 90 },
   toggleBtn: { borderRadius: 10, borderWidth: 1, paddingVertical: 9, alignItems: 'center', justifyContent: 'center' },
@@ -554,6 +619,12 @@ const styles = StyleSheet.create({
   gradeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1 },
   chipText: { fontSize: 12, fontWeight: '500' },
+  mediaPickerBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 12 },
+  mediaPickerText: { flex: 1, fontSize: 13 },
+  mediaPreviewRow: { marginTop: 10 },
+  mediaPreviewItem: { position: 'relative' },
+  mediaPreviewThumb: { width: 76, height: 76, borderRadius: 8 },
+  mediaRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.7)' },
   noteBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 8, borderWidth: 1, padding: 12 },
   noteText: { flex: 1, fontSize: 12, lineHeight: 18 },
   submitBtn: { marginTop: 20, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
