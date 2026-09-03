@@ -1,0 +1,205 @@
+Redesign the existing Login and Sign Up pages in this project to closely match the attached reference image in terms of layout, spacing, typography, form styling, gradients, buttons, and overall premium mobile-app aesthetic.
+
+IMPORTANT:
+- Do NOT copy the CalorixAI brand, logo, name, or text from the reference.
+- Use the existing CocheTalk/CocheFix branding and logo already present in the project.
+- Do not break or remove any existing backend functionality.
+- First inspect the existing authentication implementation and preserve the current auth architecture.
+- If Supabase Auth is already configured, use the existing Supabase Auth setup rather than creating a second authentication system.
+
+DESIGN DIRECTION:
+
+Create two polished authentication screens:
+
+1. LOGIN PAGE
+Heading:
+"Welcome Back"
+
+Supporting text:
+"Sign in to continue your journey with CocheTalk."
+
+Fields:
+- Email
+- Password
+- Password visibility toggle
+
+Below password:
+- "Remember me" checkbox on the left
+- "Forgot Password?" link on the right
+
+Primary CTA:
+"Log In"
+
+Below the CTA:
+A horizontal divider with:
+"Or Continue With"
+
+Social login buttons:
+- Google
+- Facebook
+
+Bottom:
+"Don't have an account? Register"
+
+2. SIGN UP PAGE
+Heading:
+"Create Your Account"
+
+Supporting text:
+"Join CocheTalk and connect, learn and share with the automotive community."
+
+Fields:
+- First Name
+- Last Name
+- Email
+- User Type (Car Owners / Service Provider – with another sub “Service Provider” option: Mechanic, Parts and Accessories, Car Dealer, Locksmith, Car Wash 
+- 
+- Password
+- Password visibility toggle
+
+Primary CTA:
+"Create Account"
+
+Below CTA:
+Horizontal divider:
+"Or Continue With"
+
+Social login buttons:
+- Google
+- Facebook
+
+Bottom:
+"Already have an account? Log In"
+
+VISUAL DESIGN:
+
+Match the reference image's visual language:
+
+- Clean premium modern UI
+- Very light/off-white background
+- Soft pastel gradient glow behind the authentication form
+- Subtle green/blue/purple gradient atmosphere
+- Rounded input fields
+- Large rounded primary CTA
+- Generous whitespace
+- Minimal borders
+- Soft shadows
+- Modern sans-serif typography
+- Strong but elegant heading typography
+- Mobile-first responsive design
+- Authentication card/form should feel lightweight rather than heavily boxed
+- Keep the interface visually clean and uncluttered
+
+BRANDING:
+
+Use the existing CocheTalk/CocheFix brand identity.
+
+Primary brand color:
+#00C787
+
+Use #00C787 for:
+- Primary CTA
+- Active/focus states
+- Important links
+- Brand accents
+
+Do not use the bright green from the reference if it conflicts with CocheFix branding.
+
+LOGO:
+Use the existing CocheTalk/CocheFix logo asset from the project.
+Place it centered above the heading, similar to the reference.
+
+RESPONSIVE BEHAVIOUR:
+
+Desktop:
+- Center the authentication form on the page.
+- Keep the form at a comfortable max width around 420–460px.
+- Use the soft gradient background across the viewport.
+
+Mobile:
+- Full-width layout with appropriate horizontal padding.
+- Make inputs and buttons easy to tap.
+- Maintain the same visual hierarchy as the reference.
+- Ensure the keyboard does not obscure important fields/buttons.
+- Respect iOS safe areas where applicable.
+
+AUTHENTICATION:
+
+Implement real authentication, not demo authentication.
+
+EMAIL/PASSWORD:
+- Login must authenticate against the project's existing auth backend.
+- Registration must create a real user account.
+- Validate email format.
+- Validate password requirements.
+- Show clear inline validation errors.
+- Show loading states during authentication.
+- Prevent duplicate submissions.
+- Display useful authentication errors without exposing sensitive backend details.
+
+GOOGLE:
+Add functional "Continue with Google" authentication.
+
+FACEBOOK:
+Add functional "Continue with Facebook" authentication.
+
+IMPORTANT:
+Before implementing Google/Facebook OAuth:
+1. Inspect the existing authentication configuration.
+2. If Supabase Auth is being used, use Supabase OAuth.
+3. Do not hard-code OAuth client secrets into the frontend.
+4. Use environment variables/secrets where required.
+5. Ensure OAuth redirects return users to the correct production/development URL.
+6. Handle successful OAuth login and redirect users to the appropriate authenticated area.
+7. Handle cancelled/failed OAuth gracefully.
+
+If Google or Facebook OAuth credentials are not yet configured in the project/environment, still build the complete UI and authentication handlers, but clearly identify the exact environment variables and provider settings that need to be configured. Do not use fake/demo social login.
+
+AUTH STATE:
+- If a user is already authenticated, redirect them away from Login/Register to the appropriate authenticated page.
+- Preserve the existing session handling.
+- Preserve logout functionality.
+- Do not create duplicate auth/session logic.
+
+UX DETAILS:
+- Password eye icon should toggle password visibility.
+- Inputs should have clear focus states.
+- Buttons should have hover, pressed and disabled states.
+- Show a subtle loading indicator when submitting.
+- Social buttons should use recognizable Google and Facebook icons.
+- Make the entire authentication experience accessible.
+- Labels must remain visible; do not rely only on placeholders.
+- Ensure good keyboard navigation and screen-reader accessibility.
+
+ROUTING:
+- Login and Register should be separate routes/pages if the project architecture supports routing.
+- Clicking "Register" from Login should navigate to Sign Up.
+- Clicking "Log In" from Sign Up should navigate to Login.
+- Forgot Password should connect to the existing password-reset flow or implement one using the existing auth provider.
+
+DO NOT:
+- Remove existing database tables.
+- Remove existing Supabase configuration.
+- Replace the existing authentication provider without a strong reason.
+- Add demo credentials.
+- Hard-code users.
+- Hard-code passwords.
+- Create fake Google/Facebook authentication.
+- Break existing authenticated pages.
+- Change unrelated parts of the application.
+
+Before making changes, inspect the current project structure and authentication implementation. Then implement the UI and integrate it with the existing backend.
+
+After implementation:
+1. Test Login.
+2. Test Sign Up.
+3. Test password visibility.
+4. Test Forgot Password.
+5. Test Google OAuth flow/configuration.
+6. Test Facebook OAuth flow/configuration.
+7. Test authenticated redirects.
+8. Test logout/session persistence.
+9. Test mobile responsiveness.
+10. Run the project's build/type-check/lint commands and fix any errors caused by your changes.
+
+The final result should feel like a production-ready CocheTalk authentication experience inspired by the attached reference, while using CocheTalk/CocheFix's own branding.
