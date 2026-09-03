@@ -89,6 +89,7 @@ export default function MarketplaceScreen() {
   const [lBrand, setLBrand] = useState('');
   const [lApplication, setLApplication] = useState('');
   const [lGrade, setLGrade] = useState('');
+  const [lPartNumber, setLPartNumber] = useState('');
 
   // Car Sales — Basic Details
   const [csMake, setCsMake] = useState('');
@@ -133,7 +134,7 @@ export default function MarketplaceScreen() {
 
   const resetForm = () => {
     setLCategory('Parts'); setLTitle(''); setLDesc(''); setLPrice(''); setLLocation('');
-    setLBrand(''); setLApplication(''); setLGrade('');
+    setLBrand(''); setLApplication(''); setLGrade(''); setLPartNumber('');
     setCsMake(''); setCsModel(''); setCsYear(''); setCsTrim(''); setCsBodyType('');
     setCsExteriorColor(''); setCsInteriorColor(''); setCsEngineType('');
     setCsTransmission(''); setCsFuelType(''); setCsMileage(''); setCsDriveType('');
@@ -208,6 +209,7 @@ export default function MarketplaceScreen() {
         category: lCategory,
         location: lLocation.trim(),
         partBrand: lBrand.trim(),
+        partNumber: lCategory === 'Parts' ? lPartNumber.trim() || undefined : undefined,
         application: lApplication.trim(),
         partsGrade: lGrade.trim(),
       };
@@ -469,6 +471,20 @@ export default function MarketplaceScreen() {
                   <>
                     <Text style={[styles.label, { color: colors.foreground }]}>Brand</Text>
                     <TextInput style={[styles.input, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]} placeholder="e.g. Denso, Bosch, Toyota Genuine" placeholderTextColor={colors.mutedForeground} value={lBrand} onChangeText={setLBrand} />
+
+                    {lCategory === 'Parts' && (
+                      <>
+                        <Text style={[styles.label, { color: colors.foreground }]}>Parts Number</Text>
+                        <TextInput
+                          style={[styles.input, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
+                          placeholder="e.g. 12345-ABC"
+                          placeholderTextColor={colors.mutedForeground}
+                          value={lPartNumber}
+                          onChangeText={setLPartNumber}
+                          autoCapitalize="characters"
+                        />
+                      </>
+                    )}
 
                     <Text style={[styles.label, { color: colors.foreground }]}>Application / Compatibility</Text>
                     <TextInput style={[styles.input, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]} placeholder="e.g. Honda Civic 2015-2020" placeholderTextColor={colors.mutedForeground} value={lApplication} onChangeText={setLApplication} />

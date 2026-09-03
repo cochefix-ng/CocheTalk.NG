@@ -133,6 +133,7 @@ export interface MarketplaceListing {
   partsGrade: string;
   application: string;
   partBrand: string;
+  partNumber?: string;
   isFeaturedBottom: boolean;
   timestamp: number;
   // Car Sales specific

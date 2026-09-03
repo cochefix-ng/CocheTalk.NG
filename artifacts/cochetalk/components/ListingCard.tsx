@@ -153,9 +153,10 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
       {isCarSale ? (
         <CarSalesMeta listing={listing} colors={colors} />
       ) : (
-        (listing.partBrand || listing.partsGrade) ? (
+        (listing.partBrand || listing.partNumber || listing.partsGrade) ? (
           <View style={styles.metaRow}>
             {listing.partBrand ? <Text style={[styles.metaItem, { color: colors.mutedForeground }]}>Brand: {listing.partBrand}</Text> : null}
+            {listing.partNumber ? <Text style={[styles.metaItem, { color: colors.mutedForeground }]}>Parts No: {listing.partNumber}</Text> : null}
             {listing.partsGrade ? <Text style={[styles.metaItem, { color: colors.mutedForeground }]}>Grade: {listing.partsGrade}</Text> : null}
           </View>
         ) : null

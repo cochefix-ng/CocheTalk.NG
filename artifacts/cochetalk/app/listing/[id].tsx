@@ -112,6 +112,7 @@ export default function ListingDetail() {
     !isCarSale
       ? [
           listing.partBrand ? { label: 'Brand', value: listing.partBrand } : null,
+           listing.partNumber ? { label: 'Parts Number', value: listing.partNumber } : null,
           listing.partsGrade ? { label: 'Grade', value: listing.partsGrade } : null,
           listing.application ? { label: 'Fits', value: listing.application } : null,
         ].filter(Boolean) as { label: string; value: string }[]

@@ -1,0 +1,448 @@
+I am preparing this project for handover to a professional developer.
+
+The developer's next responsibility will be to wire/complete the backend integrations, connect production services, and take the application live.
+
+Before handover, I want you to perform a careful CODEBASE CLEANUP, STABILIZATION, and HANDOVER PREPARATION.
+
+IMPORTANT:
+Do NOT redesign the application.
+Do NOT change the existing UI/UX unless required to fix a bug.
+Do NOT remove working features.
+Do NOT rewrite working functionality unnecessarily.
+Do NOT replace the current tech stack.
+Do NOT create a new authentication system.
+Do NOT introduce unnecessary dependencies.
+
+The goal is to make the existing codebase clean, organized, understandable, stable, and easy for another developer to take over.
+
+==================================================
+PHASE 1 — AUDIT THE ENTIRE CODEBASE
+==================================================
+
+First inspect the entire project before making changes.
+
+Identify:
+
+- Frontend framework and architecture
+- Backend/API architecture currently present
+- Authentication implementation
+- Database/Supabase integration
+- Environment variables
+- API integrations
+- Routing
+- Shared components
+- Page components
+- Hooks
+- Utilities
+- Services
+- Types/interfaces
+- Assets
+- Configuration files
+- Build configuration
+- Deployment configuration
+
+Create a clear internal understanding of what is currently working and what is incomplete.
+
+DO NOT immediately start rewriting code.
+
+==================================================
+PHASE 2 — REMOVE CODEBASE CLUTTER
+==================================================
+
+Remove ONLY obvious unnecessary clutter, including:
+
+- Unused components
+- Unused pages
+- Unused imports
+- Unused variables
+- Dead code
+- Duplicate components
+- Duplicate utilities
+- Old test/demo components that are no longer used
+- Temporary development UI
+- Placeholder content that is clearly no longer required
+- Debug console logs that are not useful
+- Temporary mock data where it is safe to remove
+- Duplicate CSS
+- Unused CSS classes
+- Obsolete configuration files
+- Unused dependencies
+
+IMPORTANT:
+
+Before deleting anything, verify that it is genuinely unused.
+
+Do not delete something simply because it looks unused.
+
+Do not remove anything required by routing, authentication, database integration, or future backend integration.
+
+==================================================
+PHASE 3 — REMOVE DEMO / TEST AUTHENTICATION
+==================================================
+
+This project must NOT contain fake production authentication.
+
+Search for:
+
+- Demo login credentials
+- Hard-coded users
+- Hard-coded passwords
+- Fake authentication
+- Temporary admin login
+- Bypass authentication
+- Mock authentication
+- "demo@example.com"
+- "admin@example.com"
+- Test passwords
+- Authentication shortcuts
+- Development-only login bypasses
+
+Remove these only where they are clearly development/demo functionality.
+
+Preserve the actual authentication implementation.
+
+If authentication is currently connected to Supabase, preserve the existing Supabase Auth implementation.
+
+Do not create a second authentication system.
+
+==================================================
+PHASE 4 — ENVIRONMENT VARIABLES & SECRETS
+==================================================
+
+Audit all environment variables.
+
+Make sure:
+
+- No API keys are hard-coded in source code.
+- No passwords are hard-coded.
+- No Supabase service-role keys are exposed to frontend code.
+- No private credentials are committed to Git.
+- No OAuth client secrets are hard-coded.
+- Production secrets are referenced through environment variables.
+
+Create or update:
+
+.env.example
+
+The .env.example file should contain the REQUIRED variable NAMES only.
+
+Example:
+
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+
+Do NOT put actual secret values in .env.example.
+
+Do NOT expose or print existing secret values.
+
+==================================================
+PHASE 5 — SUPABASE / BACKEND HANDOVER
+==================================================
+
+Do NOT change the existing Supabase project or database structure unless absolutely necessary.
+
+Document:
+
+- Supabase URL variable
+- Supabase authentication configuration
+- Database tables currently referenced by the application
+- Storage buckets currently referenced
+- Database queries
+- RPC functions
+- Edge functions, if any
+- Row Level Security dependencies
+- Required backend environment variables
+- API endpoints
+- Any backend functionality that is currently missing
+
+Clearly distinguish between:
+
+WORKING
+
+INCOMPLETE
+
+MOCKED
+
+PLACEHOLDER
+
+REQUIRES DEVELOPER
+
+Do not pretend that backend functionality is complete when it is not.
+
+==================================================
+PHASE 6 — CODE ORGANIZATION
+==================================================
+
+Improve the organization of the codebase where appropriate.
+
+Use a clear structure similar to:
+
+src/
+  components/
+  pages/
+  layouts/
+  hooks/
+  lib/
+  services/
+  utils/
+  types/
+  assets/
+
+Only reorganize files when it improves maintainability and does not introduce unnecessary risk.
+
+Update imports after moving files.
+
+Avoid creating excessive folders.
+
+==================================================
+PHASE 7 — ERROR HANDLING
+==================================================
+
+Look for obvious:
+
+- Broken imports
+- Missing components
+- Undefined variables
+- Incorrect routes
+- Broken API calls
+- Unhandled promises
+- Obvious runtime errors
+- Type errors
+- Build errors
+
+Fix genuine errors.
+
+Do NOT hide errors simply to make the build pass.
+
+==================================================
+PHASE 8 — MOBILE & UI REGRESSION CHECK
+==================================================
+
+Do not redesign the UI.
+
+However, verify that the existing pages still work after cleanup.
+
+Pay particular attention to:
+
+- Login
+- Register
+- Home
+- CocheTalk
+- Search
+- Notifications
+- Profile
+- Settings
+- Admin pages
+- Bottom navigation
+- Forms
+- Modals
+- Authentication redirects
+
+Make sure the bottom navigation does not cover the final content of pages.
+
+The user must be able to scroll completely to the bottom of every page.
+
+==================================================
+PHASE 9 — REMOVE DEVELOPMENT ARTIFACTS
+==================================================
+
+Search for obvious development artifacts such as:
+
+- TODO comments that are no longer relevant
+- "coming soon" placeholders that should not be there
+- Test buttons
+- Debug panels
+- Development-only banners
+- Temporary console logging
+- Fake statistics
+- Fake user data
+- Mock notifications
+- Mock transactions
+- Mock profiles
+
+Do NOT remove functionality simply because it is not yet connected to the backend.
+
+For features that are designed but still require backend implementation, leave the frontend intact and document what backend work is required.
+
+==================================================
+PHASE 10 — DOCUMENTATION FOR DEVELOPER
+==================================================
+
+Create/update:
+
+README.md
+
+Create a clear developer handover document:
+
+DEVELOPER_HANDOVER.md
+
+The handover document must explain:
+
+1. Project overview
+
+2. Technology stack
+
+3. How to install dependencies
+
+4. How to run locally
+
+5. How to build
+
+6. Environment variables required
+
+7. Authentication architecture
+
+8. Supabase configuration
+
+9. Database dependencies
+
+10. Routes/pages
+
+11. Important shared components
+
+12. Current working features
+
+13. Features requiring backend integration
+
+14. Known issues
+
+15. Production deployment requirements
+
+16. Third-party services
+
+17. OAuth requirements
+
+18. Anything the developer must configure before launch
+
+==================================================
+PHASE 11 — CREATE A BACKEND TODO LIST
+==================================================
+
+Inside DEVELOPER_HANDOVER.md create a section:
+
+BACKEND / PRODUCTION TODO
+
+Break it down into:
+
+AUTHENTICATION
+DATABASE
+API
+FILE STORAGE
+NOTIFICATIONS
+EMAIL
+PAYMENTS
+SOCIAL LOGIN
+ADMIN
+ANALYTICS
+SECURITY
+DEPLOYMENT
+
+For every item clearly state:
+
+- What needs to be done
+- Where it connects to the frontend
+- Whether anything is already implemented
+- Any environment variable/configuration required
+
+==================================================
+PHASE 12 — SECURITY CHECK
+==================================================
+
+Perform a basic production-readiness security audit.
+
+Look for:
+
+- Hard-coded secrets
+- Exposed API keys
+- Service-role credentials in frontend
+- Authentication bypasses
+- Insecure development endpoints
+- Sensitive information in console logs
+- Weak access checks
+- Admin routes without appropriate protection
+
+Do NOT make assumptions about security.
+
+Document anything that requires developer/security review.
+
+==================================================
+PHASE 13 — BUILD & TEST
+==================================================
+
+Run the project's appropriate:
+
+- Install/dependency check
+- Type checking
+- Lint
+- Build
+
+Fix errors caused by the cleanup.
+
+The project should build successfully before handover.
+
+Do not ignore errors.
+
+==================================================
+PHASE 14 — GIT/GITHUB PREPARATION
+==================================================
+
+Prepare the repository for GitHub handover.
+
+Before committing:
+
+Make sure the following are NOT committed:
+
+.env
+.env.local
+.env.production
+secret files
+private keys
+credentials
+node_modules
+build artifacts
+temporary Replit files
+local development files
+
+Review .gitignore and update it appropriately.
+
+Create a clean commit with a meaningful message such as:
+
+"chore: clean and prepare codebase for developer handover"
+
+If this project is already connected to GitHub:
+
+- Check the current Git status.
+- Review changed files.
+- Do NOT overwrite unrelated developer work.
+- Commit the cleanup changes.
+- Push the clean commit to the existing GitHub repository.
+
+If GitHub is NOT currently connected:
+
+DO NOT create or guess a GitHub repository.
+
+Instead, tell me exactly what is required to connect this project to the correct GitHub repository.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After completing the cleanup, provide me with:
+
+1. What was removed
+2. What was reorganized
+3. What was fixed
+4. What authentication currently does
+5. What Supabase/backend functionality already works
+6. What remains incomplete
+7. Environment variables required
+8. Security issues found
+9. Build/test result
+10. Git commit hash
+11. GitHub push status
+12. Exact next steps for the developer
+
+IMPORTANT:
+The objective is NOT to make the codebase look different.
+
+The objective is to make the existing CocheTalk/CocheFix project clean, stable, understandable, secure, and ready for a developer to take over and wire the backend for production.
