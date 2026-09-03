@@ -28,6 +28,7 @@ import { QuestionCard } from '@/components/QuestionCard';
 import { useApp } from '@/context/AppContext';
 import type { MarketplaceListing } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
 
 const SCREEN_W = Dimensions.get('window').width;
 const AD_BANNER_HEIGHT = 72;
@@ -160,6 +161,7 @@ type ConcernKey = (typeof CONCERNS)[number]['key'];
 
 export default function ForumScreen() {
   const colors = useColors();
+  const handleScroll = useTabBarScrollHandler();
   const {
     questions, answers, discussions, discussionComments,
     currentUser, askQuestion, createDiscussion,
@@ -507,6 +509,8 @@ export default function ForumScreen() {
           </View>
         }
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       />
 
       {/* ── Sponsored ad banner ── */}

@@ -27,6 +27,7 @@ import {
   exportListingsReport,
   exportUsersReport,
 } from '@/utils/exportUtils';
+import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
 
 function StarRating({ value, max = 5, size = 16, color }: { value: number; max?: number; size?: number; color: string }) {
   return (
@@ -45,6 +46,7 @@ function avgRating(ratings: { ratingValue: number }[]) {
 
 export default function ProfileScreen() {
   const colors = useColors();
+  const handleScroll = useTabBarScrollHandler();
   const { users, currentUser, login, logout, questions, answers, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser, editProfile, adminToggleWhatsApp } = useApp();
 
   const [showSwitchModal, setShowSwitchModal] = useState(false);
@@ -241,7 +243,11 @@ export default function ProfileScreen() {
           <Feather name="user" size={18} color={colors.primary} />
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Profile</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.guestContent}>
+        <ScrollView
+          contentContainerStyle={styles.guestContent}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
           <View style={[styles.guestCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[styles.guestAvatar, { backgroundColor: colors.muted }]}>
               <Feather name="user" size={32} color={colors.mutedForeground} />
@@ -291,7 +297,12 @@ export default function ProfileScreen() {
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Profile</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.bigAvatar, { backgroundColor: colors.primary + '33' }]}>
             <Text style={[styles.bigAvatarText, { color: colors.primary }]}>{currentUser.name.charAt(0)}</Text>

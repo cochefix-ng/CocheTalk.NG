@@ -23,6 +23,7 @@ import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollV
 import { QuestionCard } from '@/components/QuestionCard';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
 
 const VEHICLE_TYPES = ['Sedan', 'SUV', 'Hatchback', 'Pickup', 'Van', 'Bus', 'Other'];
 const COMMON_TAGS = [
@@ -47,6 +48,7 @@ const SORT_FILTERS = ['Latest', 'Most Answered', 'Unanswered'];
 
 export default function ProCircleScreen() {
   const colors = useColors();
+  const handleScroll = useTabBarScrollHandler();
   const { questions, answers, discussions, discussionComments, currentUser, askQuestion, createDiscussion } = useApp();
 
   // ── Modal state ───────────────────────────────────────
@@ -293,6 +295,8 @@ export default function ProCircleScreen() {
           </View>
         }
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       />
 
       {/* FAB */}

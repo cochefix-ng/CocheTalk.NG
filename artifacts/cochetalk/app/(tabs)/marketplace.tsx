@@ -19,6 +19,7 @@ import { ListingCard } from '@/components/ListingCard';
 import { useApp } from '@/context/AppContext';
 import type { MarketplaceListing } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
 
 const CATEGORIES = ['All', 'Parts', 'Services', 'Car Sales'] as const;
 const PARTS_GRADES = ['Genuine OEM', 'OEM Equivalent', 'Aftermarket', 'Used/Salvage', 'Refurbished'];
@@ -71,6 +72,7 @@ const chipStyles = StyleSheet.create({
 
 export default function MarketplaceScreen() {
   const colors = useColors();
+  const handleScroll = useTabBarScrollHandler();
   const { listings, currentUser, createListing, approveListing, deleteListing } = useApp();
 
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -264,6 +266,8 @@ export default function MarketplaceScreen() {
           </View>
         }
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       />
 
       {currentUser && (

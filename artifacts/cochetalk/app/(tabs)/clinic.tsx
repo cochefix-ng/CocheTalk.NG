@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColors } from '@/hooks/useColors';
+import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
 
 const QUICK_PROMPTS = [
   'My car makes a knocking sound when I accelerate',
@@ -24,6 +25,7 @@ const QUICK_PROMPTS = [
 
 export default function ClinicScreen() {
   const colors = useColors();
+  const handleScroll = useTabBarScrollHandler();
   const [description, setDescription] = useState('');
   const [hasQueried, setHasQueried] = useState(false);
 
@@ -54,7 +56,13 @@ export default function ClinicScreen() {
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>AI Vehicle Clinic</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         <View style={[styles.infoCard, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '40' }]}>
           <View style={[styles.infoIconWrap, { backgroundColor: colors.primary + '30' }]}>
             <Feather name="cpu" size={22} color={colors.primary} />

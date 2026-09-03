@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Conversation } from '@/context/AppContext';
 import { makeConvId, useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -22,6 +23,7 @@ function timeAgo(ts: number): string {
 
 export default function MessagesScreen() {
   const colors = useColors();
+  const handleScroll = useTabBarScrollHandler();
   const { currentUser, conversations, users } = useApp();
 
   const myConversations = (conversations ?? [])
@@ -54,7 +56,12 @@ export default function MessagesScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
           {myConversations.map((conv) => {
             const partner = getPartner(conv);
             const isUnread = currentUser ? conv.unreadBy.includes(currentUser.id) : false;

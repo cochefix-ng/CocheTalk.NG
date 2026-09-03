@@ -1,14 +1,15 @@
 import { BlurView } from 'expo-blur';
-import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Tabs } from 'expo-router';
-import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
+import { BottomTabBar, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { SymbolView } from 'expo-symbols';
 import { Feather } from '@expo/vector-icons';
-import React from 'react';
-import { Platform, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Platform, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { TabBarVisibilityProvider, useTabBarVisibility } from '@/hooks/useTabBarVisibility';
 
 function UnreadBadge({ count }: { count: number }) {
   if (count === 0) return null;
@@ -19,46 +20,35 @@ function UnreadBadge({ count }: { count: number }) {
   );
 }
 
-function NativeTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount }: { hideProTab: boolean; hideMarketplace: boolean; hideClinic: boolean; unreadCount: number }) {
+function AnimatedTabBar(props: BottomTabBarProps) {
+  const { isVisible } = useTabBarVisibility();
+  const translateY = useRef(new Animated.Value(0)).current;
+  const hiddenOffset = Platform.OS === 'web' ? 96 : 96 + props.insets.bottom;
+
+  useEffect(() => {
+    const animation = Animated.timing(translateY, {
+      toValue: isVisible ? 0 : hiddenOffset,
+      duration: 280,
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [hiddenOffset, isVisible, translateY]);
+
   return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: 'bubble.left.and.bubble.right', selected: 'bubble.left.and.bubble.right.fill' }} />
-        <Label>Forum</Label>
-      </NativeTabs.Trigger>
-      {!hideProTab && (
-        <NativeTabs.Trigger name="pro">
-          <Icon sf={{ default: 'lock.shield', selected: 'lock.shield.fill' }} />
-          <Label>Pro</Label>
-        </NativeTabs.Trigger>
-      )}
-      {!hideMarketplace && (
-        <NativeTabs.Trigger name="marketplace">
-          <Icon sf={{ default: 'cart', selected: 'cart.fill' }} />
-          <Label>Market</Label>
-        </NativeTabs.Trigger>
-      )}
-      <NativeTabs.Trigger name="messages">
-        <Icon sf={{ default: 'message.badge', selected: 'message.badge.fill' }} />
-        <Label>{unreadCount > 0 ? `Messages (${unreadCount})` : 'Messages'}</Label>
-      </NativeTabs.Trigger>
-      {!hideClinic && (
-        <NativeTabs.Trigger name="clinic">
-          <Icon sf={{ default: 'stethoscope', selected: 'stethoscope' }} />
-          <Label>Clinic</Label>
-        </NativeTabs.Trigger>
-      )}
-      <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} />
-        <Label>Profile</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
+    <BottomTabBar
+      {...props}
+      style={{
+        transform: [{ translateY }],
+      }}
+    />
   );
 }
 
 function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount }: { hideProTab: boolean; hideMarketplace: boolean; hideClinic: boolean; unreadCount: number }) {
   const colors = useColors();
   const colorScheme = useColorScheme();
+  const safeAreaInsets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
@@ -80,7 +70,7 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
             }
           : {
               position: 'absolute',
-              bottom: isIOS ? 24 : 16,
+              bottom: isIOS ? Math.max(16, safeAreaInsets.bottom) : 16,
               left: 16,
               right: 16,
               height: 64,
@@ -106,6 +96,7 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
           ) : null,
       }}
+      tabBar={(props) => <AnimatedTabBar {...props} />}
     >
       <Tabs.Screen
         name="index"
@@ -197,8 +188,14 @@ export default function TabLayout() {
   const hideMarketplace = !isAdmin && !cmsConfig.marketplaceVisible;
   const hideClinic = !isAdmin && !cmsConfig.clinicVisible;
 
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout hideProTab={hideProTab} hideMarketplace={hideMarketplace} hideClinic={hideClinic} unreadCount={unreadCount} />;
-  }
-  return <ClassicTabLayout hideProTab={hideProTab} hideMarketplace={hideMarketplace} hideClinic={hideClinic} unreadCount={unreadCount} />;
+  return (
+    <TabBarVisibilityProvider>
+      <ClassicTabLayout
+        hideProTab={hideProTab}
+        hideMarketplace={hideMarketplace}
+        hideClinic={hideClinic}
+        unreadCount={unreadCount}
+      />
+    </TabBarVisibilityProvider>
+  );
 }
