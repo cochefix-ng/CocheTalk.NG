@@ -11,6 +11,10 @@ import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { TabBarVisibilityProvider, useTabBarVisibility } from '@/hooks/useTabBarVisibility';
 
+const TAB_BAR_HEIGHT = 64;
+const TAB_BAR_BOTTOM_GAP = 16;
+const WEB_TAB_BAR_HEIGHT = 84;
+
 function UnreadBadge({ count }: { count: number }) {
   if (count === 0) return null;
   return (
@@ -23,7 +27,7 @@ function UnreadBadge({ count }: { count: number }) {
 function AnimatedTabBar(props: BottomTabBarProps) {
   const { isVisible } = useTabBarVisibility();
   const translateY = useRef(new Animated.Value(0)).current;
-  const hiddenOffset = Platform.OS === 'web' ? 96 : 96 + props.insets.bottom;
+  const hiddenOffset = Platform.OS === 'web' ? WEB_TAB_BAR_HEIGHT : TAB_BAR_HEIGHT + Math.max(TAB_BAR_BOTTOM_GAP, props.insets.bottom);
 
   useEffect(() => {
     const animation = Animated.timing(translateY, {
@@ -52,6 +56,8 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
+  const safeBottomGap = Math.max(TAB_BAR_BOTTOM_GAP, safeAreaInsets.bottom);
+  const contentBottomPadding = isWeb ? WEB_TAB_BAR_HEIGHT : TAB_BAR_HEIGHT + safeBottomGap;
 
   return (
     <Tabs
@@ -59,6 +65,12 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         headerShown: false,
+        // The tab bar is absolute/floating, so reserve its real footprint in
+        // the shared scene wrapper. This keeps every screen's actual scroller
+        // clear of the bar without adding a second scroll area.
+        sceneStyle: {
+          paddingBottom: contentBottomPadding,
+        },
         tabBarStyle: isWeb
           ? {
               position: 'absolute',
@@ -66,14 +78,14 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
               borderTopWidth: 1,
               borderTopColor: colors.border,
               elevation: 0,
-              height: 84,
+              height: WEB_TAB_BAR_HEIGHT,
             }
           : {
               position: 'absolute',
-              bottom: isIOS ? Math.max(16, safeAreaInsets.bottom) : 16,
+              bottom: safeBottomGap,
               left: 16,
               right: 16,
-              height: 64,
+              height: TAB_BAR_HEIGHT,
               borderRadius: 28,
               borderTopWidth: 0,
               backgroundColor: isIOS ? 'transparent' : isDark ? '#1a1a1a' : '#ffffff',

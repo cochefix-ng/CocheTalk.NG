@@ -1,0 +1,93 @@
+Fix the bottom navigation bar overlapping content across the app.
+
+PROBLEM:
+The fixed/sticky bottom navigation menu is covering the bottom portion of pages, making the last components/buttons/content impossible to fully see or scroll to.
+
+REQUIREMENT:
+The bottom navigation must remain fixed at the bottom of the viewport, but page content must ALWAYS have enough bottom spacing/padding so that the last element can be scrolled completely above the navigation bar.
+
+IMPLEMENTATION:
+
+1. Inspect the existing bottom navigation component and determine its actual rendered height.
+
+2. Keep the bottom navigation fixed at the bottom:
+   position: fixed;
+   bottom: 0;
+   left: 0;
+   right: 0;
+
+3. Add a global/app-level bottom padding to the scrollable page content equivalent to:
+
+   bottom navigation height + safe-area spacing
+
+   Do NOT simply add an arbitrary large padding value.
+
+4. Support mobile safe areas using:
+
+   padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+
+5. Define a reusable CSS variable, for example:
+
+   --bottom-nav-height: 72px;
+
+   Adjust this value to match the actual navigation height.
+
+6. Make sure the bottom padding is applied to the ACTUAL scrolling container.
+
+IMPORTANT:
+Do not add padding only to individual pages. Fix this at the shared layout/app-shell level so it works consistently across:
+- Home
+- CocheTalk
+- Search
+- Notifications
+- Profile
+- Settings
+- Any other page using the bottom navigation.
+
+7. Make sure the bottom navigation itself accounts for the device safe area:
+
+   padding-bottom: env(safe-area-inset-bottom);
+
+8. Ensure the navigation does NOT increase the page's scrollable content incorrectly or create a second scrollbar.
+
+9. Check for pages/components using:
+   height: 100vh;
+   min-height: 100vh;
+   overflow: hidden;
+   overflow-y: auto;
+
+   These can cause the bottom portion of content to become inaccessible when combined with a fixed navigation bar. Correct them where necessary.
+
+10. If the app has a shared page/content wrapper, structure it approximately like:
+
+   App
+   ├── Scrollable Content
+   │   └── padding-bottom: bottom-nav-height + safe area
+   │
+   └── Fixed Bottom Navigation
+
+11. IMPORTANT:
+The user must be able to scroll until the VERY LAST component on every page is completely visible and clickable above the bottom navigation.
+
+12. Do not remove the bottom navigation.
+13. Do not change its design or behavior.
+14. Do not hide content behind it.
+15. Do not solve this by reducing the navigation height.
+
+RESPONSIVE:
+Test on:
+- Small mobile screens
+- Normal mobile screens
+- Large mobile screens
+- Tablet
+- Desktop
+
+Also account for iPhone safe-area/home-indicator spacing.
+
+AFTER IMPLEMENTATION:
+- Navigate through every page using the bottom navigation.
+- Scroll to the very bottom of each page.
+- Confirm the final component/button can be completely seen and clicked.
+- Confirm there is no unwanted horizontal/vertical overflow.
+- Confirm there is only one scrollable page area.
+- Run the build/type-check and fix any errors.
