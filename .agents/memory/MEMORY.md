@@ -1,0 +1,1 @@
+- [Managed Clerk social providers](clerk-social-providers.md) — Replit-managed Clerk currently supports Google, GitHub, Apple, and X; Facebook needs a separate provider setup.

@@ -231,7 +231,7 @@ export interface AppContextType extends AppState {
 }
 
 // Bump version to reset stored state and include discussions
-const STORAGE_KEY = 'cochetalk_state_v4';
+const STORAGE_KEY = 'cochetalk_state_v5';
 
 export function makeConvId(a: string, b: string): string {
   return [a, b].sort().join('__');
@@ -716,7 +716,7 @@ function createSeedState(): AppState {
     listings,
     ratings,
     cmsConfig,
-    currentUserId: 'bisi@cochefix.com',
+    currentUserId: null,
     messages,
     conversations,
   };
