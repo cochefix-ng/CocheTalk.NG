@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { emitNotificationEvent } from '@/utils/notificationEvents';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 export type UserRole = 'Car Owner' | 'Service Provider' | 'Admin';
@@ -959,6 +960,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const answerQuestion = useCallback(
     (questionId: number, content: string) => {
       if (!state || !currentUser) return;
+      const question = state.questions.find((candidate) => candidate.id === questionId);
       const newAnswer: Answer = {
         id: Date.now(),
         questionId,
@@ -974,6 +976,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isAccepted: false,
       };
       save({ ...state, answers: [...state.answers, newAnswer] });
+      if (question && question.userId !== currentUser.id) {
+        emitNotificationEvent({
+          recipientId: question.userId,
+          notificationType: 'new_answers',
+          title: 'New answer to your question',
+          body: `${currentUser.name} answered “${question.title}”.`,
+          data: { questionId },
+          dedupeKey: `answer:${newAnswer.id}`,
+        });
+      }
     },
     [state, currentUser, save],
   );
@@ -1015,6 +1027,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addComment = useCallback(
     (parentId: number, isAnswer: boolean, content: string) => {
       if (!state || !currentUser) return;
+      const answer = isAnswer ? state.answers.find((candidate) => candidate.id === parentId) : undefined;
+      const question = state.questions.find((candidate) => candidate.id === (answer?.questionId ?? parentId));
       const newComment: Comment = {
         id: Date.now(),
         questionOrAnswerId: parentId,
@@ -1025,6 +1039,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         timestamp: Date.now(),
       };
       save({ ...state, comments: [...state.comments, newComment] });
+      if (question && question.userId !== currentUser.id) {
+        emitNotificationEvent({
+          recipientId: question.userId,
+          notificationType: 'comments_replies',
+          title: 'New comment on your question',
+          body: `${currentUser.name} added a comment to “${question.title}”.`,
+          data: { questionId: question.id },
+          dedupeKey: `comment:${newComment.id}`,
+        });
+      }
     },
     [state, currentUser, save],
   );
@@ -1083,6 +1107,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addDiscussionComment = useCallback(
     (postId: number, content: string) => {
       if (!state || !currentUser) return;
+      const post = (state.discussions ?? []).find((candidate) => candidate.id === postId);
       const newComment: DiscussionComment = {
         id: Date.now(),
         postId,
@@ -1092,6 +1117,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         timestamp: Date.now(),
       };
       save({ ...state, discussionComments: [...(state.discussionComments ?? []), newComment] });
+      if (post && post.userId !== currentUser.id) {
+        emitNotificationEvent({
+          recipientId: post.userId,
+          notificationType: 'comments_replies',
+          title: 'New reply to your discussion',
+          body: `${currentUser.name} replied to “${post.title}”.`,
+          data: { discussionId: postId },
+          dedupeKey: `discussion-comment:${newComment.id}`,
+        });
+      }
     },
     [state, currentUser, save],
   );
@@ -1132,13 +1167,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const approveListing = useCallback(
     (id: number, approved: boolean) => {
-      if (!state) return;
+      if (!state || !currentUser) return;
+      const listing = state.listings.find((candidate) => candidate.id === id);
       save({
         ...state,
         listings: state.listings.map((l) => (l.id === id ? { ...l, isApproved: approved } : l)),
       });
+      if (listing && listing.userId !== currentUser.id) {
+        emitNotificationEvent({
+          recipientId: listing.userId,
+          notificationType: 'marketplace_updates',
+          title: approved ? 'Listing approved' : 'Listing needs attention',
+          body: approved
+            ? `Your listing “${listing.title}” is now live in the marketplace.`
+            : `Your listing “${listing.title}” was not approved.`,
+          data: { listingId: id },
+          dedupeKey: `listing-approval:${id}:${approved}`,
+        });
+      }
     },
-    [state, save],
+    [state, currentUser, save],
   );
 
   const featureListing = useCallback(
@@ -1183,13 +1231,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const toggleVerified = useCallback(
     (userId: string, verified: boolean) => {
-      if (!state) return;
+      if (!state || !currentUser) return;
       save({
         ...state,
         users: state.users.map((u) => (u.id === userId ? { ...u, verified } : u)),
       });
+      if (userId !== currentUser.id) {
+        emitNotificationEvent({
+          recipientId: userId,
+          notificationType: 'provider_updates',
+          title: verified ? 'Provider profile verified' : 'Provider verification updated',
+          body: verified
+            ? 'Your CocheTalk service provider profile is now verified.'
+            : 'Your service provider verification status has been updated.',
+          data: { screen: 'profile' },
+          dedupeKey: `provider-verification:${userId}:${verified}`,
+        });
+      }
     },
-    [state, save],
+    [state, currentUser, save],
   );
 
   const banUser = useCallback(
@@ -1261,6 +1321,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         conversations: existingConv
           ? state.conversations.map((c) => (c.id === cid ? updatedConv : c))
           : [...state.conversations, updatedConv],
+      });
+      emitNotificationEvent({
+        recipientId: toUserId,
+        notificationType: 'new_messages',
+        title: `New message from ${currentUser.name}`,
+        body: content,
+        data: { conversationId: cid },
+        dedupeKey: `message:${newMsg.id}`,
       });
     },
     [state, currentUser, save],

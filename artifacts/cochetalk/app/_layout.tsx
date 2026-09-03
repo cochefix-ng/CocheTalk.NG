@@ -23,6 +23,7 @@ import { CommunityLoader } from '@/components/CommunityLoader';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AppProvider, getAnalyticsPageName } from '@/context/AppContext';
 import { useApp } from '@/context/AppContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 
 if (process.env.EXPO_PUBLIC_DOMAIN) {
   setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
@@ -138,6 +139,8 @@ function RootLayoutNav() {
       <Stack.Screen name="conversation/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="listing/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="discussion/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications/settings" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -176,16 +179,18 @@ export default function RootLayout() {
             <AppProvider>
               <AnalyticsTracker />
               <AuthSessionBridge>
-                <QueryClientProvider client={queryClient}>
-                  <GestureHandlerRootView>
-                    <KeyboardProvider>
-                      <RootLayoutNav />
-                      {showLoader && (
-                        <CommunityLoader onFinished={() => setShowLoader(false)} />
-                      )}
-                    </KeyboardProvider>
-                  </GestureHandlerRootView>
-                </QueryClientProvider>
+                <NotificationProvider>
+                  <QueryClientProvider client={queryClient}>
+                    <GestureHandlerRootView>
+                      <KeyboardProvider>
+                        <RootLayoutNav />
+                        {showLoader && (
+                          <CommunityLoader onFinished={() => setShowLoader(false)} />
+                        )}
+                      </KeyboardProvider>
+                    </GestureHandlerRootView>
+                  </QueryClientProvider>
+                </NotificationProvider>
               </AuthSessionBridge>
             </AppProvider>
           </ErrorBoundary>

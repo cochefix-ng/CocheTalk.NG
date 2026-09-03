@@ -1,0 +1,671 @@
+Implement a complete production-ready push notification system for the CocheTalk.NG mobile app.
+
+IMPORTANT: Do not redesign the existing UI or break existing functionality. First inspect the existing codebase, authentication, database structure, user roles, notification-related components, and API architecture. Reuse the existing architecture where possible.
+
+## 1. Push Notification Infrastructure
+
+Implement real push notifications for the Expo/React Native Android application.
+
+Use an appropriate production-ready Expo push notification architecture.
+
+The system must:
+
+* Register each user's device for push notifications after login.
+* Store the user's push notification token securely in the backend/database.
+* Support Android push notifications when the app is:
+
+  * Open
+  * In the background
+  * Completely closed
+* Handle notification permissions correctly.
+* Handle invalid/expired push tokens.
+* Prevent duplicate device tokens.
+* Allow a user to have multiple devices.
+* Remove/deactivate tokens when appropriate.
+* Never expose server-side secrets or API keys in the mobile application.
+
+Do not use AsyncStorage as the source of truth for notification preferences or notification permissions. Local storage may only be used for appropriate device-level caching.
+
+---
+
+# 2. Notification Categories
+
+Create separate notification settings for the following categories:
+
+1. New Answers
+
+   * Notify a user when someone answers their question.
+
+2. Comments & Replies
+
+   * Notify a user when someone comments on or replies to their content.
+
+3. New Messages
+
+   * Notify a user when they receive a new message.
+
+4. Marketplace Updates
+
+   * Notify users about relevant marketplace activity, such as listing approval/rejection or important listing updates.
+
+5. Provider Updates
+
+   * Notify service providers about relevant account/provider activity, such as verification status.
+
+6. Announcements
+
+   * Allow administrators to send important platform-wide announcements.
+
+7. System Notifications
+
+   * Important security/account/system notifications.
+   * These should not be treated as ordinary marketing notifications.
+
+Keep the notification categories configurable so additional categories can be added later without restructuring the entire system.
+
+---
+
+# 3. User Notification Settings
+
+Create/update the user's Settings → Notifications screen.
+
+Show each notification category with an ON/OFF toggle.
+
+Example:
+
+Notifications
+
+New Answers                    ON
+Comments & Replies             ON
+New Messages                   ON
+Marketplace Updates            ON
+Provider Updates               ON
+Announcements                  ON
+System Notifications           ON
+
+IMPORTANT:
+
+ALL USER NOTIFICATION SETTINGS MUST BE ON BY DEFAULT FOR NEW USERS.
+
+When a new user registers, their notification preferences should automatically be created with all applicable settings enabled.
+
+Do not require the user to manually enable each setting.
+
+---
+
+# 4. Admin Global Notification Controls
+
+Create notification controls inside the Admin Dashboard.
+
+The Admin must be able to centrally control whether each notification category is available to users.
+
+Example:
+
+GLOBAL NOTIFICATION SETTINGS
+
+New Answers                    ON
+Comments & Replies             ON
+New Messages                   ON
+Marketplace Updates            ON
+Provider Updates               ON
+Announcements                  ON
+System Notifications           ON
+
+Each setting should have an ON/OFF control.
+
+The Admin setting represents the GLOBAL availability of that notification category.
+
+---
+
+# 5. IMPORTANT: Admin Setting Overrides User Setting
+
+Implement the following hierarchy:
+
+ADMIN GLOBAL SETTING
+↓
+USER NOTIFICATION SETTING
+↓
+SEND NOTIFICATION
+
+The Admin setting always takes priority.
+
+### Scenario 1 — Admin ON
+
+If:
+
+Admin = ON
+User = ON
+
+→ Send notification.
+
+If:
+
+Admin = ON
+User = OFF
+
+→ Do NOT send notification.
+
+The user is allowed to turn the notification back ON.
+
+---
+
+### Scenario 2 — Admin OFF
+
+If:
+
+Admin = OFF
+User = ON
+
+→ Do NOT send notification.
+
+If:
+
+Admin = OFF
+User = OFF
+
+→ Do NOT send notification.
+
+The user MUST NOT be able to turn the notification ON while the Admin has globally disabled it.
+
+---
+
+# 6. User Interface Behaviour When Admin Disables a Category
+
+If the Admin disables a notification category globally, reflect this clearly in the user's Settings → Notifications screen.
+
+For example:
+
+New Answers
+[ OFF / DISABLED ]
+
+"Disabled by CocheTalk administrators"
+
+The toggle should be disabled/locked.
+
+The user must not be able to override the Admin setting.
+
+Do not simply hide the setting from the user. Prefer showing the setting as disabled so the user understands why they cannot enable it.
+
+Example:
+
+New Answers                 🔒 OFF
+Disabled by administrator
+
+Comments & Replies          ON
+
+New Messages                ON
+
+---
+
+# 7. If Admin Re-enables a Category
+
+When the Admin changes:
+
+New Answers = OFF
+
+to:
+
+New Answers = ON
+
+the notification category becomes available to users again.
+
+However, respect the user's previously selected preference.
+
+Example:
+
+Before Admin disabled it:
+
+User preference = OFF
+
+Admin = OFF
+
+After Admin changes to:
+
+Admin = ON
+
+The user's setting should remain:
+
+User = OFF
+
+Therefore:
+
+→ Do not send notifications until the user chooses ON.
+
+Do NOT automatically change the user's personal preference when the Admin temporarily disables a category.
+
+This preserves the user's preference.
+
+---
+
+# 8. Effective Notification Logic
+
+Every notification must pass through a centralized notification service/function before being sent.
+
+Create a single source of truth for this logic.
+
+Conceptually:
+
+canSendNotification(user, notificationType)
+
+should check:
+
+1. Does the notification category exist?
+2. Is the Admin global setting enabled?
+3. Is the user's personal setting enabled?
+4. Does the user have a valid push token?
+5. Does the notification meet any required business rules?
+
+Only then send the notification.
+
+The logic must be enforced SERVER-SIDE.
+
+Do not rely on frontend toggles to enforce notification restrictions.
+
+---
+
+# 9. Database Structure
+
+Inspect the existing database/schema and implement appropriate tables.
+
+At minimum, create/modify structures similar to:
+
+### notification_preferences
+
+* id
+* user_id
+* new_answers_enabled
+* comments_replies_enabled
+* new_messages_enabled
+* marketplace_updates_enabled
+* provider_updates_enabled
+* announcements_enabled
+* system_notifications_enabled
+* created_at
+* updated_at
+
+All applicable notification fields should default to TRUE.
+
+---
+
+### notification_global_settings
+
+* id
+* notification_type
+* enabled
+* updated_at
+* updated_by
+* updated_at
+
+The database must enforce the global Admin configuration.
+
+---
+
+### push_tokens
+
+* id
+* user_id
+* token
+* platform
+* device_identifier if appropriate
+* is_active
+* created_at
+* updated_at
+* last_used_at
+
+Support multiple devices per user.
+
+---
+
+### notifications
+
+Create a persistent notification record containing appropriate fields such as:
+
+* id
+* user_id
+* notification_type
+* title
+* body
+* data/payload
+* read/unread status
+* created_at
+* sent_at
+* delivery status where practical
+
+This will allow the application to eventually have an in-app notification centre as well as push notifications.
+
+---
+
+# 10. In-App Notification Centre
+
+If the existing application already has a notification UI, connect it to the backend.
+
+If it does not, create a simple notification centre accessible from the existing app navigation/settings without redesigning the overall application.
+
+Users should be able to:
+
+* View notifications
+* See unread notifications
+* Mark notifications as read
+* Mark all as read
+* Tap a notification and navigate to the relevant content
+
+Push notifications and in-app notifications should use the same underlying notification records.
+
+---
+
+# 11. Notification Triggers
+
+Connect notifications to actual CocheTalk events.
+
+Implement at minimum:
+
+### Forum
+
+When User A answers User B's question:
+
+→ User B receives "New Answer" notification.
+
+When someone comments/replies:
+
+→ Relevant user receives "Comments & Replies" notification.
+
+Do not notify users about their own actions.
+
+---
+
+### Messaging
+
+When User A sends a message to User B:
+
+→ User B receives "New Message" notification.
+
+Do not send a notification to the sender for their own message.
+
+---
+
+### Marketplace
+
+When Admin approves/rejects a listing:
+
+→ Seller receives "Marketplace Update".
+
+When an important marketplace event occurs:
+
+→ Send the appropriate marketplace notification.
+
+---
+
+### Provider
+
+When a provider's verification status changes:
+
+→ Notify the provider.
+
+---
+
+### Announcements
+
+Allow Admin to create a platform-wide announcement.
+
+The Admin should be able to select:
+
+* Notification title
+* Notification message
+* Optional destination/screen
+* Optional audience if supported
+
+Announcements must respect the global Announcement setting and the user's Announcement preference.
+
+---
+
+# 12. Notification Preferences API
+
+Create secure backend endpoints for:
+
+* Get notification preferences
+* Update notification preferences
+* Register push token
+* Remove/deactivate push token
+* Get notifications
+* Mark notification as read
+* Mark all notifications as read
+
+User endpoints must only allow users to modify their own preferences.
+
+Admin endpoints must require Admin authorization.
+
+---
+
+# 13. Admin UI
+
+Add a section such as:
+
+Admin Dashboard
+→ Settings
+→ Notifications
+
+Display:
+
+GLOBAL NOTIFICATION CONTROLS
+
+New Answers
+[ ON ]
+
+Comments & Replies
+[ ON ]
+
+New Messages
+[ ON ]
+
+Marketplace Updates
+[ ON ]
+
+Provider Updates
+[ ON ]
+
+Announcements
+[ ON ]
+
+System Notifications
+[ ON ]
+
+Add a confirmation before disabling a category, especially for important notification types.
+
+Example:
+
+"Disabling New Answers will prevent users from receiving push notifications when someone answers their questions."
+
+Confirm / Cancel
+
+---
+
+# 14. Admin Audit Trail
+
+Whenever an Admin changes a global notification setting, record:
+
+* Admin user
+* notification category
+* previous value
+* new value
+* timestamp
+
+This will make it possible to know who disabled/enabled a notification category.
+
+---
+
+# 15. Default Behaviour
+
+For all NEW USERS:
+
+New Answers = ON
+Comments & Replies = ON
+New Messages = ON
+Marketplace Updates = ON
+Provider Updates = ON
+Announcements = ON
+System Notifications = ON
+
+For existing users:
+
+Do not overwrite existing preferences if they already exist.
+
+Create default preferences only where a user does not yet have notification preferences.
+
+---
+
+# 16. Permission Handling
+
+When a user logs into the Android app:
+
+1. Check notification permission.
+2. Request permission where appropriate.
+3. Register the device push token.
+4. Store/update the token on the backend.
+5. Respect the user's device-level notification permission.
+6. Respect Admin global settings.
+7. Respect the user's individual notification settings.
+
+Important:
+
+Device notification permission is separate from CocheTalk notification preferences.
+
+The notification can only be sent when BOTH the device/app permission and the effective CocheTalk notification setting allow it.
+
+---
+
+# 17. Error Handling
+
+Handle:
+
+* Notification permission denied
+* Invalid push token
+* Expired push token
+* User has no registered device
+* Admin has disabled category
+* User has disabled category
+* Push service failure
+* Network failure
+* Duplicate notification
+* App opened from notification
+* Notification received while app is open
+
+The app should fail gracefully without crashing.
+
+---
+
+# 18. Security
+
+Do NOT allow a normal user to manipulate:
+
+* Admin global notification settings
+* Other users' preferences
+* Other users' push tokens
+* Notification records belonging to other users
+
+Admin settings must be protected by backend role/permission checks.
+
+Do not rely on hiding Admin UI elements as the security mechanism.
+
+---
+
+# 19. Testing Requirements
+
+Test all combinations.
+
+### Admin ON / User ON
+
+→ Notification sent.
+
+### Admin ON / User OFF
+
+→ Notification NOT sent.
+
+### Admin OFF / User ON
+
+→ Notification NOT sent.
+
+### Admin OFF / User OFF
+
+→ Notification NOT sent.
+
+### Admin OFF → ON
+
+→ User becomes allowed to control the category again.
+
+### User OFF → Admin OFF → Admin ON
+
+→ User remains OFF.
+
+### New user
+
+→ All notification settings default to ON.
+
+### User has multiple devices
+
+→ Notification is sent to active registered devices.
+
+### User disables phone notification permission
+
+→ App handles this gracefully.
+
+---
+
+# 20. Production Requirements
+
+Do not consider this feature complete simply because a notification appears on an emulator/development build.
+
+Verify push notifications on a real Android device using a production/release build.
+
+Configure all required Expo/EAS Android notification credentials and production settings.
+
+Document:
+
+* Push notification architecture
+* Required environment variables
+* Expo/EAS configuration
+* Android credentials
+* Database migrations
+* Notification event triggers
+* Admin controls
+* How to test notifications
+* How to troubleshoot failed notifications
+
+---
+
+# 21. Final Acceptance Criteria
+
+The feature is complete only when:
+
+✓ New users have all applicable notification settings ON by default.
+
+✓ Users can independently turn notification categories ON/OFF.
+
+✓ Admin can globally disable any notification category.
+
+✓ When Admin disables a category, users cannot re-enable it.
+
+✓ Disabled categories are visibly shown as locked/disabled to users.
+
+✓ Admin global settings are enforced server-side.
+
+✓ Re-enabling a category does not overwrite the user's previous preference.
+
+✓ Push notifications work when the app is open, backgrounded and closed.
+
+✓ Notifications are stored in the backend.
+
+✓ Users can view/read notifications inside the app.
+
+✓ Multiple devices are supported.
+
+✓ Invalid tokens are handled.
+
+✓ No API secrets are exposed in the mobile app.
+
+✓ Google/Facebook/Clerk authentication continues to work.
+
+✓ Existing CocheTalk features are not broken.
+
+✓ The feature is tested on a real Android production/release build.
+
+Before making major architectural changes, inspect the existing codebase and explain what you intend to reuse versus what needs to be added. Do not unnecessarily introduce a new backend technology if the existing backend/database architecture can support this feature.

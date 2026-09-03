@@ -30,3 +30,193 @@ export const DiagnoseVehicleResponse = zod.object({
 })
 
 
+/**
+ * @summary Get notification preferences
+ */
+export const GetNotificationPreferencesResponse = zod.object({
+  "preferences": zod.object({
+  "userId": zod.string(),
+  "newAnswersEnabled": zod.boolean(),
+  "commentsRepliesEnabled": zod.boolean(),
+  "newMessagesEnabled": zod.boolean(),
+  "marketplaceUpdatesEnabled": zod.boolean(),
+  "providerUpdatesEnabled": zod.boolean(),
+  "announcementsEnabled": zod.boolean(),
+  "systemNotificationsEnabled": zod.boolean(),
+  "createdAt": zod.coerce.date().optional(),
+  "updatedAt": zod.coerce.date().optional()
+}),
+  "globalSettings": zod.array(zod.object({
+  "notificationType": zod.enum(['new_answers', 'comments_replies', 'new_messages', 'marketplace_updates', 'provider_updates', 'announcements', 'system_notifications']),
+  "label": zod.string(),
+  "enabled": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullish(),
+  "updatedBy": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary Update the current user's notification preferences
+ */
+export const UpdateNotificationPreferencesBody = zod.object({
+  "newAnswersEnabled": zod.boolean().optional(),
+  "commentsRepliesEnabled": zod.boolean().optional(),
+  "newMessagesEnabled": zod.boolean().optional(),
+  "marketplaceUpdatesEnabled": zod.boolean().optional(),
+  "providerUpdatesEnabled": zod.boolean().optional(),
+  "announcementsEnabled": zod.boolean().optional(),
+  "systemNotificationsEnabled": zod.boolean().optional()
+})
+
+export const UpdateNotificationPreferencesResponse = zod.object({
+  "preferences": zod.object({
+  "userId": zod.string(),
+  "newAnswersEnabled": zod.boolean(),
+  "commentsRepliesEnabled": zod.boolean(),
+  "newMessagesEnabled": zod.boolean(),
+  "marketplaceUpdatesEnabled": zod.boolean(),
+  "providerUpdatesEnabled": zod.boolean(),
+  "announcementsEnabled": zod.boolean(),
+  "systemNotificationsEnabled": zod.boolean(),
+  "createdAt": zod.coerce.date().optional(),
+  "updatedAt": zod.coerce.date().optional()
+})
+})
+
+
+/**
+ * @summary Register or reactivate a device push token
+ */
+export const RegisterNotificationPushTokenBody = zod.object({
+  "token": zod.string(),
+  "platform": zod.string(),
+  "deviceIdentifier": zod.string().nullish()
+})
+
+
+/**
+ * @summary Deactivate a device push token
+ */
+export const DeactivateNotificationPushTokenBody = zod.object({
+  "token": zod.string().optional()
+})
+
+
+/**
+ * @summary List the current user's in-app notifications
+ */
+export const listNotificationsQueryLimitMax = 100;
+
+
+
+export const ListNotificationsQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(listNotificationsQueryLimitMax).optional()
+})
+
+export const ListNotificationsResponse = zod.object({
+  "notifications": zod.array(zod.object({
+  "id": zod.number(),
+  "userId": zod.string(),
+  "notificationType": zod.enum(['new_answers', 'comments_replies', 'new_messages', 'marketplace_updates', 'provider_updates', 'announcements', 'system_notifications']),
+  "title": zod.string(),
+  "body": zod.string(),
+  "data": zod.record(zod.string(), zod.unknown()),
+  "isRead": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "sentAt": zod.coerce.date().nullish(),
+  "deliveryStatus": zod.string()
+}))
+})
+
+
+/**
+ * @summary Mark one notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Get global notification availability settings
+ */
+export const GetGlobalNotificationSettingsResponse = zod.object({
+  "settings": zod.array(zod.object({
+  "notificationType": zod.enum(['new_answers', 'comments_replies', 'new_messages', 'marketplace_updates', 'provider_updates', 'announcements', 'system_notifications']),
+  "label": zod.string(),
+  "enabled": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullish(),
+  "updatedBy": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary Update global notification availability
+ */
+export const UpdateGlobalNotificationSettingParams = zod.object({
+  "type": zod.enum(['new_answers', 'comments_replies', 'new_messages', 'marketplace_updates', 'provider_updates', 'announcements', 'system_notifications'])
+})
+
+export const UpdateGlobalNotificationSettingBody = zod.object({
+  "enabled": zod.boolean()
+})
+
+export const UpdateGlobalNotificationSettingResponse = zod.object({
+  "setting": zod.object({
+  "notificationType": zod.enum(['new_answers', 'comments_replies', 'new_messages', 'marketplace_updates', 'provider_updates', 'announcements', 'system_notifications']),
+  "label": zod.string(),
+  "enabled": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullish(),
+  "updatedBy": zod.string().nullish()
+})
+})
+
+
+/**
+ * @summary List notification category changes
+ */
+export const listNotificationAuditLogQueryLimitMax = 100;
+
+
+
+export const ListNotificationAuditLogQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(listNotificationAuditLogQueryLimitMax).optional()
+})
+
+export const ListNotificationAuditLogResponse = zod.object({
+  "auditLog": zod.array(zod.object({
+  "id": zod.number(),
+  "adminUserId": zod.string(),
+  "notificationType": zod.enum(['new_answers', 'comments_replies', 'new_messages', 'marketplace_updates', 'provider_updates', 'announcements', 'system_notifications']),
+  "previousValue": zod.boolean(),
+  "newValue": zod.boolean(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Send a platform-wide announcement
+ */
+export const SendNotificationAnnouncementBody = zod.object({
+  "title": zod.string(),
+  "body": zod.string(),
+  "screen": zod.string().optional()
+})
+
+
+/**
+ * @summary Create a notification from an authenticated app event
+ */
+export const CreateNotificationEventBody = zod.object({
+  "recipientId": zod.string(),
+  "notificationType": zod.enum(['new_answers', 'comments_replies', 'new_messages', 'marketplace_updates', 'provider_updates']),
+  "title": zod.string(),
+  "body": zod.string(),
+  "data": zod.record(zod.string(), zod.unknown()).optional(),
+  "dedupeKey": zod.string().optional()
+})
+
+

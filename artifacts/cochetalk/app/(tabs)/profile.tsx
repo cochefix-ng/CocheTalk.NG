@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -20,7 +21,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useApp } from '@/context/AppContext';
 import type { AnalyticsState, User, UserRole } from '@/context/AppContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { useColors } from '@/hooks/useColors';
+import { updateGlobalNotificationSetting, type NotificationType } from '@workspace/api-client-react';
 import {
   exportActivitiesReport,
   exportAnalyticsReport,
@@ -53,6 +56,78 @@ function formatMetric(value: number) {
 function formatAnalyticsDate(timestamp: number) {
   if (!timestamp) return 'No visits yet';
   return new Date(timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function NotificationAdminControls({ colors }: { colors: ReturnType<typeof useColors> }) {
+  const { globalSettings, refresh } = useNotifications();
+  const [savingType, setSavingType] = useState<string | null>(null);
+
+  const toggleGlobalSetting = (type: string, enabled: boolean, label: string) => {
+    Alert.alert(
+      enabled ? `Disable ${label}?` : `Enable ${label}?`,
+      enabled
+        ? 'Users will not receive this category while it is disabled. Their personal choices will be preserved.'
+        : 'Users who previously enabled this category will receive it again.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: enabled ? 'Disable' : 'Enable',
+          style: enabled ? 'destructive' : 'default',
+          onPress: async () => {
+            setSavingType(type);
+            try {
+              await updateGlobalNotificationSetting(type as NotificationType, { enabled: !enabled });
+              await refresh();
+            } catch {
+              Alert.alert('Could not update', 'The server rejected this admin setting. Check the trusted admin configuration.');
+            } finally {
+              setSavingType(null);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  return (
+    <View style={[styles.notificationAdminCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={styles.notificationAdminTitleRow}>
+        <View style={[styles.notificationAdminIcon, { backgroundColor: colors.destructive + '18' }]}>
+          <Feather name="bell" size={15} color={colors.destructive} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.notificationAdminTitle, { color: colors.foreground }]}>Global notifications</Text>
+          <Text style={[styles.notificationAdminSubtitle, { color: colors.mutedForeground }]}>
+            Temporarily pause a category for everyone
+          </Text>
+        </View>
+      </View>
+      {globalSettings.map((setting) => (
+        <View key={setting.notificationType} style={[styles.notificationAdminRow, { borderTopColor: colors.border }]}>
+          <Text style={[styles.notificationAdminLabel, { color: colors.foreground }]}>{setting.label}</Text>
+          <TouchableOpacity
+            disabled={savingType === setting.notificationType}
+            onPress={() => toggleGlobalSetting(setting.notificationType, setting.enabled, setting.label)}
+            style={[
+              styles.notificationAdminToggle,
+              { backgroundColor: setting.enabled ? colors.primary + '18' : colors.muted, borderColor: setting.enabled ? colors.primary + '55' : colors.border },
+            ]}
+          >
+            {savingType === setting.notificationType ? (
+              <Text style={[styles.notificationAdminToggleText, { color: colors.mutedForeground }]}>Saving…</Text>
+            ) : (
+              <>
+                <View style={[styles.notificationAdminDot, { backgroundColor: setting.enabled ? colors.primary : colors.mutedForeground }]} />
+                <Text style={[styles.notificationAdminToggleText, { color: setting.enabled ? colors.primary : colors.mutedForeground }]}>
+                  {setting.enabled ? 'On' : 'Off'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      ))}
+    </View>
+  );
 }
 
 function AnalyticsDashboard({
@@ -337,6 +412,7 @@ export default function ProfileScreen() {
   const colors = useColors();
   const handleScroll = useTabBarScrollHandler();
   const { users, currentUser, login, logout, questions, answers, comments, discussions, discussionComments, listings, ratings, messages, analytics, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser, editProfile, adminToggleWhatsApp } = useApp();
+  const { unreadCount: notificationUnreadCount } = useNotifications();
 
   const [showSwitchModal, setShowSwitchModal] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms' | 'export'>('users');
@@ -582,8 +658,18 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Feather name="user" size={18} color={colors.primary} />
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Profile</Text>
+        <View style={styles.headerTitleRow}>
+          <Feather name="user" size={18} color={colors.primary} />
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Profile</Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.headerAction} accessibilityLabel="Notifications">
+          <Feather name="bell" size={19} color={colors.foreground} />
+          {notificationUnreadCount > 0 && (
+            <View style={[styles.headerUnreadBadge, { backgroundColor: colors.destructive }]}>
+              <Text style={styles.headerUnreadText}>{notificationUnreadCount > 9 ? '9+' : notificationUnreadCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -680,6 +766,20 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         )}
 
+        <TouchableOpacity
+          style={[styles.actionBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+          onPress={() => router.push('/notifications/settings')}
+        >
+          <Feather name="bell" size={16} color={colors.foreground} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Notification Settings</Text>
+            <Text style={[styles.notificationSettingsSub, { color: colors.mutedForeground }]}>
+              {notificationUnreadCount > 0 ? `${notificationUnreadCount} unread notification${notificationUnreadCount === 1 ? '' : 's'}` : 'Manage alerts and push notifications'}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        </TouchableOpacity>
+
         <View style={styles.statsRow}>
           {[
             { label: 'Questions', value: userQuestions.length, icon: 'message-square' },
@@ -717,6 +817,8 @@ export default function ProfileScreen() {
               <Feather name="shield" size={16} color={colors.destructive} />
               <Text style={[styles.adminTitle, { color: colors.destructive }]}>Admin Panel</Text>
             </View>
+
+            <NotificationAdminControls colors={colors} />
 
             <View style={styles.analytics}>
               {[
@@ -1489,7 +1591,11 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
+  headerTitleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
+  headerAction: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  headerUnreadBadge: { position: 'absolute', top: 1, right: 0, minWidth: 15, height: 15, borderRadius: 8, paddingHorizontal: 3, alignItems: 'center', justifyContent: 'center' },
+  headerUnreadText: { color: '#fff', fontSize: 8, fontWeight: '800' },
   guestContent: { paddingHorizontal: 16, paddingTop: 20 },
   guestCard: { borderRadius: 12, borderWidth: 1, padding: 20, alignItems: 'center', gap: 10, marginBottom: 24 },
   guestAvatar: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
@@ -1517,7 +1623,18 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 11 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 10, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 13, marginBottom: 8 },
   actionBtnText: { flex: 1, fontSize: 14, fontWeight: '600' },
+  notificationSettingsSub: { fontSize: 11, marginTop: 2 },
   actionChevron: { marginLeft: 'auto' },
+  notificationAdminCard: { borderRadius: 10, borderWidth: 1, padding: 12, marginBottom: 14 },
+  notificationAdminTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 8 },
+  notificationAdminIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  notificationAdminTitle: { fontSize: 13, fontWeight: '700' },
+  notificationAdminSubtitle: { fontSize: 10, marginTop: 2 },
+  notificationAdminRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, paddingVertical: 9 },
+  notificationAdminLabel: { flex: 1, fontSize: 12, fontWeight: '600' },
+  notificationAdminToggle: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5 },
+  notificationAdminDot: { width: 7, height: 7, borderRadius: 4 },
+  notificationAdminToggleText: { fontSize: 10, fontWeight: '700' },
   adminSection: { marginTop: 12 },
   adminHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 14, borderBottomWidth: 1, marginBottom: 14 },
   adminTitle: { fontSize: 16, fontWeight: '700' },

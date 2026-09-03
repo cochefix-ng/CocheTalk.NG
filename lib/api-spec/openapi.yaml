@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: diagnose
     description: AI vehicle diagnostics
+  - name: notifications
+    description: User notification preferences, push tokens, and in-app notifications
 paths:
   /healthz:
     get:
@@ -45,7 +47,266 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DiagnoseResponse"
+  /notifications/preferences:
+    get:
+      operationId: getNotificationPreferences
+      tags: [notifications]
+      summary: Get notification preferences
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Notification preferences and global availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPreferencesResponse"
+    patch:
+      operationId: updateNotificationPreferences
+      tags: [notifications]
+      summary: Update the current user's notification preferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationPreferencesUpdate"
+      responses:
+        "200":
+          description: Updated preferences
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [preferences]
+                properties:
+                  preferences:
+                    $ref: "#/components/schemas/NotificationPreferences"
+  /notifications/push-tokens:
+    post:
+      operationId: registerNotificationPushToken
+      tags: [notifications]
+      summary: Register or reactivate a device push token
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushTokenRegistration"
+      responses:
+        "201":
+          description: Registered push token
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pushToken]
+                properties:
+                  pushToken:
+                    $ref: "#/components/schemas/PushToken"
+    delete:
+      operationId: deactivateNotificationPushToken
+      tags: [notifications]
+      summary: Deactivate a device push token
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+              schema:
+                $ref: "#/components/schemas/DeactivateNotificationPushTokenRequest"
+      responses:
+        "204":
+          description: Token deactivated
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List the current user's in-app notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: User notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [notifications]
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark one notification as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Notification marked as read
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Notifications marked as read
+  /notifications/admin/global:
+    get:
+      operationId: getGlobalNotificationSettings
+      tags: [notifications]
+      summary: Get global notification availability settings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Global settings
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [settings]
+                properties:
+                  settings:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NotificationGlobalSetting"
+  /notifications/admin/global/{type}:
+    patch:
+      operationId: updateGlobalNotificationSetting
+      tags: [notifications]
+      summary: Update global notification availability
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/NotificationType"
+      requestBody:
+        required: true
+        content:
+          application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateGlobalNotificationSettingRequest"
+      responses:
+        "200":
+          description: Updated global setting
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [setting]
+                properties:
+                  setting:
+                    $ref: "#/components/schemas/NotificationGlobalSetting"
+  /notifications/admin/audit:
+    get:
+      operationId: listNotificationAuditLog
+      tags: [notifications]
+      summary: List notification category changes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Notification audit log
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [auditLog]
+                properties:
+                  auditLog:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NotificationAuditLogEntry"
+  /notifications/admin/announcements:
+    post:
+      operationId: sendNotificationAnnouncement
+      tags: [notifications]
+      summary: Send a platform-wide announcement
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementRequest"
+      responses:
+        "201":
+          description: Announcement queued for recipients
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [recipients, sent]
+                properties:
+                  recipients:
+                    type: integer
+                  sent:
+                    type: integer
+  /notifications/events:
+    post:
+      operationId: createNotificationEvent
+      tags: [notifications]
+      summary: Create a notification from an authenticated app event
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationEventRequest"
+      responses:
+        "202":
+          description: Event evaluated and notification queued when allowed
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     HealthStatus:
       type: object
@@ -68,3 +329,210 @@ components:
           type: string
       required:
         - result
+    NotificationType:
+      type: string
+      enum:
+        - new_answers
+        - comments_replies
+        - new_messages
+        - marketplace_updates
+        - provider_updates
+        - announcements
+        - system_notifications
+    NotificationPreferences:
+      type: object
+      required:
+        - userId
+        - newAnswersEnabled
+        - commentsRepliesEnabled
+        - newMessagesEnabled
+        - marketplaceUpdatesEnabled
+        - providerUpdatesEnabled
+        - announcementsEnabled
+        - systemNotificationsEnabled
+      properties:
+        userId:
+          type: string
+        newAnswersEnabled:
+          type: boolean
+        commentsRepliesEnabled:
+          type: boolean
+        newMessagesEnabled:
+          type: boolean
+        marketplaceUpdatesEnabled:
+          type: boolean
+        providerUpdatesEnabled:
+          type: boolean
+        announcementsEnabled:
+          type: boolean
+        systemNotificationsEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    NotificationGlobalSetting:
+      type: object
+      required: [notificationType, label, enabled]
+      properties:
+        notificationType:
+          $ref: "#/components/schemas/NotificationType"
+        label:
+          type: string
+        enabled:
+          type: boolean
+        updatedAt:
+          type: [string, "null"]
+          format: date-time
+        updatedBy:
+          type: [string, "null"]
+    NotificationPreferencesUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        newAnswersEnabled:
+          type: boolean
+        commentsRepliesEnabled:
+          type: boolean
+        newMessagesEnabled:
+          type: boolean
+        marketplaceUpdatesEnabled:
+          type: boolean
+        providerUpdatesEnabled:
+          type: boolean
+        announcementsEnabled:
+          type: boolean
+        systemNotificationsEnabled:
+          type: boolean
+    PushTokenRegistration:
+      type: object
+      required: [token, platform]
+      properties:
+        token:
+          type: string
+        platform:
+          type: string
+        deviceIdentifier:
+          type: [string, "null"]
+    DeactivateNotificationPushTokenRequest:
+      type: object
+      properties:
+        token:
+          type: string
+    UpdateGlobalNotificationSettingRequest:
+      type: object
+      required: [enabled]
+      properties:
+        enabled:
+          type: boolean
+    PushToken:
+      type: object
+      required: [id, token, platform, isActive]
+      properties:
+        id:
+          type: integer
+        token:
+          type: string
+        platform:
+          type: string
+        isActive:
+          type: boolean
+    NotificationPreferencesResponse:
+      type: object
+      required: [preferences, globalSettings]
+      properties:
+        preferences:
+          $ref: "#/components/schemas/NotificationPreferences"
+        globalSettings:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationGlobalSetting"
+    Notification:
+      type: object
+      required:
+        - id
+        - userId
+        - notificationType
+        - title
+        - body
+        - data
+        - isRead
+        - createdAt
+        - deliveryStatus
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        notificationType:
+          $ref: "#/components/schemas/NotificationType"
+        title:
+          type: string
+        body:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: [string, "null"]
+          format: date-time
+        deliveryStatus:
+          type: string
+    NotificationAuditLogEntry:
+      type: object
+      required: [id, adminUserId, notificationType, previousValue, newValue, createdAt]
+      properties:
+        id:
+          type: integer
+        adminUserId:
+          type: string
+        notificationType:
+          $ref: "#/components/schemas/NotificationType"
+        previousValue:
+          type: boolean
+        newValue:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    AnnouncementRequest:
+      type: object
+      required: [title, body]
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        screen:
+          type: string
+    NotificationEventRequest:
+      type: object
+      required: [recipientId, notificationType, title, body]
+      properties:
+        recipientId:
+          type: string
+        notificationType:
+          type: string
+          enum:
+            - new_answers
+            - comments_replies
+            - new_messages
+            - marketplace_updates
+            - provider_updates
+        title:
+          type: string
+        body:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        dedupeKey:
+          type: string

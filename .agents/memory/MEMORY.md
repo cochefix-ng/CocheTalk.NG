@@ -1,2 +1,3 @@
 - [Managed Clerk social providers](clerk-social-providers.md) — Replit-managed Clerk currently supports Google, GitHub, Apple, and X; Facebook needs a separate provider setup.
 - [Animated tab visibility](animated-tab-visibility.md) — Dynamic scroll-driven tab visibility uses the classic React Navigation bar so the animation behaves consistently across supported platforms.
+- [Expo notification web guard](notification-web-guard.md) — Native Expo notification response APIs must be platform-guarded so the web preview does not crash.

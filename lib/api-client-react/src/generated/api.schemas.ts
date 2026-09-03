@@ -17,3 +17,176 @@ export interface DiagnoseResponse {
   result: string;
 }
 
+export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
+
+
+export const NotificationType = {
+  new_answers: 'new_answers',
+  comments_replies: 'comments_replies',
+  new_messages: 'new_messages',
+  marketplace_updates: 'marketplace_updates',
+  provider_updates: 'provider_updates',
+  announcements: 'announcements',
+  system_notifications: 'system_notifications',
+} as const;
+
+export interface NotificationPreferences {
+  userId: string;
+  newAnswersEnabled: boolean;
+  commentsRepliesEnabled: boolean;
+  newMessagesEnabled: boolean;
+  marketplaceUpdatesEnabled: boolean;
+  providerUpdatesEnabled: boolean;
+  announcementsEnabled: boolean;
+  systemNotificationsEnabled: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface NotificationGlobalSetting {
+  notificationType: NotificationType;
+  label: string;
+  enabled: boolean;
+  /** @nullable */
+  updatedAt?: string | null;
+  /** @nullable */
+  updatedBy?: string | null;
+}
+
+export interface NotificationPreferencesUpdate {
+  newAnswersEnabled?: boolean;
+  commentsRepliesEnabled?: boolean;
+  newMessagesEnabled?: boolean;
+  marketplaceUpdatesEnabled?: boolean;
+  providerUpdatesEnabled?: boolean;
+  announcementsEnabled?: boolean;
+  systemNotificationsEnabled?: boolean;
+}
+
+export interface PushTokenRegistration {
+  token: string;
+  platform: string;
+  /** @nullable */
+  deviceIdentifier?: string | null;
+}
+
+export interface DeactivateNotificationPushTokenRequest {
+  token?: string;
+}
+
+export interface UpdateGlobalNotificationSettingRequest {
+  enabled: boolean;
+}
+
+export interface PushToken {
+  id: number;
+  token: string;
+  platform: string;
+  isActive: boolean;
+}
+
+export interface NotificationPreferencesResponse {
+  preferences: NotificationPreferences;
+  globalSettings: NotificationGlobalSetting[];
+}
+
+export type NotificationData = { [key: string]: unknown };
+
+export interface Notification {
+  id: number;
+  userId: string;
+  notificationType: NotificationType;
+  title: string;
+  body: string;
+  data: NotificationData;
+  isRead: boolean;
+  createdAt: string;
+  /** @nullable */
+  sentAt?: string | null;
+  deliveryStatus: string;
+}
+
+export interface NotificationAuditLogEntry {
+  id: number;
+  adminUserId: string;
+  notificationType: NotificationType;
+  previousValue: boolean;
+  newValue: boolean;
+  createdAt: string;
+}
+
+export interface AnnouncementRequest {
+  title: string;
+  body: string;
+  screen?: string;
+}
+
+export type NotificationEventRequestNotificationType = typeof NotificationEventRequestNotificationType[keyof typeof NotificationEventRequestNotificationType];
+
+
+export const NotificationEventRequestNotificationType = {
+  new_answers: 'new_answers',
+  comments_replies: 'comments_replies',
+  new_messages: 'new_messages',
+  marketplace_updates: 'marketplace_updates',
+  provider_updates: 'provider_updates',
+} as const;
+
+export type NotificationEventRequestData = { [key: string]: unknown };
+
+export interface NotificationEventRequest {
+  recipientId: string;
+  notificationType: NotificationEventRequestNotificationType;
+  title: string;
+  body: string;
+  data?: NotificationEventRequestData;
+  dedupeKey?: string;
+}
+
+export type UpdateNotificationPreferences200 = {
+  preferences: NotificationPreferences;
+};
+
+export type RegisterNotificationPushToken201 = {
+  pushToken: PushToken;
+};
+
+export type ListNotificationsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+};
+
+export type ListNotifications200 = {
+  notifications: Notification[];
+};
+
+export type GetGlobalNotificationSettings200 = {
+  settings: NotificationGlobalSetting[];
+};
+
+export type UpdateGlobalNotificationSetting200 = {
+  setting: NotificationGlobalSetting;
+};
+
+export type ListNotificationAuditLogParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+};
+
+export type ListNotificationAuditLog200 = {
+  auditLog: NotificationAuditLogEntry[];
+};
+
+export type SendNotificationAnnouncement201 = {
+  recipients: number;
+  sent: number;
+};
+
+export type CreateNotificationEvent202 = { [key: string]: unknown };
+
