@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
   Alert,
@@ -19,7 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useApp } from '@/context/AppContext';
-import type { User, UserRole } from '@/context/AppContext';
+import type { AnalyticsState, User, UserRole } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import {
   exportActivitiesReport,
@@ -44,10 +44,299 @@ function avgRating(ratings: { ratingValue: number }[]) {
   return ratings.reduce((sum, r) => sum + r.ratingValue, 0) / ratings.length;
 }
 
+type AnalyticsPeriod = 'all' | '30d' | '7d';
+
+function formatMetric(value: number) {
+  return value.toLocaleString();
+}
+
+function formatAnalyticsDate(timestamp: number) {
+  if (!timestamp) return 'No visits yet';
+  return new Date(timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function AnalyticsDashboard({
+  colors,
+  analytics,
+  users,
+  questions,
+  answers,
+  comments,
+  discussions,
+  discussionComments,
+  listings,
+  ratings,
+  messages,
+}: {
+  colors: ReturnType<typeof useColors>;
+  analytics: AnalyticsState;
+  users: User[];
+  questions: ReturnType<typeof useApp>['questions'];
+  answers: ReturnType<typeof useApp>['answers'];
+  comments: ReturnType<typeof useApp>['comments'];
+  discussions: ReturnType<typeof useApp>['discussions'];
+  discussionComments: ReturnType<typeof useApp>['discussionComments'];
+  listings: ReturnType<typeof useApp>['listings'];
+  ratings: ReturnType<typeof useApp>['ratings'];
+  messages: ReturnType<typeof useApp>['messages'];
+}) {
+  const [period, setPeriod] = useState<AnalyticsPeriod>('30d');
+  const colorsForAnalytics = colors;
+
+  const traffic = useMemo(() => {
+    const cutoff = period === 'all' ? 0 : Date.now() - (period === '7d' ? 7 : 30) * 86400000;
+    const pageEvents = analytics.events.filter((event) => event.type === 'page_view' && event.timestamp >= cutoff);
+    const counts = period === 'all'
+      ? Object.entries(analytics.pageVisits)
+      : Object.entries(pageEvents.reduce<Record<string, number>>((acc, event) => {
+          acc[event.page] = (acc[event.page] ?? 0) + 1;
+          return acc;
+        }, {}));
+    const sortedPages = counts.sort(([, a], [, b]) => b - a);
+    return {
+      pageVisits: sortedPages.reduce((sum, [, visits]) => sum + visits, 0),
+      sessions: period === 'all'
+        ? analytics.sessionCount
+        : analytics.events.filter((event) => event.type === 'session_start' && event.timestamp >= cutoff).length,
+      pages: sortedPages,
+      activePages: sortedPages.filter(([, visits]) => visits > 0).length,
+    };
+  }, [analytics, period]);
+
+  const answeredQuestions = questions.filter((question) => answers.some((answer) => answer.questionId === question.id)).length;
+  const acceptedQuestions = questions.filter((question) => question.acceptedAnswerId > 0).length;
+  const verifiedProviders = users.filter((user) => user.role === 'Service Provider' && user.verified).length;
+  const serviceProviders = users.filter((user) => user.role === 'Service Provider').length;
+  const approvedListings = listings.filter((listing) => listing.isApproved).length;
+  const totalListingValue = listings
+    .filter((listing) => listing.isApproved)
+    .reduce((sum, listing) => sum + listing.price, 0);
+  const interactionCount = answers.length + comments.length + discussionComments.length + messages.length + ratings.length;
+  const maxPageVisits = traffic.pages[0]?.[1] ?? 1;
+
+  const roleBreakdown = [
+    { label: 'Car owners', value: users.filter((user) => user.role === 'Car Owner').length, color: colorsForAnalytics.primary },
+    { label: 'Service providers', value: serviceProviders, color: colorsForAnalytics.proCircle },
+    { label: 'Admins', value: users.filter((user) => user.role === 'Admin').length, color: colorsForAnalytics.destructive },
+  ];
+
+  const contributorRows = users
+    .map((user) => ({
+      name: user.name,
+      score:
+        questions.filter((question) => question.userId === user.id).length * 3 +
+        answers.filter((answer) => answer.userId === user.id).length * 2 +
+        listings.filter((listing) => listing.userId === user.id).length,
+    }))
+    .filter((user) => user.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  return (
+    <View style={styles.dashboard}>
+      <View style={styles.dashboardHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.dashboardTitle, { color: colorsForAnalytics.foreground }]}>Platform analytics</Text>
+          <Text style={[styles.dashboardSubtitle, { color: colorsForAnalytics.mutedForeground }]}>
+            Live product health and traffic from this app
+          </Text>
+        </View>
+        <View style={[styles.livePill, { backgroundColor: colorsForAnalytics.success + '18' }]}>
+          <View style={[styles.liveDot, { backgroundColor: colorsForAnalytics.success }]} />
+          <Text style={[styles.livePillText, { color: colorsForAnalytics.success }]}>Live</Text>
+        </View>
+      </View>
+
+      <View style={[styles.periodPicker, { backgroundColor: colorsForAnalytics.muted, borderColor: colorsForAnalytics.border }]}>
+        {([
+          { key: '7d', label: '7 days' },
+          { key: '30d', label: '30 days' },
+          { key: 'all', label: 'All time' },
+        ] as const).map((option) => (
+          <TouchableOpacity
+            key={option.key}
+            style={[
+              styles.periodOption,
+              period === option.key && { backgroundColor: colorsForAnalytics.card, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+            ]}
+            onPress={() => setPeriod(option.key)}
+          >
+            <Text style={[styles.periodOptionText, { color: period === option.key ? colorsForAnalytics.primary : colorsForAnalytics.mutedForeground }]}>
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.dashboardMetricGrid}>
+        {[
+          { label: 'Page visits', value: traffic.pageVisits, icon: 'eye' as const, color: colorsForAnalytics.primary },
+          { label: 'Sessions', value: traffic.sessions, icon: 'activity' as const, color: colorsForAnalytics.proCircle },
+          { label: 'Active pages', value: traffic.activePages, icon: 'layers' as const, color: colorsForAnalytics.success },
+          { label: 'Members', value: users.length, icon: 'users' as const, color: colorsForAnalytics.warning },
+        ].map((metric) => (
+          <View key={metric.label} style={[styles.dashboardMetric, { backgroundColor: metric.color + '12', borderColor: metric.color + '30' }]}>
+            <View style={[styles.metricIcon, { backgroundColor: metric.color + '20' }]}>
+              <Feather name={metric.icon} size={14} color={metric.color} />
+            </View>
+            <Text style={[styles.dashboardMetricValue, { color: metric.color }]}>{formatMetric(metric.value)}</Text>
+            <Text style={[styles.dashboardMetricLabel, { color: colorsForAnalytics.mutedForeground }]}>{metric.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={[styles.dashboardCard, { backgroundColor: colorsForAnalytics.surfaceVariant, borderColor: colorsForAnalytics.border }]}>
+        <View style={styles.cardHeadingRow}>
+          <View>
+            <Text style={[styles.cardHeading, { color: colorsForAnalytics.foreground }]}>Page visits</Text>
+            <Text style={[styles.cardCaption, { color: colorsForAnalytics.mutedForeground }]}>
+              Most visited screens · {period === 'all' ? 'all time' : period === '7d' ? 'last 7 days' : 'last 30 days'}
+            </Text>
+          </View>
+          <Feather name="bar-chart-2" size={17} color={colorsForAnalytics.primary} />
+        </View>
+        {traffic.pages.length === 0 ? (
+          <View style={styles.emptyAnalytics}>
+            <Feather name="bar-chart" size={17} color={colorsForAnalytics.mutedForeground} />
+            <Text style={[styles.emptyAnalyticsText, { color: colorsForAnalytics.mutedForeground }]}>Visits will appear as people use the app.</Text>
+          </View>
+        ) : (
+          traffic.pages.slice(0, 5).map(([page, visits]) => (
+            <View key={page} style={styles.pageRow}>
+              <View style={styles.pageRowTop}>
+                <Text style={[styles.pageName, { color: colorsForAnalytics.foreground }]} numberOfLines={1}>{page}</Text>
+                <Text style={[styles.pageVisits, { color: colorsForAnalytics.mutedForeground }]}>{formatMetric(visits)}</Text>
+              </View>
+              <View style={[styles.pageTrack, { backgroundColor: colorsForAnalytics.border }]}>
+                <View style={[styles.pageFill, { width: `${Math.max(8, (visits / maxPageVisits) * 100)}%`, backgroundColor: colorsForAnalytics.primary }]} />
+              </View>
+            </View>
+          ))
+        )}
+      </View>
+
+      <View style={[styles.dashboardCard, { backgroundColor: colorsForAnalytics.surfaceVariant, borderColor: colorsForAnalytics.border }]}>
+        <View style={styles.cardHeadingRow}>
+          <View>
+            <Text style={[styles.cardHeading, { color: colorsForAnalytics.foreground }]}>Platform health</Text>
+            <Text style={[styles.cardCaption, { color: colorsForAnalytics.mutedForeground }]}>Key operating parameters</Text>
+          </View>
+          <Feather name="activity" size={17} color={colorsForAnalytics.success} />
+        </View>
+        <View style={styles.healthGrid}>
+          {[
+            { label: 'Questions', value: questions.length },
+            { label: 'Answered', value: answeredQuestions },
+            { label: 'Accepted', value: acceptedQuestions },
+            { label: 'Answers', value: answers.length },
+            { label: 'Discussions', value: discussions.length },
+            { label: 'Comments', value: comments.length + discussionComments.length },
+            { label: 'Messages', value: messages.length },
+            { label: 'Ratings', value: ratings.length },
+            { label: 'Listings', value: listings.length },
+            { label: 'Approved', value: approvedListings },
+            { label: 'Verified providers', value: verifiedProviders },
+            { label: 'Banned users', value: users.filter((user) => user.isBanned).length },
+          ].map((metric) => (
+            <View key={metric.label} style={[styles.healthItem, { borderColor: colorsForAnalytics.border }]}>
+              <Text style={[styles.healthValue, { color: colorsForAnalytics.foreground }]}>{formatMetric(metric.value)}</Text>
+              <Text style={[styles.healthLabel, { color: colorsForAnalytics.mutedForeground }]} numberOfLines={1}>{metric.label}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.splitAnalyticsRow}>
+        <View style={[styles.dashboardCard, styles.splitCard, { backgroundColor: colorsForAnalytics.surfaceVariant, borderColor: colorsForAnalytics.border }]}>
+          <View style={styles.cardHeadingRow}>
+            <Text style={[styles.cardHeading, { color: colorsForAnalytics.foreground }]}>Audience</Text>
+            <Feather name="users" size={16} color={colorsForAnalytics.proCircle} />
+          </View>
+          {roleBreakdown.map((role) => (
+            <View key={role.label} style={styles.breakdownRow}>
+              <View style={styles.breakdownLabelRow}>
+                <Text style={[styles.breakdownLabel, { color: colorsForAnalytics.mutedForeground }]}>{role.label}</Text>
+                <Text style={[styles.breakdownValue, { color: colorsForAnalytics.foreground }]}>{role.value}</Text>
+              </View>
+              <View style={[styles.pageTrack, { backgroundColor: colorsForAnalytics.border }]}>
+                <View style={[styles.pageFill, { width: `${users.length ? Math.max(4, (role.value / users.length) * 100) : 0}%`, backgroundColor: role.color }]} />
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={[styles.dashboardCard, styles.splitCard, { backgroundColor: colorsForAnalytics.surfaceVariant, borderColor: colorsForAnalytics.border }]}>
+          <View style={styles.cardHeadingRow}>
+            <Text style={[styles.cardHeading, { color: colorsForAnalytics.foreground }]}>Conversion signals</Text>
+            <Feather name="trending-up" size={16} color={colorsForAnalytics.success} />
+          </View>
+          {[
+            { label: 'Questions answered', value: questions.length ? `${Math.round((answeredQuestions / questions.length) * 100)}%` : '0%' },
+            { label: 'Accepted answers', value: questions.length ? `${Math.round((acceptedQuestions / questions.length) * 100)}%` : '0%' },
+            { label: 'Provider verification', value: serviceProviders ? `${Math.round((verifiedProviders / serviceProviders) * 100)}%` : '0%' },
+            { label: 'Listing approval', value: listings.length ? `${Math.round((approvedListings / listings.length) * 100)}%` : '0%' },
+          ].map((metric) => (
+            <View key={metric.label} style={styles.signalRow}>
+              <Text style={[styles.breakdownLabel, { color: colorsForAnalytics.mutedForeground }]}>{metric.label}</Text>
+              <Text style={[styles.signalValue, { color: colorsForAnalytics.success }]}>{metric.value}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={[styles.dashboardCard, { backgroundColor: colorsForAnalytics.surfaceVariant, borderColor: colorsForAnalytics.border }]}>
+        <View style={styles.cardHeadingRow}>
+          <View>
+            <Text style={[styles.cardHeading, { color: colorsForAnalytics.foreground }]}>Business snapshot</Text>
+            <Text style={[styles.cardCaption, { color: colorsForAnalytics.mutedForeground }]}>Activity and marketplace value</Text>
+          </View>
+          <Feather name="briefcase" size={17} color={colorsForAnalytics.warning} />
+        </View>
+        <View style={styles.snapshotGrid}>
+          <View style={styles.snapshotItem}>
+            <Text style={[styles.snapshotValue, { color: colorsForAnalytics.foreground }]}>{formatMetric(interactionCount)}</Text>
+            <Text style={[styles.snapshotLabel, { color: colorsForAnalytics.mutedForeground }]}>Interactions</Text>
+          </View>
+          <View style={styles.snapshotItem}>
+            <Text style={[styles.snapshotValue, { color: colorsForAnalytics.foreground }]}>₦{totalListingValue.toLocaleString()}</Text>
+            <Text style={[styles.snapshotLabel, { color: colorsForAnalytics.mutedForeground }]}>Approved listing value</Text>
+          </View>
+          <View style={styles.snapshotItem}>
+            <Text style={[styles.snapshotValue, { color: colorsForAnalytics.foreground }]}>{ratings.length ? avgRating(ratings).toFixed(1) : '0.0'}</Text>
+            <Text style={[styles.snapshotLabel, { color: colorsForAnalytics.mutedForeground }]}>Average rating</Text>
+          </View>
+          <View style={styles.snapshotItem}>
+            <Text style={[styles.snapshotValue, { color: colorsForAnalytics.foreground }]}>{formatAnalyticsDate(analytics.lastVisitAt)}</Text>
+            <Text style={[styles.snapshotLabel, { color: colorsForAnalytics.mutedForeground }]}>Last visit captured</Text>
+          </View>
+        </View>
+      </View>
+
+      {contributorRows.length > 0 && (
+        <View style={[styles.dashboardCard, { backgroundColor: colorsForAnalytics.surfaceVariant, borderColor: colorsForAnalytics.border }]}>
+          <View style={styles.cardHeadingRow}>
+            <Text style={[styles.cardHeading, { color: colorsForAnalytics.foreground }]}>Top contributors</Text>
+            <Feather name="award" size={17} color={colorsForAnalytics.warning} />
+          </View>
+          {contributorRows.map((contributor, index) => (
+            <View key={contributor.name} style={styles.contributorRow}>
+              <View style={[styles.rankBubble, { backgroundColor: colorsForAnalytics.warning + '20' }]}>
+                <Text style={[styles.rankText, { color: colorsForAnalytics.warning }]}>{index + 1}</Text>
+              </View>
+              <Text style={[styles.contributorName, { color: colorsForAnalytics.foreground }]}>{contributor.name}</Text>
+              <Text style={[styles.contributorScore, { color: colorsForAnalytics.mutedForeground }]}>{contributor.score} pts</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
   const handleScroll = useTabBarScrollHandler();
-  const { users, currentUser, login, logout, questions, answers, listings, ratings, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser, editProfile, adminToggleWhatsApp } = useApp();
+  const { users, currentUser, login, logout, questions, answers, comments, discussions, discussionComments, listings, ratings, messages, analytics, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser, editProfile, adminToggleWhatsApp } = useApp();
 
   const [showSwitchModal, setShowSwitchModal] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms' | 'export'>('users');
@@ -777,8 +1066,21 @@ export default function ProfileScreen() {
 
             {activeAdminTab === 'export' && (
               <View style={styles.exportSection}>
+                <AnalyticsDashboard
+                  colors={colors}
+                  analytics={analytics}
+                  users={users}
+                  questions={questions}
+                  answers={answers}
+                  comments={comments}
+                  discussions={discussions}
+                  discussionComments={discussionComments}
+                  listings={listings}
+                  ratings={ratings}
+                  messages={messages}
+                />
                 <Text style={[styles.exportHeading, { color: colors.mutedForeground }]}>
-                  Download platform data as CSV files. All data reflects the current live state.
+                  Download platform data as CSV files. Reports include the current live state and tracked page visits.
                 </Text>
 
                 {[
@@ -810,7 +1112,7 @@ export default function ProfileScreen() {
                     color: colors.success,
                     rows: null,
                     unit: null,
-                    onExport: () => exportAnalyticsReport(users, questions, answers, listings, ratings),
+                     onExport: () => exportAnalyticsReport(users, questions, answers, listings, ratings, analytics),
                   },
                   {
                     id: 'listings',
@@ -1302,6 +1604,54 @@ const styles = StyleSheet.create({
   userModalSaveText: { fontSize: 14, fontWeight: '700' },
   exportSection: { gap: 10 },
   exportHeading: { fontSize: 12, lineHeight: 17, marginBottom: 4 },
+  dashboard: { gap: 10, marginBottom: 8 },
+  dashboardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  dashboardTitle: { fontSize: 17, fontWeight: '700' },
+  dashboardSubtitle: { fontSize: 11, lineHeight: 16, marginTop: 2 },
+  livePill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingHorizontal: 9, paddingVertical: 5 },
+  liveDot: { width: 6, height: 6, borderRadius: 3 },
+  livePillText: { fontSize: 11, fontWeight: '700' },
+  periodPicker: { flexDirection: 'row', borderWidth: 1, borderRadius: 9, padding: 3, gap: 2 },
+  periodOption: { flex: 1, alignItems: 'center', borderRadius: 7, paddingVertical: 7 },
+  periodOptionText: { fontSize: 11, fontWeight: '700' },
+  dashboardMetricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  dashboardMetric: { width: '48%', borderRadius: 11, borderWidth: 1, padding: 11 },
+  metricIcon: { width: 27, height: 27, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 7 },
+  dashboardMetricValue: { fontSize: 21, fontWeight: '700' },
+  dashboardMetricLabel: { fontSize: 11, marginTop: 2 },
+  dashboardCard: { borderRadius: 11, borderWidth: 1, padding: 13, gap: 10 },
+  cardHeadingRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
+  cardHeading: { fontSize: 14, fontWeight: '700' },
+  cardCaption: { fontSize: 11, marginTop: 2 },
+  pageRow: { gap: 5 },
+  pageRowTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  pageName: { flex: 1, fontSize: 12, fontWeight: '600' },
+  pageVisits: { fontSize: 12, fontWeight: '600' },
+  pageTrack: { height: 6, borderRadius: 4, overflow: 'hidden' },
+  pageFill: { height: '100%', borderRadius: 4 },
+  emptyAnalytics: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 },
+  emptyAnalyticsText: { flex: 1, fontSize: 12 },
+  healthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  healthItem: { width: '31.8%', borderWidth: 1, borderRadius: 8, padding: 8 },
+  healthValue: { fontSize: 16, fontWeight: '700' },
+  healthLabel: { fontSize: 10, marginTop: 3 },
+  splitAnalyticsRow: { flexDirection: 'row', gap: 8 },
+  splitCard: { flex: 1 },
+  breakdownRow: { gap: 5 },
+  breakdownLabelRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 },
+  breakdownLabel: { flex: 1, fontSize: 11 },
+  breakdownValue: { fontSize: 11, fontWeight: '700' },
+  signalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
+  signalValue: { fontSize: 13, fontWeight: '700' },
+  snapshotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  snapshotItem: { width: '47%' },
+  snapshotValue: { fontSize: 16, fontWeight: '700' },
+  snapshotLabel: { fontSize: 10, lineHeight: 14, marginTop: 2 },
+  contributorRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rankBubble: { width: 23, height: 23, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  rankText: { fontSize: 11, fontWeight: '700' },
+  contributorName: { flex: 1, fontSize: 12, fontWeight: '600' },
+  contributorScore: { fontSize: 11 },
   exportCard: { flexDirection: 'row', gap: 12, borderRadius: 12, borderWidth: 1, padding: 14 },
   exportIconWrap: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   exportCardBody: { flex: 1, gap: 6 },

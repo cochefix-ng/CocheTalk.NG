@@ -12,7 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ClerkLoaded, ClerkProvider, useAuth, useUser } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { Stack } from 'expo-router';
-import { router, useSegments } from 'expo-router';
+import { router, usePathname, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useRef, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -21,7 +21,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { CommunityLoader } from '@/components/CommunityLoader';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { AppProvider } from '@/context/AppContext';
+import { AppProvider, getAnalyticsPageName } from '@/context/AppContext';
 import { useApp } from '@/context/AppContext';
 
 if (process.env.EXPO_PUBLIC_DOMAIN) {
@@ -111,6 +111,23 @@ function AuthSessionBridge({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AnalyticsTracker() {
+  const pathname = usePathname();
+  const { isLoading, trackPageView } = useApp();
+  const trackPageViewRef = useRef(trackPageView);
+  const sessionStartedRef = useRef(false);
+
+  trackPageViewRef.current = trackPageView;
+
+  useEffect(() => {
+    if (isLoading || !pathname) return;
+    trackPageViewRef.current(getAnalyticsPageName(pathname), !sessionStartedRef.current);
+    sessionStartedRef.current = true;
+  }, [isLoading, pathname]);
+
+  return null;
+}
+
 function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>
@@ -157,6 +174,7 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <ErrorBoundary>
             <AppProvider>
+              <AnalyticsTracker />
               <AuthSessionBridge>
                 <QueryClientProvider client={queryClient}>
                   <GestureHandlerRootView>

@@ -2,7 +2,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
-import type { Answer, MarketplaceListing, ProviderRating, Question, User } from '@/context/AppContext';
+import type { AnalyticsState, Answer, MarketplaceListing, ProviderRating, Question, User } from '@/context/AppContext';
 
 function esc(val: unknown): string {
   const s = val == null ? '' : String(val);
@@ -204,6 +204,7 @@ export async function exportAnalyticsReport(
   answers: Answer[],
   listings: MarketplaceListing[],
   ratings: ProviderRating[],
+  analytics?: AnalyticsState,
 ): Promise<void> {
   const carOwners = users.filter((u) => u.role === 'Car Owner').length;
   const serviceProviders = users.filter((u) => u.role === 'Service Provider').length;
@@ -231,6 +232,14 @@ export async function exportAnalyticsReport(
   const avgRating = ratings.length
     ? (ratings.reduce((s, r) => s + r.ratingValue, 0) / ratings.length).toFixed(2)
     : '0';
+  const totalPageVisits = analytics
+    ? Object.values(analytics.pageVisits).reduce((sum, visits) => sum + visits, 0)
+    : 0;
+  const topPages = analytics
+    ? Object.entries(analytics.pageVisits)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+    : [];
 
   const topContributors = users
     .map((u) => ({
@@ -276,6 +285,13 @@ export async function exportAnalyticsReport(
     ['=== RATINGS ===', ''],
     ['Total Ratings', String(ratings.length)],
     ['Average Rating', avgRating],
+    ['', ''],
+    ['=== TRAFFIC & PAGE VIEWS ===', ''],
+    ['Total Page Visits', String(totalPageVisits)],
+    ['Tracked Sessions', String(analytics?.sessionCount ?? 0)],
+    ['Pages Tracked', String(Object.keys(analytics?.pageVisits ?? {}).length)],
+    ['Last Visit Recorded', analytics?.lastVisitAt ? new Date(analytics.lastVisitAt).toLocaleString() : 'No visits recorded'],
+    ...topPages.map(([page, visits], i) => [`Top Page #${i + 1}`, `${page} (${visits} visits)`] as [string, string]),
     ['', ''],
     ['=== TOP CONTRIBUTORS (by score) ===', ''],
     ...topContributors.map((c, i) => [`#${i + 1} ${c.name}`, `Score: ${c.score}`] as [string, string]),

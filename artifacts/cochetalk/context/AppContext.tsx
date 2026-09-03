@@ -168,6 +168,51 @@ export interface ProviderRating {
   timestamp: number;
 }
 
+export interface AnalyticsEvent {
+  id: number;
+  type: 'page_view' | 'session_start';
+  page: string;
+  timestamp: number;
+  userId: string | null;
+}
+
+export interface AnalyticsState {
+  pageVisits: Record<string, number>;
+  events: AnalyticsEvent[];
+  sessionCount: number;
+  firstTrackedAt: number;
+  lastVisitAt: number;
+}
+
+export function getAnalyticsPageName(path: string): string {
+  const normalized = path.replace(/^\/+/, '');
+  if (!normalized || normalized === '(tabs)' || normalized === '(tabs)/') return 'Forum';
+  if (normalized.includes('(auth)') || normalized.startsWith('sign-in') || normalized.startsWith('sign-up')) {
+    return normalized.includes('sign-up') ? 'Sign up' : 'Sign in';
+  }
+  if (normalized.includes('question/')) return 'Question detail';
+  if (normalized.includes('discussion/')) return 'Discussion detail';
+  if (normalized.includes('listing/')) return 'Listing detail';
+  if (normalized.includes('seller/')) return 'Provider profile';
+  if (normalized.includes('conversation/')) return 'Conversation';
+
+  const lastSegment = normalized.split('/').filter(Boolean).pop();
+  switch (lastSegment) {
+    case 'pro':
+      return 'Pro Circle';
+    case 'marketplace':
+      return 'Marketplace';
+    case 'messages':
+      return 'Messages';
+    case 'clinic':
+      return 'AI Clinic';
+    case 'profile':
+      return 'Profile';
+    default:
+      return lastSegment ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1) : 'Forum';
+  }
+}
+
 export interface CmsConfig {
   announcementText: string;
   announcementActive: boolean;
@@ -189,6 +234,7 @@ interface AppState {
   discussionComments: DiscussionComment[];
   listings: MarketplaceListing[];
   ratings: ProviderRating[];
+  analytics: AnalyticsState;
   cmsConfig: CmsConfig;
   currentUserId: string | null;
   messages: Message[];
@@ -227,6 +273,7 @@ export interface AppContextType extends AppState {
   sendMessage: (toUserId: string, toUserName: string, content: string) => void;
   markConversationRead: (conversationId: string) => void;
   adminToggleWhatsApp: (userId: string, enabled: boolean) => void;
+  trackPageView: (page: string, startsSession?: boolean) => void;
   unreadCount: number;
 }
 
@@ -715,10 +762,21 @@ function createSeedState(): AppState {
     discussionComments,
     listings,
     ratings,
+    analytics: createSeedAnalytics(),
     cmsConfig,
     currentUserId: null,
     messages,
     conversations,
+  };
+}
+
+function createSeedAnalytics(): AnalyticsState {
+  return {
+    pageVisits: {},
+    events: [],
+    sessionCount: 0,
+    firstTrackedAt: 0,
+    lastVisitAt: 0,
   };
 }
 
@@ -738,6 +796,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ...parsed,
             discussions: parsed.discussions ?? [],
             discussionComments: parsed.discussionComments ?? [],
+            analytics: {
+              ...createSeedAnalytics(),
+              ...(parsed.analytics ?? {}),
+              pageVisits: parsed.analytics?.pageVisits ?? {},
+              events: parsed.analytics?.events ?? [],
+            },
           });
         } catch (err) {
           console.error('[AppContext] Failed to parse persisted state — resetting to seed data.', err);
@@ -774,6 +838,48 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!state) return;
     save({ ...state, currentUserId: null });
   }, [state, save]);
+
+  const trackPageView = useCallback(
+    (page: string, startsSession = false) => {
+      if (!state || !page) return;
+      const now = Date.now();
+      const previous = state.analytics ?? createSeedAnalytics();
+      const pageVisits = {
+        ...previous.pageVisits,
+        [page]: (previous.pageVisits[page] ?? 0) + 1,
+      };
+      const pageEvent: AnalyticsEvent = {
+        id: now,
+        type: 'page_view',
+        page,
+        timestamp: now,
+        userId: state.currentUserId,
+      };
+      const sessionEvent: AnalyticsEvent | null = startsSession
+        ? {
+            id: now + 1,
+            type: 'session_start',
+            page,
+            timestamp: now,
+            userId: state.currentUserId,
+          }
+        : null;
+      const events = [...previous.events, pageEvent, ...(sessionEvent ? [sessionEvent] : [])].slice(-1000);
+
+      save({
+        ...state,
+        analytics: {
+          ...previous,
+          pageVisits,
+          events,
+          sessionCount: previous.sessionCount + (startsSession ? 1 : 0),
+          firstTrackedAt: previous.firstTrackedAt || now,
+          lastVisitAt: now,
+        },
+      });
+    },
+    [state, save],
+  );
 
   const register = useCallback(
     (data: Omit<User, 'isBanned' | 'verified'>) => {
@@ -1252,6 +1358,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       sendMessage,
       markConversationRead,
       adminToggleWhatsApp,
+      trackPageView,
       unreadCount,
     }),
     [
@@ -1287,6 +1394,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       sendMessage,
       markConversationRead,
       adminToggleWhatsApp,
+      trackPageView,
       unreadCount,
     ],
   );
