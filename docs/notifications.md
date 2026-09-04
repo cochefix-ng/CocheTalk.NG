@@ -49,6 +49,32 @@ Before production push testing:
 
 The web preview intentionally skips native push registration and native notification-response APIs. It still renders the notification center and preferences screens without crashing.
 
+
+## Android release validation record
+
+The repository-side checks below were completed on 2026-09-03:
+
+- Expo config resolves successfully with the stable Android package `ng.cochetalk.app`, iOS bundle identifier `ng.cochetalk.app`, and the `expo-notifications` plugin.
+- The CocheTalk Expo TypeScript check passes.
+- No `extra.eas.projectId` is present in `artifacts/cochetalk/app.json`.
+- `EXPO_PUBLIC_EAS_PROJECT_ID` is not present in the current build environment.
+- No Android SDK/`adb`, Android build artifact, FCM credential file, or EAS project metadata is available in this workspace.
+
+Consequently, production push delivery is **not yet verified** here. A release owner must complete the native setup and device matrix before treating this as release-ready. Do not mark a row as passed based on the web preview or Expo Go.
+
+| Scenario | Required evidence |
+| --- | --- |
+| EAS project and Android provider | The linked project ID is supplied through the Expo build environment or `expo.extra.eas.projectId`; the Android build has valid FCM credentials; the build succeeds. |
+| Two-device registration | Two physical Android devices sign in; each receives a distinct active token in `POST /api/notifications/push-tokens`; both devices receive the same eligible event. |
+| Foreground delivery | With the app open, an eligible event displays a native notification banner/list entry and creates the in-app notification. |
+| Background delivery | With the app backgrounded, an eligible event is delivered and tapping it opens the intended screen. |
+| Closed-app tap | Force-close the app, tap an eligible notification, and verify cold-start routing and read-state handling. |
+| Permission denial | Deny notifications; confirm no token is registered and the app remains usable. If Android prevents another prompt, verify the settings recovery path. |
+| Token refresh/re-registration | Reinstall or refresh the token; confirm the current token is active and the prior token is no longer used for delivery. |
+| Logout deactivation | Log out on each device; confirm its token is deactivated and it receives no subsequent eligible push. |
+
+Record the build identifier, device/Android versions, notification permission state, token registration result, Expo ticket/receipt result, and any FCM or `DeviceNotRegistered` error for every row. Any FCM credential, Expo project, or provider failure should be fixed or recorded as a release blocker rather than worked around in application code.
+
 ## API surface
 
 Authenticated user routes:
