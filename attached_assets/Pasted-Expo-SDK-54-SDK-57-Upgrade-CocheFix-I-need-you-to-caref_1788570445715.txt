@@ -1,0 +1,482 @@
+Expo SDK 54 → SDK 57 Upgrade — CocheFix
+
+I need you to carefully upgrade this existing CocheFix Expo/React Native codebase from Expo SDK 54 to Expo SDK 57.
+
+PRIMARY OBJECTIVE
+
+Upgrade the project to Expo SDK 57 while preserving the existing application exactly as much as possible.
+
+This is an existing application, NOT a new project. Do not rebuild, redesign, refactor unnecessarily, or remove existing functionality.
+
+The priority is:
+
+Upgrade safely → preserve functionality → resolve compatibility issues → verify the app builds and runs successfully.
+
+---
+
+1. BEFORE MAKING ANY CHANGES
+
+First inspect the entire codebase and determine:
+
+- Current Expo SDK version
+- React version
+- React Native version
+- Expo Router version
+- TypeScript version
+- Node/package manager configuration
+- All Expo packages
+- All React Native packages
+- All native modules
+- "app.json" / "app.config.*"
+- "eas.json"
+- Babel configuration
+- Metro configuration
+- TypeScript configuration
+- Android configuration
+- iOS configuration, if present
+- Environment variables
+- Supabase configuration
+- Authentication implementation
+- Push/in-app notification implementation
+- Navigation structure
+- Any custom native code
+- Any packages that may be incompatible with SDK 57
+
+Create a concise upgrade assessment before modifying anything.
+
+DO NOT make changes until you understand the dependency structure.
+
+---
+
+2. CREATE A SAFE CHECKPOINT
+
+Before upgrading:
+
+- Preserve the current working state.
+- Do not delete existing files.
+- Do not overwrite configuration unnecessarily.
+- If git is available, create a commit/checkpoint before starting.
+- If git is not available, clearly document the current package versions and important configuration before making changes.
+
+The current SDK 54 version must remain recoverable.
+
+---
+
+3. UPGRADE TO EXPO SDK 57
+
+Upgrade the project specifically to Expo SDK 57.
+
+Use Expo's recommended upgrade process rather than manually changing random package versions.
+
+Use:
+
+npx expo install expo@^57.0.0 --fix
+
+Then use:
+
+npx expo-doctor@latest
+
+Do NOT simply upgrade every dependency in "package.json" to its newest version.
+
+Only upgrade dependencies that:
+
+1. Are required for Expo SDK 57 compatibility
+2. Are required to resolve an identified dependency conflict
+3. Are required because the SDK 57 version of an Expo package requires them
+
+Keep unrelated dependencies at their existing versions where possible.
+
+---
+
+4. ENSURE DEPENDENCY COMPATIBILITY
+
+After upgrading Expo, verify compatibility of all major packages, especially:
+
+- "expo-router"
+- "expo-notifications"
+- "expo-device"
+- "expo-constants"
+- "expo-linking"
+- "expo-status-bar"
+- "expo-font"
+- "expo-image"
+- "expo-location"
+- "expo-camera"
+- "expo-file-system"
+- "expo-secure-store"
+- "expo-splash-screen"
+- "expo-web-browser"
+- "expo-application"
+- "react-native-reanimated"
+- "react-native-gesture-handler"
+- "react-native-screens"
+- "react-native-safe-area-context"
+- "react-native-svg"
+- "@react-native-async-storage/async-storage"
+- Supabase packages
+- Any other native React Native libraries currently used by the application
+
+Use:
+
+npx expo install
+
+where appropriate so Expo selects compatible versions.
+
+Do not force incompatible versions simply to make npm/yarn install succeed.
+
+---
+
+5. PRESERVE EXISTING APPLICATION FUNCTIONALITY
+
+Do NOT remove or disable existing functionality during the upgrade.
+
+Specifically verify that the upgrade does not break:
+
+Authentication
+
+- Login
+- Signup
+- Logout
+- Password reset
+- Session persistence
+- Auth state handling
+- Any Google/Facebook/social authentication already implemented
+
+Supabase
+
+- Supabase connection
+- Database queries
+- Authentication
+- Storage
+- Realtime functionality
+- Existing environment variables
+- Existing Supabase project configuration
+
+Do not change Supabase project IDs, URLs, keys, database schema, RLS policies, or production configuration unless absolutely necessary.
+
+Navigation
+
+Verify:
+
+- Expo Router
+- Tab navigation
+- Stack navigation
+- Modals
+- Deep linking
+- Back navigation
+- Authentication redirects
+- Protected routes
+- Existing bottom navigation behavior
+
+Preserve the existing navigation structure.
+
+Notifications
+
+Verify:
+
+- Push notification registration
+- Notification permissions
+- Notification tokens
+- Foreground notifications
+- Background notifications
+- Notification tap/deep-link behavior
+- User notification preferences/toggles
+- Any Supabase notification integration
+
+Do not remove notification functionality because of an SDK migration issue. Fix it using the SDK 57-compatible implementation.
+
+Existing UI
+
+Preserve:
+
+- Existing screens
+- Layouts
+- Colors
+- Typography
+- Icons
+- Buttons
+- Forms
+- Cards
+- Navigation
+- Animations
+- Responsive behavior
+- Existing CocheFix branding
+
+Do NOT redesign the application.
+
+---
+
+6. REVIEW CONFIGURATION FILES
+
+Carefully review:
+
+- "package.json"
+- "app.json" / "app.config.js" / "app.config.ts"
+- "eas.json"
+- "babel.config.js"
+- "metro.config.js"
+- "tsconfig.json"
+- Android configuration
+- iOS configuration
+
+Update only configuration that is genuinely required for SDK 57.
+
+Pay particular attention to:
+
+- Expo plugins
+- notification configuration
+- splash screen
+- app icon
+- Android permissions
+- iOS permissions
+- URL schemes
+- package/bundle identifiers
+- build configuration
+- environment variable handling
+
+Do not accidentally change the production application ID/package name.
+
+---
+
+7. CHECK FOR SDK 54-SPECIFIC OR DEPRECATED CODE
+
+Search the entire codebase for:
+
+- deprecated Expo APIs
+- deprecated React Native APIs
+- SDK 54-specific workarounds
+- old notification APIs
+- old file-system APIs
+- old router APIs
+- obsolete configuration
+- unsupported native modules
+- incompatible third-party packages
+
+Where something is genuinely incompatible with SDK 57:
+
+1. Identify the issue
+2. Explain why it is incompatible
+3. Replace it with the SDK 57-compatible implementation
+4. Preserve the original behavior
+
+Do not refactor unrelated code.
+
+---
+
+8. REINSTALL CLEANLY
+
+After dependency changes, perform a clean dependency installation.
+
+Remove only generated dependency/build artifacts when appropriate.
+
+Then install dependencies cleanly.
+
+After installation, run:
+
+npx expo-doctor@latest
+
+Resolve all actionable errors.
+
+Warnings that are genuinely non-blocking can remain, but document them.
+
+---
+
+9. TEST THE APPLICATION
+
+Run the appropriate validation commands, including:
+
+npx expo start
+
+and:
+
+npx expo export
+
+If the project has a build configuration, also validate the EAS configuration.
+
+Run:
+
+eas build:configure
+
+ONLY if the project is not already configured for EAS.
+
+Do not overwrite an existing EAS configuration unnecessarily.
+
+If possible, perform an Android development/build test.
+
+The goal is to confirm that the application:
+
+- Starts successfully
+- Compiles successfully
+- Loads the initial screen
+- Can navigate between screens
+- Auth works
+- Supabase works
+- Existing core features work
+- No fatal runtime errors occur
+
+---
+
+10. DO NOT MASK ERRORS
+
+Do NOT:
+
+- Comment out broken features
+- Remove imports just to make compilation pass
+- Disable notifications
+- Disable authentication
+- Replace Supabase with mock data
+- Replace real API calls with dummy data
+- Delete problematic screens
+- Remove native packages without investigating
+- Suppress TypeScript errors unnecessarily
+- Add "any" everywhere to hide errors
+- Downgrade Expo back to SDK 54
+- Upgrade the entire dependency tree indiscriminately
+
+If something breaks, diagnose the actual cause and fix it properly.
+
+---
+
+11. HANDLE DEPENDENCY CONFLICTS CAREFULLY
+
+If npm reports peer dependency conflicts:
+
+Do not immediately use:
+
+--force
+
+or:
+
+--legacy-peer-deps
+
+First determine which package versions are actually compatible with Expo SDK 57.
+
+Only use an override/legacy installation approach if there is a clear technical reason and the resulting application can be verified.
+
+Prefer Expo-recommended package versions.
+
+---
+
+12. TYPESCRIPT AND LINTING
+
+After the upgrade, check for TypeScript errors.
+
+Run the project's existing type-check command if available.
+
+Fix errors caused by the SDK migration.
+
+Do not rewrite unrelated TypeScript code.
+
+Do not weaken the project's type safety simply to get a clean build.
+
+---
+
+13. FINAL VERIFICATION CHECKLIST
+
+Before considering the upgrade complete, verify:
+
+Expo
+
+- [ ] Expo SDK is 57
+- [ ] Expo dependencies are SDK 57 compatible
+- [ ] "expo-doctor" has no critical errors
+
+Application
+
+- [ ] App starts
+- [ ] App builds
+- [ ] Existing screens remain
+- [ ] Navigation works
+- [ ] Authentication works
+- [ ] Supabase works
+- [ ] Existing data loads correctly
+- [ ] Existing forms work
+- [ ] Notifications work
+- [ ] Existing notification preferences work
+- [ ] Existing UI/branding is preserved
+- [ ] No major runtime errors
+
+Production configuration
+
+- [ ] Android package/application ID unchanged
+- [ ] iOS bundle identifier unchanged
+- [ ] App name unchanged
+- [ ] App icon unchanged
+- [ ] Splash screen unchanged unless SDK 57 requires configuration changes
+- [ ] Environment variables preserved
+- [ ] Supabase production project unchanged
+- [ ] EAS configuration preserved
+
+---
+
+14. IMPORTANT: STOP AND REPORT IF A MAJOR ISSUE IS FOUND
+
+If you discover a major breaking dependency or native-code issue that cannot safely be resolved automatically:
+
+STOP before making destructive changes.
+
+Report:
+
+1. What is broken
+2. Which package/configuration causes it
+3. Why SDK 57 causes the problem
+4. The safest fix
+5. Whether the fix could affect production
+6. What you recommend doing next
+
+Do not make a risky architectural change without explaining it.
+
+---
+
+15. FINAL REPORT
+
+When finished, provide a concise migration report containing:
+
+Upgrade
+
+- Previous Expo SDK
+- New Expo SDK
+- Previous React Native version
+- New React Native version
+
+Dependencies changed
+
+List the important packages that were upgraded and why.
+
+Files changed
+
+List the important configuration/source files modified.
+
+Issues fixed
+
+List every SDK compatibility issue discovered and how it was resolved.
+
+Testing
+
+Report the results of:
+
+- "expo-doctor"
+- TypeScript check
+- Expo start
+- Expo export/build validation
+- Any Android/iOS build test performed
+
+Remaining warnings
+
+Clearly identify anything that still needs attention.
+
+Rollback
+
+Explain how to return to the SDK 54 checkpoint if necessary.
+
+---
+
+CRITICAL RULE
+
+This is a migration, not a rewrite.
+
+Preserve the existing CocheFix application, functionality, database, authentication, navigation, branding, and user experience.
+
+Make the minimum necessary changes required to move safely from Expo SDK 54 to SDK 57.
+
+Do not declare the migration complete merely because "npm install" succeeds. The migration is complete only after the application has been checked for both build-time compatibility and runtime functionality.
