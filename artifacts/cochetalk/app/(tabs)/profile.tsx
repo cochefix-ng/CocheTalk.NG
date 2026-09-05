@@ -1309,7 +1309,7 @@ export default function ProfileScreen() {
       {/* ── One-Time Self-Edit Modal ── */}
       <Modal visible={showSelfEditModal} animationType="slide" transparent onRequestClose={() => setShowSelfEditModal(false)}>
         <KeyboardAvoidingView style={styles.modalBackdrop} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowSelfEditModal(false)} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowSelfEditModal(false)} />
           <View style={[styles.userModalSheet, { backgroundColor: colors.card }]}>
             <View style={[styles.userModalHeader, { borderBottomColor: colors.border }]}>
               <Text style={[styles.userModalTitle, { color: colors.foreground }]}>Edit My Profile</Text>
@@ -1427,7 +1427,7 @@ export default function ProfileScreen() {
           style={styles.modalBackdrop}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowUserModal(false)} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowUserModal(false)} />
           <View style={[styles.userModalSheet, { backgroundColor: colors.card }]}>
             {/* Header */}
             <View style={[styles.userModalHeader, { borderBottomColor: colors.border }]}>
@@ -1779,7 +1779,7 @@ const styles = StyleSheet.create({
   exportCardDesc: { fontSize: 12, lineHeight: 17 },
   exportBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8, paddingVertical: 9, marginTop: 2 },
   exportBtnText: { fontSize: 13, fontWeight: '700' },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.5)' },
   switchSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40, gap: 8 },
   switchTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
   switchItem: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 10, borderWidth: 1, padding: 12 },

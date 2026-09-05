@@ -188,7 +188,7 @@ export function CommunityLoader({ onFinished }: Props) {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 9999,
     alignItems: 'center',
     justifyContent: 'space-between',
