@@ -95,12 +95,12 @@ export default function DiscussionDetailScreen() {
           {post.isProCircle ? (
             <View style={[styles.typeBadge, { backgroundColor: colors.proCircle + '22', borderColor: colors.proCircle + '55' }]}>
               <Feather name="lock" size={10} color={colors.proCircle} />
-              <Text style={[styles.typeBadgeText, { color: colors.proCircle }]}>Pro Circle Discussion</Text>
+              <Text style={[styles.typeBadgeText, { color: colors.proCircleText }]}>Pro Circle Discussion</Text>
             </View>
           ) : (
             <View style={[styles.typeBadge, { backgroundColor: colors.secondary + '22', borderColor: colors.secondary + '55' }]}>
               <Feather name="book-open" size={10} color={colors.secondary} />
-              <Text style={[styles.typeBadgeText, { color: colors.secondary }]}>General Discussion</Text>
+              <Text style={[styles.typeBadgeText, { color: colors.secondaryText }]}>General Discussion</Text>
             </View>
           )}
 
@@ -115,7 +115,7 @@ export default function DiscussionDetailScreen() {
             <View style={styles.tagRow}>
               {tags.map((tag) => (
                 <View key={tag} style={[styles.tag, { backgroundColor: colors.muted }]}>
-                  <Text style={[styles.tagText, { color: colors.secondary }]}>{tag}</Text>
+                  <Text style={[styles.tagText, { color: colors.secondaryText }]}>{tag}</Text>
                 </View>
               ))}
             </View>
@@ -139,7 +139,7 @@ export default function DiscussionDetailScreen() {
               onPress={() => router.push(`/seller/${encodeURIComponent(post.userId)}`)}
             >
               <View style={[styles.avatar, { backgroundColor: colors.secondary + '33' }]}>
-                <Text style={[styles.avatarText, { color: colors.secondary }]}>{post.userName.charAt(0)}</Text>
+                <Text style={[styles.avatarText, { color: colors.secondaryText }]}>{post.userName.charAt(0)}</Text>
               </View>
               <View>
                 <View style={styles.nameRow}>
@@ -155,7 +155,7 @@ export default function DiscussionDetailScreen() {
               onPress={() => currentUser && upvoteDiscussion(post.id)}
             >
               <Feather name="arrow-up" size={14} color={hasVoted ? colors.primary : colors.mutedForeground} />
-              <Text style={[styles.voteCount, { color: hasVoted ? colors.primary : colors.mutedForeground }]}>
+              <Text style={[styles.voteCount, { color: hasVoted ? colors.primaryText : colors.mutedForeground }]}>
                 {post.upvotes}
               </Text>
             </TouchableOpacity>
@@ -177,7 +177,7 @@ export default function DiscussionDetailScreen() {
                 onPress={() => router.push(`/seller/${encodeURIComponent(c.userId)}`)}
               >
                 <View style={[styles.avatarSm, { backgroundColor: colors.primary + '22' }]}>
-                  <Text style={[styles.avatarSmText, { color: colors.primary }]}>{c.userName.charAt(0)}</Text>
+                  <Text style={[styles.avatarSmText, { color: colors.primaryText }]}>{c.userName.charAt(0)}</Text>
                 </View>
                 <Text style={[styles.commentAuthor, { color: colors.foreground }]}>{c.userName}</Text>
               </TouchableOpacity>
@@ -221,7 +221,7 @@ export default function DiscussionDetailScreen() {
 
       {/* Lightbox */}
       <Modal visible={!!lightboxUri} transparent animationType="fade" onRequestClose={() => setLightboxUri(null)}>
-        <Pressable style={styles.lightboxOverlay} onPress={() => setLightboxUri(null)}>
+        <Pressable style={[styles.lightboxOverlay, { backgroundColor: colors.lightboxOverlay }]} onPress={() => setLightboxUri(null)}>
           {lightboxUri && (
             <Image source={{ uri: lightboxUri }} style={styles.lightboxImage} resizeMode="contain" />
           )}
@@ -338,7 +338,6 @@ const styles = StyleSheet.create({
   },
   lightboxOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
     alignItems: 'center',
     justifyContent: 'center',
   },

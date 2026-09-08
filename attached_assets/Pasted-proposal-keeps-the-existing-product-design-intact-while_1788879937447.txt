@@ -1,0 +1,1 @@
+proposal keeps the existing product design intact while making it centralized, accessible, semantically consistent, and ready for future Admin theme control.

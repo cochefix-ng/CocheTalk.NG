@@ -33,10 +33,11 @@ import {
 import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
 
 function StarRating({ value, max = 5, size = 16, color }: { value: number; max?: number; size?: number; color: string }) {
+  const colors = useColors();
   return (
     <View style={{ flexDirection: 'row', gap: 2 }}>
       {Array.from({ length: max }).map((_, i) => (
-        <Feather key={i} name={i < Math.round(value) ? 'star' : 'star'} size={size} color={i < Math.round(value) ? '#F59E0B' : color} style={{ opacity: i < Math.round(value) ? 1 : 0.3 }} />
+        <Feather key={i} name={i < Math.round(value) ? 'star' : 'star'} size={size} color={i < Math.round(value) ? colors.rating : color} style={{ opacity: i < Math.round(value) ? 1 : 0.3 }} />
       ))}
     </View>
   );
@@ -118,7 +119,7 @@ function NotificationAdminControls({ colors }: { colors: ReturnType<typeof useCo
             ) : (
               <>
                 <View style={[styles.notificationAdminDot, { backgroundColor: setting.enabled ? colors.primary : colors.mutedForeground }]} />
-                <Text style={[styles.notificationAdminToggleText, { color: setting.enabled ? colors.primary : colors.mutedForeground }]}>
+                <Text style={[styles.notificationAdminToggleText, { color: setting.enabled ? colors.primaryText : colors.mutedForeground }]}>
                   {setting.enabled ? 'On' : 'Off'}
                 </Text>
               </>
@@ -232,7 +233,7 @@ function AnalyticsDashboard({
             key={option.key}
             style={[
               styles.periodOption,
-              period === option.key && { backgroundColor: colorsForAnalytics.card, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+              period === option.key && { backgroundColor: colorsForAnalytics.card, shadowColor: colorsForAnalytics.overlay, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
             ]}
             onPress={() => setPeriod(option.key)}
           >
@@ -631,7 +632,7 @@ export default function ProfileScreen() {
               onPress={() => login(u.id)}
             >
               <View style={[styles.userAvatar, { backgroundColor: colors.primary + '33' }]}>
-                <Text style={[styles.userAvatarText, { color: colors.primary }]}>{u.name.charAt(0)}</Text>
+                <Text style={[styles.userAvatarText, { color: colors.primaryText }]}>{u.name.charAt(0)}</Text>
               </View>
               <View style={styles.userInfo}>
                 <View style={styles.nameRow}>
@@ -666,7 +667,7 @@ export default function ProfileScreen() {
           <Feather name="bell" size={19} color={colors.foreground} />
           {notificationUnreadCount > 0 && (
             <View style={[styles.headerUnreadBadge, { backgroundColor: colors.destructive }]}>
-              <Text style={styles.headerUnreadText}>{notificationUnreadCount > 9 ? '9+' : notificationUnreadCount}</Text>
+              <Text style={[styles.headerUnreadText, { color: colors.errorForeground }]}>{notificationUnreadCount > 9 ? '9+' : notificationUnreadCount}</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -680,7 +681,7 @@ export default function ProfileScreen() {
       >
         <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.bigAvatar, { backgroundColor: colors.primary + '33' }]}>
-            <Text style={[styles.bigAvatarText, { color: colors.primary }]}>{currentUser.name.charAt(0)}</Text>
+            <Text style={[styles.bigAvatarText, { color: colors.primaryText }]}>{currentUser.name.charAt(0)}</Text>
           </View>
           <View style={styles.profileMain}>
             <View style={styles.nameRow}>
@@ -693,7 +694,7 @@ export default function ProfileScreen() {
               )}
             </View>
             <View style={[styles.roleBadge, { backgroundColor: currentUser.role === 'Admin' ? colors.destructive + '22' : currentUser.role === 'Service Provider' ? colors.proCircle + '22' : colors.primary + '22' }]}>
-              <Text style={[styles.roleText, { color: currentUser.role === 'Admin' ? colors.destructive : currentUser.role === 'Service Provider' ? colors.proCircle : colors.primary }]}>
+              <Text style={[styles.roleText, { color: currentUser.role === 'Admin' ? colors.destructiveText : currentUser.role === 'Service Provider' ? colors.proCircleText : colors.primaryText }]}>
                 {currentUser.role}
               </Text>
             </View>
@@ -759,8 +760,8 @@ export default function ProfileScreen() {
           >
             <Feather name="edit-3" size={15} color={colors.primary} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.editProfileBtnTitle, { color: colors.primary }]}>Edit My Profile</Text>
-              <Text style={[styles.editProfileBtnSub, { color: colors.primary + 'AA' }]}>One-time only · cannot be undone</Text>
+              <Text style={[styles.editProfileBtnTitle, { color: colors.primaryText }]}>Edit My Profile</Text>
+              <Text style={[styles.editProfileBtnSub, { color: colors.primaryText }]}>One-time only · cannot be undone</Text>
             </View>
             <Feather name="chevron-right" size={15} color={colors.primary + '88'} />
           </TouchableOpacity>
@@ -808,24 +809,24 @@ export default function ProfileScreen() {
           onPress={logout}
         >
           <Feather name="log-out" size={16} color={colors.destructive} />
-          <Text style={[styles.actionBtnText, { color: colors.destructive }]}>Sign Out</Text>
+          <Text style={[styles.actionBtnText, { color: colors.destructiveText }]}>Sign Out</Text>
         </TouchableOpacity>
 
         {currentUser.role === 'Admin' && (
           <View style={styles.adminSection}>
             <View style={[styles.adminHeader, { borderColor: colors.border }]}>
               <Feather name="shield" size={16} color={colors.destructive} />
-              <Text style={[styles.adminTitle, { color: colors.destructive }]}>Admin Panel</Text>
+              <Text style={[styles.adminTitle, { color: colors.destructiveText }]}>Admin Panel</Text>
             </View>
 
             <NotificationAdminControls colors={colors} />
 
             <View style={styles.analytics}>
               {[
-                { label: 'Total Questions', value: questions.length, color: colors.primary },
-                { label: 'Approved Listings', value: listings.filter((l) => l.isApproved).length, color: colors.success },
-                { label: 'Pending Approvals', value: pendingListings.length, color: colors.warning },
-                { label: 'Registered Users', value: users.length, color: colors.proCircle },
+                { label: 'Total Questions', value: questions.length, color: colors.primaryText },
+                { label: 'Approved Listings', value: listings.filter((l) => l.isApproved).length, color: colors.successText },
+                { label: 'Pending Approvals', value: pendingListings.length, color: colors.warningText },
+                { label: 'Registered Users', value: users.length, color: colors.proCircleText },
               ].map((stat) => (
                 <View key={stat.label} style={[styles.analyticsCard, { backgroundColor: stat.color + '15', borderColor: stat.color + '33' }]}>
                   <Text style={[styles.analyticsValue, { color: stat.color }]}>{stat.value}</Text>
@@ -846,7 +847,7 @@ export default function ProfileScreen() {
                   style={[styles.adminTab, activeAdminTab === key && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
                   onPress={() => setActiveAdminTab(key)}
                 >
-                  <Text style={[styles.adminTabText, { color: activeAdminTab === key ? colors.primary : colors.mutedForeground }]}>
+                  <Text style={[styles.adminTabText, { color: activeAdminTab === key ? colors.primaryText : colors.mutedForeground }]}>
                     {label}
                   </Text>
                 </TouchableOpacity>
@@ -861,19 +862,19 @@ export default function ProfileScreen() {
                   onPress={openAddUser}
                 >
                   <Feather name="user-plus" size={15} color={colors.primary} />
-                  <Text style={[styles.addUserBtnText, { color: colors.primary }]}>Add New User</Text>
+                  <Text style={[styles.addUserBtnText, { color: colors.primaryText }]}>Add New User</Text>
                 </TouchableOpacity>
 
                 {users.map((u) => (
                   <View key={u.id} style={[styles.adminUserItem, { backgroundColor: colors.surfaceVariant, borderColor: u.role === 'Admin' ? colors.destructive + '44' : colors.border }]}>
                     <View style={[styles.userAvatar, { backgroundColor: u.role === 'Admin' ? colors.destructive + '33' : colors.primary + '33' }]}>
-                      <Text style={[styles.userAvatarText, { color: u.role === 'Admin' ? colors.destructive : colors.primary }]}>{u.name.charAt(0)}</Text>
+                      <Text style={[styles.userAvatarText, { color: u.role === 'Admin' ? colors.destructiveText : colors.primaryText }]}>{u.name.charAt(0)}</Text>
                     </View>
                     <View style={styles.adminUserInfo}>
                       <View style={styles.nameRow}>
                         <Text style={[styles.adminUserName, { color: colors.foreground }]}>{u.name}</Text>
-                        {u.isBanned && <View style={[styles.bannedBadge, { backgroundColor: colors.destructive }]}><Text style={styles.bannedText}>Banned</Text></View>}
-                        {u.role === 'Admin' && <View style={[styles.bannedBadge, { backgroundColor: colors.destructive + 'CC' }]}><Text style={styles.bannedText}>Admin</Text></View>}
+                        {u.isBanned && <View style={[styles.bannedBadge, { backgroundColor: colors.destructive }]}><Text style={[styles.bannedText, { color: colors.errorForeground }]}>Banned</Text></View>}
+                        {u.role === 'Admin' && <View style={[styles.bannedBadge, { backgroundColor: colors.destructive + '22' }]}><Text style={[styles.bannedText, { color: colors.destructiveText }]}>Admin</Text></View>}
                       </View>
                       <Text style={[styles.adminUserRole, { color: colors.mutedForeground }]} numberOfLines={1}>
                         {u.specialization && u.specialization.length > 0 ? `${u.role} · ${u.specialization.join(', ')}` : u.role}
@@ -883,10 +884,10 @@ export default function ProfileScreen() {
                     <View style={styles.adminActions}>
                       {u.role === 'Service Provider' && (
                         <TouchableOpacity
-                          style={[styles.adminActionBtn, { backgroundColor: u.whatsappEnabled ? '#25D36622' : colors.muted }]}
+                          style={[styles.adminActionBtn, { backgroundColor: u.whatsappEnabled ? colors.whatsapp + '22' : colors.muted }]}
                           onPress={() => adminToggleWhatsApp(u.id, !u.whatsappEnabled)}
                         >
-                          <Feather name="phone" size={12} color={u.whatsappEnabled ? '#25D366' : colors.mutedForeground} />
+                          <Feather name="phone" size={12} color={u.whatsappEnabled ? colors.whatsapp : colors.mutedForeground} />
                         </TouchableOpacity>
                       )}
                       {u.role === 'Service Provider' && (
@@ -918,7 +919,7 @@ export default function ProfileScreen() {
                 {/* Featured summary pill */}
                 <View style={[styles.featuredSummary, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '44' }]}>
                   <Feather name="star" size={14} color={colors.primary} />
-                  <Text style={[styles.featuredSummaryText, { color: colors.primary }]}>
+                  <Text style={[styles.featuredSummaryText, { color: colors.primaryText }]}>
                     {featuredCount} listing{featuredCount !== 1 ? 's' : ''} featured on Forum ad banner
                   </Text>
                 </View>
@@ -935,10 +936,10 @@ export default function ProfileScreen() {
                         </View>
                         <View style={{ flexDirection: 'row', gap: 6 }}>
                           <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: colors.success }]} onPress={() => approveListing(l.id, true)}>
-                            <Feather name="check" size={13} color="#fff" />
+                            <Feather name="check" size={13} color={colors.successForeground} />
                           </TouchableOpacity>
                           <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: colors.destructive + 'CC' }]} onPress={() => deleteListing(l.id)}>
-                            <Feather name="trash-2" size={13} color="#fff" />
+                            <Feather name="trash-2" size={13} color={colors.errorForeground} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -957,7 +958,7 @@ export default function ProfileScreen() {
                             {l.isFeaturedBottom && (
                               <View style={[styles.featuredBadge, { backgroundColor: colors.primary + '22' }]}>
                                 <Feather name="star" size={9} color={colors.primary} />
-                                <Text style={[styles.featuredBadgeText, { color: colors.primary }]}>Featured</Text>
+                                <Text style={[styles.featuredBadgeText, { color: colors.primaryText }]}>Featured</Text>
                               </View>
                             )}
                           </View>
@@ -969,10 +970,10 @@ export default function ProfileScreen() {
                             style={[styles.adminActionBtn, { backgroundColor: l.isFeaturedBottom ? colors.primary : colors.muted, borderWidth: 1, borderColor: l.isFeaturedBottom ? colors.primary : colors.border }]}
                             onPress={() => featureListing(l.id, !l.isFeaturedBottom)}
                           >
-                            <Feather name="star" size={13} color={l.isFeaturedBottom ? '#fff' : colors.mutedForeground} />
+                            <Feather name="star" size={13} color={l.isFeaturedBottom ? colors.primaryForeground : colors.mutedForeground} />
                           </TouchableOpacity>
                           <TouchableOpacity style={[styles.adminActionBtn, { backgroundColor: colors.destructive + 'CC' }]} onPress={() => deleteListing(l.id)}>
-                            <Feather name="trash-2" size={13} color="#fff" />
+                            <Feather name="trash-2" size={13} color={colors.errorForeground} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -1192,6 +1193,8 @@ export default function ProfileScreen() {
                     title: 'Users Report',
                     desc: 'All user accounts with role, verification status, ban status, activity counts, and average rating.',
                     color: colors.proCircle,
+                    textColor: colors.proCircleText,
+                    foreground: colors.proCircleForeground,
                     rows: users.length,
                     unit: 'users',
                     onExport: () => exportUsersReport(users, questions, answers, listings, ratings),
@@ -1202,6 +1205,8 @@ export default function ProfileScreen() {
                     title: 'Activities Report',
                     desc: 'All questions, answers, marketplace listings, and provider ratings with full details.',
                     color: colors.primary,
+                    textColor: colors.primaryText,
+                    foreground: colors.primaryForeground,
                     rows: questions.length + answers.length + listings.length + ratings.length,
                     unit: 'records',
                     onExport: () => exportActivitiesReport(questions, answers, listings, ratings),
@@ -1212,6 +1217,8 @@ export default function ProfileScreen() {
                     title: 'Analytics Summary',
                     desc: 'Platform-wide totals, engagement stats, marketplace value, top contributors, and category breakdowns.',
                     color: colors.success,
+                    textColor: colors.successText,
+                    foreground: colors.successForeground,
                     rows: null,
                     unit: null,
                      onExport: () => exportAnalyticsReport(users, questions, answers, listings, ratings, analytics),
@@ -1222,6 +1229,8 @@ export default function ProfileScreen() {
                     title: 'Listings Report',
                     desc: 'Full listing details including category-specific fields, approval status, featured flag, and pricing.',
                     color: colors.warning,
+                    textColor: colors.warningText,
+                    foreground: colors.warningForeground,
                     rows: listings.length,
                     unit: 'listings',
                     onExport: () => exportListingsReport(listings),
@@ -1239,7 +1248,7 @@ export default function ProfileScreen() {
                         <Text style={[styles.exportCardTitle, { color: colors.foreground }]}>{card.title}</Text>
                         {card.rows != null && (
                           <View style={[styles.exportBadge, { backgroundColor: card.color + '1A' }]}>
-                            <Text style={[styles.exportBadgeText, { color: card.color }]}>
+                            <Text style={[styles.exportBadgeText, { color: card.textColor }]}>
                               {card.rows} {card.unit}
                             </Text>
                           </View>
@@ -1264,11 +1273,11 @@ export default function ProfileScreen() {
                         }}
                       >
                         {exportingId === card.id ? (
-                          <Text style={[styles.exportBtnText, { color: '#fff' }]}>Generating…</Text>
+                          <Text style={[styles.exportBtnText, { color: card.foreground }]}>Generating…</Text>
                         ) : (
                           <>
-                            <Feather name="download" size={13} color="#fff" />
-                            <Text style={[styles.exportBtnText, { color: '#fff' }]}>Download CSV</Text>
+                            <Feather name="download" size={13} color={card.foreground} />
+                            <Text style={[styles.exportBtnText, { color: card.foreground }]}>Download CSV</Text>
                           </>
                         )}
                       </TouchableOpacity>
@@ -1284,7 +1293,7 @@ export default function ProfileScreen() {
       </ScrollView>
 
       <Modal visible={showSwitchModal} animationType="fade" transparent onRequestClose={() => setShowSwitchModal(false)}>
-        <Pressable style={styles.overlay} onPress={() => setShowSwitchModal(false)} />
+        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => setShowSwitchModal(false)} />
         <View style={[styles.switchSheet, { backgroundColor: colors.card }]}>
           <Text style={[styles.switchTitle, { color: colors.foreground }]}>Switch Account</Text>
           {users.map((u) => (
@@ -1294,7 +1303,7 @@ export default function ProfileScreen() {
               onPress={() => { login(u.id); setShowSwitchModal(false); }}
             >
               <View style={[styles.userAvatar, { backgroundColor: colors.primary + '33' }]}>
-                <Text style={[styles.userAvatarText, { color: colors.primary }]}>{u.name.charAt(0)}</Text>
+                <Text style={[styles.userAvatarText, { color: colors.primaryText }]}>{u.name.charAt(0)}</Text>
               </View>
               <View style={styles.userInfo}>
                 <Text style={[styles.userName, { color: colors.foreground }]}>{u.name}</Text>
@@ -1321,7 +1330,7 @@ export default function ProfileScreen() {
             {/* One-time warning banner */}
             <View style={[styles.oneTimeWarning, { backgroundColor: colors.warning + '18', borderColor: colors.warning + '44' }]}>
               <Feather name="alert-triangle" size={14} color={colors.warning} />
-              <Text style={[styles.oneTimeWarningText, { color: colors.warning }]}>
+              <Text style={[styles.oneTimeWarningText, { color: colors.warningText }]}>
                 This is your one and only profile edit. Once saved, this option is gone permanently.
               </Text>
             </View>
@@ -1373,7 +1382,7 @@ export default function ProfileScreen() {
                           }))}
                         >
                           {selected && <Feather name="check" size={11} color={colors.primary} />}
-                          <Text style={[styles.tagChipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{tag}</Text>
+                          <Text style={[styles.tagChipText, { color: selected ? colors.primaryText : colors.mutedForeground }]}>{tag}</Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -1413,8 +1422,8 @@ export default function ProfileScreen() {
                 style={[styles.userModalSaveBtn, { backgroundColor: colors.warning }]}
                 onPress={saveSelfEdit}
               >
-                <Feather name="save" size={14} color="#fff" />
-                <Text style={[styles.userModalSaveText, { color: '#fff' }]}>Save Profile</Text>
+                <Feather name="save" size={14} color={colors.warningForeground} />
+                <Text style={[styles.userModalSaveText, { color: colors.warningForeground }]}>Save Profile</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1475,7 +1484,7 @@ export default function ProfileScreen() {
                     ]}
                     onPress={() => setUserForm((f) => ({ ...f, role: r }))}
                   >
-                    <Text style={[styles.roleOptionText, { color: userForm.role === r ? colors.primary : colors.mutedForeground }]}>{r}</Text>
+                    <Text style={[styles.roleOptionText, { color: userForm.role === r ? colors.primaryText : colors.mutedForeground }]}>{r}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -1520,7 +1529,7 @@ export default function ProfileScreen() {
                           }))}
                         >
                           {selected && <Feather name="check" size={11} color={colors.primary} />}
-                          <Text style={[styles.tagChipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{tag}</Text>
+                          <Text style={[styles.tagChipText, { color: selected ? colors.primaryText : colors.mutedForeground }]}>{tag}</Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -1595,7 +1604,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: '700' },
   headerAction: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   headerUnreadBadge: { position: 'absolute', top: 1, right: 0, minWidth: 15, height: 15, borderRadius: 8, paddingHorizontal: 3, alignItems: 'center', justifyContent: 'center' },
-  headerUnreadText: { color: '#fff', fontSize: 8, fontWeight: '800' },
+  headerUnreadText: { fontSize: 8, fontWeight: '800' },
   guestContent: { paddingHorizontal: 16, paddingTop: 20 },
   guestCard: { borderRadius: 12, borderWidth: 1, padding: 20, alignItems: 'center', gap: 10, marginBottom: 24 },
   guestAvatar: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
@@ -1650,7 +1659,7 @@ const styles = StyleSheet.create({
   adminUserName: { fontSize: 14, fontWeight: '600' },
   adminUserRole: { fontSize: 12, marginTop: 2 },
   bannedBadge: { borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 },
-  bannedText: { fontSize: 10, fontWeight: '700', color: '#fff' },
+  bannedText: { fontSize: 10, fontWeight: '700' },
   adminActions: { flexDirection: 'row', gap: 6 },
   adminActionBtn: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 },
   adminActionText: { fontSize: 11, fontWeight: '600' },
@@ -1661,7 +1670,7 @@ const styles = StyleSheet.create({
   adminListingTitle: { fontSize: 13, fontWeight: '600' },
   adminListingMeta: { fontSize: 11, marginTop: 2 },
   approveBtn: { borderRadius: 6, paddingHorizontal: 12, paddingVertical: 7 },
-  approveBtnText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  approveBtnText: { fontSize: 12, fontWeight: '700' },
   featuredSummary: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 8, borderWidth: 1, padding: 10, marginBottom: 12 },
   featuredSummaryText: { fontSize: 13, fontWeight: '600' },
   listingsSectionLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 },
@@ -1779,7 +1788,7 @@ const styles = StyleSheet.create({
   exportCardDesc: { fontSize: 12, lineHeight: 17 },
   exportBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8, paddingVertical: 9, marginTop: 2 },
   exportBtnText: { fontSize: 13, fontWeight: '700' },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlay: { ...StyleSheet.absoluteFill },
   switchSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40, gap: 8 },
   switchTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
   switchItem: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 10, borderWidth: 1, padding: 12 },

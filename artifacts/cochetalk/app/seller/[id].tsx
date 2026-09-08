@@ -29,11 +29,12 @@ function timeAgo(ts: number): string {
 }
 
 function StarRating({ value, interactive = false, max = 5, size = 20, onSelect }: { value: number; interactive?: boolean; max?: number; size?: number; onSelect?: (v: number) => void }) {
+  const colors = useColors();
   return (
     <View style={{ flexDirection: 'row', gap: 3 }}>
       {Array.from({ length: max }).map((_, i) => (
         <TouchableOpacity key={i} disabled={!interactive} onPress={() => onSelect?.(i + 1)}>
-          <Feather name="star" size={size} color="#F59E0B" style={{ opacity: i < value ? 1 : 0.25 }} />
+          <Feather name="star" size={size} color={colors.rating} style={{ opacity: i < value ? 1 : 0.25 }} />
         </TouchableOpacity>
       ))}
     </View>
@@ -105,7 +106,7 @@ export default function SellerProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.avatar, { backgroundColor: seller.verified ? colors.verified + '33' : colors.primary + '33' }]}>
-            <Text style={[styles.avatarText, { color: seller.verified ? colors.verified : colors.primary }]}>
+            <Text style={[styles.avatarText, { color: seller.verified ? colors.verified : colors.primaryText }]}>
               {seller.name.charAt(0)}
             </Text>
           </View>
@@ -122,7 +123,7 @@ export default function SellerProfileScreen() {
             </View>
 
             <View style={[styles.roleBadge, { backgroundColor: seller.role === 'Service Provider' ? colors.proCircle + '22' : colors.primary + '22' }]}>
-              <Text style={[styles.roleText, { color: seller.role === 'Service Provider' ? colors.proCircle : colors.primary }]}>
+              <Text style={[styles.roleText, { color: seller.role === 'Service Provider' ? colors.proCircleText : colors.primaryText }]}>
                 {seller.role}
               </Text>
             </View>
@@ -178,15 +179,15 @@ export default function SellerProfileScreen() {
               </TouchableOpacity>
               {seller.whatsappEnabled && (
                 <TouchableOpacity
-                  style={[styles.whatsappBtn, { borderColor: '#25D366' }]}
+                  style={[styles.whatsappBtn, { borderColor: colors.whatsapp }]}
                   onPress={() => {
                     const phone = seller.phone.replace(/\D/g, '');
                     const msg = encodeURIComponent(`Hi ${seller.name}, I found you on CocheTalk.NG`);
                     require('react-native').Linking.openURL(`https://wa.me/${phone}?text=${msg}`).catch(() => {});
                   }}
                 >
-                  <Feather name="phone" size={13} color="#25D366" />
-                  <Text style={styles.whatsappBtnText}>WhatsApp</Text>
+                  <Feather name="phone" size={13} color={colors.whatsapp} />
+                  <Text style={[styles.whatsappBtnText, { color: colors.whatsappText }]}>WhatsApp</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -234,7 +235,7 @@ export default function SellerProfileScreen() {
               <View key={r.id} style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.reviewHeader}>
                   <View style={[styles.reviewAvatar, { backgroundColor: colors.primary + '33' }]}>
-                    <Text style={[styles.reviewAvatarText, { color: colors.primary }]}>{r.raterName.charAt(0)}</Text>
+                    <Text style={[styles.reviewAvatarText, { color: colors.primaryText }]}>{r.raterName.charAt(0)}</Text>
                   </View>
                   <View style={styles.reviewInfo}>
                     <Text style={[styles.reviewerName, { color: colors.foreground }]}>{r.raterName}</Text>
@@ -252,7 +253,7 @@ export default function SellerProfileScreen() {
       </ScrollView>
 
       <Modal visible={showRateModal} animationType="slide" transparent onRequestClose={() => setShowRateModal(false)}>
-        <Pressable style={styles.overlay} onPress={() => setShowRateModal(false)} />
+        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => setShowRateModal(false)} />
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
           <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
@@ -265,7 +266,7 @@ export default function SellerProfileScreen() {
             <Text style={[styles.ratingLabel, { color: colors.foreground }]}>Your Rating</Text>
             <View style={styles.starRow}>
               <StarRating value={ratingValue} interactive max={5} size={36} onSelect={setRatingValue} />
-              <Text style={[styles.ratingValueText, { color: colors.primary }]}>{ratingValue}/5</Text>
+              <Text style={[styles.ratingValueText, { color: colors.primaryText }]}>{ratingValue}/5</Text>
             </View>
 
             <Text style={[styles.ratingLabel, { color: colors.foreground }]}>Feedback</Text>
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
   messageBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, paddingVertical: 11 },
   messageBtnText: { fontSize: 14, fontWeight: '700' },
   whatsappBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14, borderWidth: 1 },
-  whatsappBtnText: { color: '#25D366', fontSize: 13, fontWeight: '600' },
+  whatsappBtnText: { fontSize: 13, fontWeight: '600' },
   rateBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, width: '100%', justifyContent: 'center', borderRadius: 10, paddingVertical: 11 },
   rateBtnText: { fontSize: 14, fontWeight: '700' },
   sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8, marginTop: 8 },
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
   reviewerName: { fontSize: 13, fontWeight: '600' },
   reviewTime: { fontSize: 11 },
   reviewFeedback: { fontSize: 13, lineHeight: 19 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlay: { ...StyleSheet.absoluteFill },
   sheet: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
   sheetHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginVertical: 10 },
   sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1 },

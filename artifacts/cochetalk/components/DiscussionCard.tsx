@@ -41,7 +41,7 @@ export function DiscussionCard({ post, commentCount, onUserPress }: Props) {
       {/* Discussion badge */}
       <View style={[styles.typeBadge, { backgroundColor: colors.secondary + '22', borderColor: colors.secondary + '55' }]}>
         <Feather name="book-open" size={10} color={colors.secondary} />
-        <Text style={[styles.typeBadgeText, { color: colors.secondary }]}>Discussion</Text>
+        <Text style={[styles.typeBadgeText, { color: colors.secondaryText }]}>Discussion</Text>
       </View>
 
       <View style={styles.mainRow}>
@@ -66,7 +66,7 @@ export function DiscussionCard({ post, commentCount, onUserPress }: Props) {
         <View style={styles.tagRow}>
           {tags.map((tag) => (
             <View key={tag} style={[styles.tag, { backgroundColor: colors.muted }]}>
-              <Text style={[styles.tagText, { color: colors.secondary }]}>{tag}</Text>
+              <Text style={[styles.tagText, { color: colors.secondaryText }]}>{tag}</Text>
             </View>
           ))}
           {(post.mediaUris?.length ?? 0) > 0 && (
@@ -81,7 +81,7 @@ export function DiscussionCard({ post, commentCount, onUserPress }: Props) {
       <View style={styles.footer}>
         <TouchableOpacity style={styles.userRow} onPress={onUserPress} disabled={!onUserPress}>
           <View style={[styles.avatar, { backgroundColor: colors.secondary + '33' }]}>
-            <Text style={[styles.avatarText, { color: colors.secondary }]}>
+            <Text style={[styles.avatarText, { color: colors.secondaryText }]}>
               {post.userName.charAt(0).toUpperCase()}
             </Text>
           </View>

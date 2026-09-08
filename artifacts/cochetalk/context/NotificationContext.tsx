@@ -19,6 +19,7 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { Platform } from 'react-native';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { primitives } from '@/constants/colors';
 
 type NotificationContextValue = {
   preferences: NotificationPreferences | null;
@@ -65,7 +66,7 @@ async function registerForPushNotifications() {
       name: 'CocheTalk notifications',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#26d367',
+      lightColor: primitives.PRIMARY,
       sound: 'default',
     });
   }

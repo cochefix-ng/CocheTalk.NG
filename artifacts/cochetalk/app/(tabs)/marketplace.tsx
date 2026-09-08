@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
+import { primitives } from '@/constants/colors';
 import { ListingCard } from '@/components/ListingCard';
 import { useApp } from '@/context/AppContext';
 import type { MarketplaceListing } from '@/context/AppContext';
@@ -40,7 +41,7 @@ type ListingCategory = 'Parts' | 'Services' | 'Car Sales';
 function SectionHeader({ title, colors }: { title: string; colors: ReturnType<typeof useColors> }) {
   return (
     <View style={[sectionHeaderStyles.row, { borderBottomColor: colors.border }]}>
-      <Text style={[sectionHeaderStyles.text, { color: colors.primary }]}>{title}</Text>
+      <Text style={[sectionHeaderStyles.text, { color: colors.primaryText }]}>{title}</Text>
     </View>
   );
 }
@@ -61,7 +62,7 @@ function OptionChips({
           style={[chipStyles.chip, { backgroundColor: value === opt ? colors.primary + '22' : colors.muted, borderColor: value === opt ? colors.primary : colors.border }]}
           onPress={() => onSelect(value === opt ? '' : opt)}
         >
-          <Text style={[chipStyles.text, { color: value === opt ? colors.primary : colors.mutedForeground }]}>{opt}</Text>
+          <Text style={[chipStyles.text, { color: value === opt ? colors.primaryText : colors.mutedForeground }]}>{opt}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -264,7 +265,7 @@ export default function MarketplaceScreen() {
         </View>
         {isAdmin && pendingCount > 0 && (
           <View style={[styles.pendingBadge, { backgroundColor: colors.warning }]}>
-            <Text style={styles.pendingBadgeText}>{pendingCount} pending</Text>
+            <Text style={[styles.pendingBadgeText, { color: colors.warningForeground }]}>{pendingCount} pending</Text>
           </View>
         )}
       </View>
@@ -317,7 +318,7 @@ export default function MarketplaceScreen() {
       )}
 
       <Modal visible={showCreateModal} animationType="slide" transparent onRequestClose={() => { setShowCreateModal(false); resetForm(); }}>
-        <Pressable style={styles.overlay} onPress={() => { setShowCreateModal(false); resetForm(); }} />
+        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => { setShowCreateModal(false); resetForm(); }} />
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
           <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
@@ -390,7 +391,7 @@ export default function MarketplaceScreen() {
                       <View key={uri} style={styles.mediaPreviewItem}>
                         <Image source={{ uri }} style={styles.mediaPreviewThumb} resizeMode="cover" />
                         <TouchableOpacity style={styles.mediaRemoveBtn} onPress={() => removeCarImage(uri)}>
-                          <Feather name="x" size={12} color="#fff" />
+                          <Feather name="x" size={12} color={colors.errorForeground} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -451,7 +452,7 @@ export default function MarketplaceScreen() {
                 {csCondition === 'Tokunbo' && (
                   <View style={[styles.noteBox, { backgroundColor: colors.primary + '12', borderColor: colors.primary + '44', marginTop: 8 }]}>
                     <Feather name="info" size={13} color={colors.primary} />
-                    <Text style={[styles.noteText, { color: colors.primary }]}>Tokunbo — foreign-used vehicle imported into Nigeria. Ensure customs papers are available.</Text>
+                    <Text style={[styles.noteText, { color: colors.primaryText }]}>Tokunbo — foreign-used vehicle imported into Nigeria. Ensure customs papers are available.</Text>
                   </View>
                 )}
 
@@ -460,10 +461,10 @@ export default function MarketplaceScreen() {
                   {['None', 'Yes'].map((a) => (
                     <TouchableOpacity
                       key={a}
-                      style={[styles.toggleBtn, { flex: 1, backgroundColor: csAccidentHistory === a ? (a === 'Yes' ? colors.warning + 'DD' : colors.success + 'CC') : colors.muted, borderColor: csAccidentHistory === a ? (a === 'Yes' ? colors.warning : colors.success) : colors.border }]}
+                      style={[styles.toggleBtn, { flex: 1, backgroundColor: csAccidentHistory === a ? (a === 'Yes' ? colors.warning : colors.success) : colors.muted, borderColor: csAccidentHistory === a ? (a === 'Yes' ? colors.warning : colors.success) : colors.border }]}
                       onPress={() => { setCsAccidentHistory(csAccidentHistory === a ? '' : a); if (a === 'None') setCsAccidentDetails(''); }}
                     >
-                      <Text style={[styles.toggleBtnText, { color: csAccidentHistory === a ? '#fff' : colors.mutedForeground }]}>{a === 'None' ? 'No Accidents' : 'Has Accident History'}</Text>
+                      <Text style={[styles.toggleBtnText, { color: csAccidentHistory === a ? (a === 'Yes' ? colors.warningForeground : colors.successForeground) : colors.mutedForeground }]}>{a === 'None' ? 'No Accidents' : 'Has Accident History'}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -556,7 +557,7 @@ export default function MarketplaceScreen() {
                     <View style={styles.gradeGrid}>
                       {PARTS_GRADES.map((g) => (
                         <TouchableOpacity key={g} style={[styles.chip, { backgroundColor: lGrade === g ? colors.primary + '33' : colors.muted, borderColor: lGrade === g ? colors.primary : colors.border }]} onPress={() => setLGrade(lGrade === g ? '' : g)}>
-                          <Text style={[styles.chipText, { color: lGrade === g ? colors.primary : colors.mutedForeground }]}>{g}</Text>
+                          <Text style={[styles.chipText, { color: lGrade === g ? colors.primaryText : colors.mutedForeground }]}>{g}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -568,7 +569,7 @@ export default function MarketplaceScreen() {
             {currentUser?.role !== 'Admin' && (
               <View style={[styles.noteBox, { backgroundColor: colors.warning + '15', borderColor: colors.warning + '44', marginTop: 16 }]}>
                 <Feather name="info" size={14} color={colors.warning} />
-                <Text style={[styles.noteText, { color: colors.warning }]}>Your listing will be reviewed by an admin before it becomes visible to buyers.</Text>
+                <Text style={[styles.noteText, { color: colors.warningText }]}>Your listing will be reviewed by an admin before it becomes visible to buyers.</Text>
               </View>
             )}
 
@@ -590,7 +591,7 @@ const styles = StyleSheet.create({
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   pendingBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  pendingBadgeText: { fontSize: 12, fontWeight: '600', color: '#fff' },
+  pendingBadgeText: { fontSize: 12, fontWeight: '600' },
   catRow: { marginTop: 10, maxHeight: 42 },
   catContent: { paddingHorizontal: 16, gap: 8, alignItems: 'center' },
   catChip: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1 },
@@ -599,8 +600,8 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: '600' },
   emptyText: { fontSize: 14, textAlign: 'center', paddingHorizontal: 20 },
-  fab: { position: 'absolute', bottom: Platform.OS === 'ios' ? 95 : 75, right: 20, width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.5)' },
+  fab: { position: 'absolute', bottom: Platform.OS === 'ios' ? 95 : 75, right: 20, width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: primitives.BLACK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  overlay: { ...StyleSheet.absoluteFill },
   sheet: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '94%' },
   sheetHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginVertical: 10 },
   sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1 },
@@ -624,7 +625,7 @@ const styles = StyleSheet.create({
   mediaPreviewRow: { marginTop: 10 },
   mediaPreviewItem: { position: 'relative' },
   mediaPreviewThumb: { width: 76, height: 76, borderRadius: 8 },
-  mediaRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.7)' },
+  mediaRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: primitives.IMAGE_SCRIM_STRONG },
   noteBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 8, borderWidth: 1, padding: 12 },
   noteText: { flex: 1, fontSize: 12, lineHeight: 18 },
   submitBtn: { marginTop: 20, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },

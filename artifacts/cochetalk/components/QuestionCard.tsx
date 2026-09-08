@@ -49,7 +49,7 @@ export function QuestionCard({ question, answerCount, isProCircle = false, onUse
       {isProCircle && (
         <View style={[styles.proBadge, { backgroundColor: colors.proCircle + '22', borderColor: colors.proCircle }]}>
           <Feather name="lock" size={10} color={colors.proCircle} />
-          <Text style={[styles.proLabel, { color: colors.proCircle }]}>Pro Circle</Text>
+          <Text style={[styles.proLabel, { color: colors.proCircleText }]}>Pro Circle</Text>
         </View>
       )}
 
@@ -65,7 +65,7 @@ export function QuestionCard({ question, answerCount, isProCircle = false, onUse
         <View style={styles.tagRow}>
           {tags.map((tag) => (
             <View key={tag} style={[styles.tag, { backgroundColor: colors.muted }]}>
-              <Text style={[styles.tagText, { color: colors.primary }]}>{tag}</Text>
+              <Text style={[styles.tagText, { color: colors.primaryText }]}>{tag}</Text>
             </View>
           ))}
         </View>
@@ -75,7 +75,7 @@ export function QuestionCard({ question, answerCount, isProCircle = false, onUse
         <View style={styles.tagRow}>
           {concerns.map((c) => (
             <View key={c} style={[styles.tag, { backgroundColor: colors.warning + '22', borderColor: colors.warning + '44' }]}>
-              <Text style={[styles.tagText, { color: colors.warning }]}>{c}</Text>
+              <Text style={[styles.tagText, { color: colors.warningText }]}>{c}</Text>
             </View>
           ))}
         </View>
@@ -84,7 +84,7 @@ export function QuestionCard({ question, answerCount, isProCircle = false, onUse
       <View style={styles.footer}>
         <TouchableOpacity style={styles.userRow} onPress={onUserPress} disabled={!onUserPress}>
           <View style={[styles.avatar, { backgroundColor: colors.primary + '33' }]}>
-            <Text style={[styles.avatarText, { color: colors.primary }]}>
+            <Text style={[styles.avatarText, { color: colors.primaryText }]}>
               {question.userName.charAt(0).toUpperCase()}
             </Text>
           </View>

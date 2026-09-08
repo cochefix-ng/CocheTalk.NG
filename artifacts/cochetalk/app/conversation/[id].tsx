@@ -91,7 +91,7 @@ export default function ConversationScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={[styles.headerAvatar, { backgroundColor: colors.primary + '33' }]}>
-          <Text style={[styles.headerAvatarText, { color: colors.primary }]}>
+          <Text style={[styles.headerAvatarText, { color: colors.primaryText }]}>
             {partnerName.charAt(0).toUpperCase()}
           </Text>
         </View>

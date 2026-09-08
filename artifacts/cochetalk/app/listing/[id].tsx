@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { getCategoryColor, getCategoryTextColor } from '@/constants/colors';
 import { makeConvId, useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
@@ -29,12 +30,6 @@ function timeAgo(ts: number): string {
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
 }
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Parts: '#3B82F6',
-  Services: '#10B981',
-  'Car Sales': '#F59E0B',
-};
 
 export default function ListingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -59,7 +54,8 @@ export default function ListingDetail() {
   const seller = users.find((u) => u.id === listing.userId);
   const whatsappEnabled = seller?.whatsappEnabled ?? false;
   const isSelf = currentUser?.id === listing.userId;
-  const catColor = CATEGORY_COLORS[listing.category] ?? colors.primary;
+  const catColor = getCategoryColor(listing.category, colors);
+  const catTextColor = getCategoryTextColor(listing.category, colors);
   const isCarSale = listing.category === 'Car Sales';
 
   const handleWhatsApp = () => {
@@ -137,16 +133,16 @@ export default function ListingDetail() {
         {!listing.isApproved && (
           <View style={[styles.pendingBanner, { backgroundColor: colors.warning + '22' }]}>
             <Feather name="clock" size={13} color={colors.warning} />
-            <Text style={[styles.pendingText, { color: colors.warning }]}>Pending Approval — only visible to you</Text>
+            <Text style={[styles.pendingText, { color: colors.warningText }]}>Pending Approval — only visible to you</Text>
           </View>
         )}
 
         {/* Category + price */}
         <View style={styles.topRow}>
           <View style={[styles.catBadge, { backgroundColor: catColor + '22' }]}>
-            <Text style={[styles.catText, { color: catColor }]}>{listing.category}</Text>
+            <Text style={[styles.catText, { color: catTextColor }]}>{listing.category}</Text>
           </View>
-          <Text style={[styles.price, { color: colors.primary }]}>{formatPrice(listing.price)}</Text>
+          <Text style={[styles.price, { color: colors.primaryText }]}>{formatPrice(listing.price)}</Text>
         </View>
 
         {/* Title */}
@@ -211,7 +207,7 @@ export default function ListingDetail() {
             onPress={() => router.push(`/seller/${encodeURIComponent(listing.userId)}`)}
           >
             <View style={[styles.avatar, { backgroundColor: colors.primary + '33' }]}>
-              <Text style={[styles.avatarText, { color: colors.primary }]}>
+              <Text style={[styles.avatarText, { color: colors.primaryText }]}>
                 {listing.userName.charAt(0).toUpperCase()}
               </Text>
             </View>
@@ -222,7 +218,7 @@ export default function ListingDetail() {
                 {seller?.verified && (
                   <View style={[styles.verifiedBadge, { backgroundColor: colors.primary + '22' }]}>
                     <Feather name="check-circle" size={10} color={colors.primary} />
-                    <Text style={[styles.verifiedText, { color: colors.primary }]}>Verified</Text>
+                    <Text style={[styles.verifiedText, { color: colors.primaryText }]}>Verified</Text>
                   </View>
                 )}
               </View>
@@ -244,11 +240,11 @@ export default function ListingDetail() {
 
             {whatsappEnabled && (
               <TouchableOpacity
-                style={[styles.whatsappBtn, { borderColor: '#25D366' }]}
+                style={[styles.whatsappBtn, { borderColor: colors.whatsapp }]}
                 onPress={handleWhatsApp}
               >
-                <Feather name="phone" size={16} color="#25D366" />
-                <Text style={[styles.whatsappBtnText]}>WhatsApp</Text>
+                <Feather name="phone" size={16} color={colors.whatsapp} />
+                <Text style={[styles.whatsappBtnText, { color: colors.whatsappText }]}>WhatsApp</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -371,7 +367,7 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderWidth: 1.5,
   },
-  whatsappBtnText: { color: '#25D366', fontSize: 15, fontWeight: '700' },
+  whatsappBtnText: { fontSize: 15, fontWeight: '700' },
   loginPrompt: {
     padding: 14,
     borderRadius: 10,

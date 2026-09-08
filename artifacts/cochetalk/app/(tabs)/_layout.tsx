@@ -15,10 +15,11 @@ const TAB_BAR_BOTTOM_GAP = 16;
 const WEB_TAB_BAR_HEIGHT = 84;
 
 function UnreadBadge({ count }: { count: number }) {
+  const colors = useColors();
   if (count === 0) return null;
   return (
-    <View style={{ position: 'absolute', top: -4, right: -6, backgroundColor: '#EF4444', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
-      <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{count > 9 ? '9+' : count}</Text>
+    <View style={{ position: 'absolute', top: -4, right: -6, backgroundColor: colors.notificationBadge, borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
+      <Text style={{ color: colors.errorForeground, fontSize: 9, fontWeight: '800' }}>{count > 9 ? '9+' : count}</Text>
     </View>
   );
 }
@@ -49,7 +50,7 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.primaryText,
         tabBarInactiveTintColor: colors.mutedForeground,
         headerShown: false,
         // The tab bar is absolute/floating, so reserve its real footprint in
@@ -76,9 +77,9 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
               height: TAB_BAR_HEIGHT,
               borderRadius: 28,
               borderTopWidth: 0,
-              backgroundColor: isIOS ? 'transparent' : isDark ? '#1a1a1a' : '#ffffff',
+              backgroundColor: isIOS ? 'transparent' : colors.surfaceElevated,
               elevation: 16,
-              shadowColor: '#000',
+              shadowColor: colors.overlay,
               shadowOffset: { width: 0, height: 6 },
               shadowOpacity: isDark ? 0.45 : 0.18,
               shadowRadius: 16,

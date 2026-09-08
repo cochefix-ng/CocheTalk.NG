@@ -73,11 +73,11 @@ export default function MessagesScreen() {
                 activeOpacity={0.7}
               >
                 <View style={[styles.avatar, { backgroundColor: colors.primary + '33' }]}>
-                  <Text style={[styles.avatarText, { color: colors.primary }]}>
+                  <Text style={[styles.avatarText, { color: colors.primaryText }]}>
                     {partner.name.charAt(0).toUpperCase()}
                   </Text>
                   {isUnread && (
-                    <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
+                    <View style={[styles.unreadDot, { backgroundColor: colors.primary, borderColor: colors.card }]} />
                   )}
                 </View>
 
@@ -92,7 +92,7 @@ export default function MessagesScreen() {
                       )}
                       {partner.user?.role === 'Service Provider' && (
                         <View style={[styles.spBadge, { backgroundColor: colors.proCircle + '22' }]}>
-                          <Text style={[styles.spBadgeText, { color: colors.proCircle }]}>SP</Text>
+                          <Text style={[styles.spBadgeText, { color: colors.proCircleText }]}>SP</Text>
                         </View>
                       )}
                     </View>
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   convRow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 8 },
   avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   avatarText: { fontSize: 18, fontWeight: '700' },
-  unreadDot: { position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: '#fff' },
+  unreadDot: { position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
   convBody: { flex: 1, gap: 3 },
   convTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5, flex: 1 },

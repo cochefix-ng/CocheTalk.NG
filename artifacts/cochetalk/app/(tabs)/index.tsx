@@ -26,18 +26,13 @@ import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollV
 import { DiscussionCard } from '@/components/DiscussionCard';
 import { QuestionCard } from '@/components/QuestionCard';
 import { useApp } from '@/context/AppContext';
+import { getCategoryColor, getCategoryTextColor, primitives } from '@/constants/colors';
 import type { MarketplaceListing } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
 
 const SCREEN_W = Dimensions.get('window').width;
 const AD_BANNER_HEIGHT = 72;
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Parts: '#3B82F6',
-  Services: '#10B981',
-  'Car Sales': '#F59E0B',
-};
 
 function AdBannerSlider({ ads }: { ads: MarketplaceListing[] }) {
   const colors = useColors();
@@ -68,7 +63,8 @@ function AdBannerSlider({ ads }: { ads: MarketplaceListing[] }) {
   if (ads.length === 0) return null;
 
   const ad = ads[index];
-  const catColor = CATEGORY_COLORS[ad.category] ?? colors.primary;
+  const catColor = getCategoryColor(ad.category, colors);
+  const catTextColor = getCategoryTextColor(ad.category, colors);
 
   return (
     <TouchableOpacity
@@ -84,9 +80,9 @@ function AdBannerSlider({ ads }: { ads: MarketplaceListing[] }) {
             <Text style={[adStyles.sponsoredText, { color: catColor }]}>Sponsored</Text>
           </View>
           <View style={[adStyles.catBadge, { backgroundColor: catColor + '18' }]}>
-            <Text style={[adStyles.catText, { color: catColor }]}>{ad.category}</Text>
+            <Text style={[adStyles.catText, { color: catTextColor }]}>{ad.category}</Text>
           </View>
-          <Text style={[adStyles.price, { color: colors.primary }]}>
+          <Text style={[adStyles.price, { color: colors.primaryText }]}>
             ₦{ad.price.toLocaleString()}
           </Text>
         </View>
@@ -113,7 +109,7 @@ function AdBannerSlider({ ads }: { ads: MarketplaceListing[] }) {
 }
 
 const adStyles = StyleSheet.create({
-  wrapper: { marginHorizontal: 16, marginBottom: 8, borderRadius: 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', height: AD_BANNER_HEIGHT, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4 },
+  wrapper: { marginHorizontal: 16, marginBottom: 8, borderRadius: 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', height: AD_BANNER_HEIGHT, overflow: 'hidden', elevation: 2, shadowColor: primitives.BLACK, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4 },
   accent: { width: 4, alignSelf: 'stretch' },
   content: { flex: 1, paddingHorizontal: 12, paddingVertical: 10, justifyContent: 'space-between' },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -392,7 +388,7 @@ export default function ForumScreen() {
               style={[styles.avatarSmall, { backgroundColor: colors.primary + '33' }]}
               onPress={() => router.push(`/seller/${encodeURIComponent(currentUser.id)}`)}
             >
-              <Text style={[styles.avatarSmallText, { color: colors.primary }]}>
+              <Text style={[styles.avatarSmallText, { color: colors.primaryText }]}>
                 {currentUser.name.charAt(0)}
               </Text>
             </TouchableOpacity>
@@ -424,7 +420,7 @@ export default function ForumScreen() {
       {cmsConfig.announcementActive && cmsConfig.announcementText ? (
         <View style={[styles.announcement, { backgroundColor: colors.primary + '22', borderColor: colors.primary + '44' }]}>
           <Feather name="bell" size={13} color={colors.primary} />
-          <Text style={[styles.announcementText, { color: colors.primary }]} numberOfLines={1}>
+          <Text style={[styles.announcementText, { color: colors.primaryText }]} numberOfLines={1}>
             {cmsConfig.announcementText}
           </Text>
         </View>
@@ -446,7 +442,7 @@ export default function ForumScreen() {
             ) : f === 'Questions' ? (
               <Feather name="help-circle" size={13} color={activeTypeFilter === f ? colors.primary : colors.mutedForeground} style={{ marginRight: 4 }} />
             ) : null}
-            <Text style={[styles.typeTabText, { color: activeTypeFilter === f ? colors.primary : colors.mutedForeground }]}>
+            <Text style={[styles.typeTabText, { color: activeTypeFilter === f ? colors.primaryText : colors.mutedForeground }]}>
               {f}
             </Text>
           </TouchableOpacity>
@@ -471,7 +467,7 @@ export default function ForumScreen() {
             style={[styles.chip, { backgroundColor: activeTag === tag ? colors.secondary + '33' : 'transparent', borderColor: activeTag === tag ? colors.secondary : colors.border }]}
             onPress={() => setActiveTag(activeTag === tag ? '' : tag)}
           >
-            <Text style={[styles.chipText, { color: activeTag === tag ? colors.secondary : colors.mutedForeground }]}>#{tag}</Text>
+            <Text style={[styles.chipText, { color: activeTag === tag ? colors.secondaryText : colors.mutedForeground }]}>#{tag}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -543,7 +539,7 @@ export default function ForumScreen() {
         transparent
         onRequestClose={() => setShowFabMenu(false)}
       >
-        <Pressable style={styles.overlay} onPress={() => setShowFabMenu(false)} />
+        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => setShowFabMenu(false)} />
         <View style={[styles.fabMenu, { backgroundColor: colors.card }, featuredAds.length > 0 && styles.fabMenuWithAd]}>
           <Text style={[styles.fabMenuTitle, { color: colors.mutedForeground }]}>What would you like to post?</Text>
 
@@ -586,7 +582,7 @@ export default function ForumScreen() {
         transparent
         onRequestClose={() => { setShowAskModal(false); resetQForm(); }}
       >
-        <Pressable style={styles.overlay} onPress={() => { setShowAskModal(false); resetQForm(); }} />
+        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => { setShowAskModal(false); resetQForm(); }} />
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
           <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
@@ -647,7 +643,7 @@ export default function ForumScreen() {
                   style={[styles.chip, { backgroundColor: qTags.includes(tag) ? colors.primary + '33' : colors.muted, borderColor: qTags.includes(tag) ? colors.primary : colors.border }]}
                   onPress={() => toggleQTag(tag)}
                 >
-                  <Text style={[styles.chipText, { color: qTags.includes(tag) ? colors.primary : colors.mutedForeground }]}>{tag}</Text>
+                  <Text style={[styles.chipText, { color: qTags.includes(tag) ? colors.primaryText : colors.mutedForeground }]}>{tag}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -661,7 +657,7 @@ export default function ForumScreen() {
                   onPress={() => toggleConcern(c.key)}
                 >
                   {qConcerns[c.key] && <Feather name="check" size={10} color={colors.warning} />}
-                  <Text style={[styles.chipText, { color: qConcerns[c.key] ? colors.warning : colors.mutedForeground }]}>{c.label}</Text>
+                  <Text style={[styles.chipText, { color: qConcerns[c.key] ? colors.warningText : colors.mutedForeground }]}>{c.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -704,7 +700,7 @@ export default function ForumScreen() {
         transparent
         onRequestClose={() => { setShowDiscussModal(false); resetDForm(); }}
       >
-        <Pressable style={styles.overlay} onPress={() => { setShowDiscussModal(false); resetDForm(); }} />
+        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => { setShowDiscussModal(false); resetDForm(); }} />
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
           <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
@@ -753,7 +749,7 @@ export default function ForumScreen() {
                   style={[styles.chip, { backgroundColor: dTags.includes(tag) ? colors.secondary + '33' : colors.muted, borderColor: dTags.includes(tag) ? colors.secondary : colors.border }]}
                   onPress={() => toggleDTag(tag)}
                 >
-                  <Text style={[styles.chipText, { color: dTags.includes(tag) ? colors.secondary : colors.mutedForeground }]}>{tag}</Text>
+                  <Text style={[styles.chipText, { color: dTags.includes(tag) ? colors.secondaryText : colors.mutedForeground }]}>{tag}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -787,7 +783,7 @@ export default function ForumScreen() {
                     style={[styles.chip, { backgroundColor: colors.secondary + '33', borderColor: colors.secondary, flexDirection: 'row', gap: 4 }]}
                     onPress={() => toggleDTag(tag)}
                   >
-                    <Text style={[styles.chipText, { color: colors.secondary }]}>{tag}</Text>
+                    <Text style={[styles.chipText, { color: colors.secondaryText }]}>{tag}</Text>
                     <Feather name="x" size={10} color={colors.secondary} />
                   </TouchableOpacity>
                 ))}
@@ -816,7 +812,7 @@ export default function ForumScreen() {
                   <View key={uri} style={styles.mediaPreviewItem}>
                     <Image source={{ uri }} style={styles.mediaPreviewThumb} resizeMode="cover" />
                     <TouchableOpacity style={styles.mediaRemoveBtn} onPress={() => removeMedia(uri)}>
-                      <Feather name="x" size={12} color="#fff" />
+                      <Feather name="x" size={12} color={colors.errorForeground} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -867,18 +863,18 @@ const styles = StyleSheet.create({
   filterContent: { paddingHorizontal: 16, gap: 6, alignItems: 'center' },
   chip: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1 },
   chipText: { fontSize: 12, fontWeight: '500' },
-  chipDivider: { width: 1, height: 20, backgroundColor: '#ccc', marginHorizontal: 4 },
+  chipDivider: { width: 1, height: 20, backgroundColor: primitives.NEUTRAL_DIVIDER, marginHorizontal: 4 },
   // List
   listContent: { paddingTop: 10, paddingBottom: 160 },
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: '600' },
   emptyText: { fontSize: 14 },
   adContainer: { position: 'absolute', bottom: Platform.OS === 'ios' ? 88 : 68, left: 0, right: 0 },
-  fab: { position: 'absolute', bottom: Platform.OS === 'ios' ? 95 : 75, right: 20, width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  fab: { position: 'absolute', bottom: Platform.OS === 'ios' ? 95 : 75, right: 20, width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: primitives.BLACK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
   fabWithAd: { bottom: Platform.OS === 'ios' ? 175 : 155 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlay: { ...StyleSheet.absoluteFill },
   // FAB menu
-  fabMenu: { position: 'absolute', bottom: Platform.OS === 'ios' ? 160 : 140, right: 16, left: 16, borderRadius: 16, padding: 16, elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 },
+  fabMenu: { position: 'absolute', bottom: Platform.OS === 'ios' ? 160 : 140, right: 16, left: 16, borderRadius: 16, padding: 16, elevation: 8, shadowColor: primitives.BLACK, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 },
   fabMenuWithAd: { bottom: Platform.OS === 'ios' ? 240 : 220 },
   fabMenuTitle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 },
   fabMenuOption: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: 1 },
@@ -916,5 +912,5 @@ const styles = StyleSheet.create({
   mediaPreviewRow: { marginTop: 10 },
   mediaPreviewItem: { position: 'relative' },
   mediaPreviewThumb: { width: 80, height: 80, borderRadius: 8 },
-  mediaRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  mediaRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: primitives.IMAGE_SCRIM, alignItems: 'center', justifyContent: 'center' },
 });

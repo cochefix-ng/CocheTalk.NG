@@ -68,7 +68,7 @@ export default function ClinicScreen() {
             <Feather name="cpu" size={22} color={colors.primary} />
           </View>
           <View style={styles.infoText}>
-            <Text style={[styles.infoTitle, { color: colors.primary }]}>Powered by Gemini AI</Text>
+            <Text style={[styles.infoTitle, { color: colors.primaryText }]}>Powered by Gemini AI</Text>
             <Text style={[styles.infoDesc, { color: colors.foreground }]}>
               Describe your vehicle problem in plain language and get an instant diagnostic report tailored for Nigerian road conditions.
             </Text>
@@ -135,7 +135,7 @@ export default function ClinicScreen() {
           <View style={[styles.errorCard, { backgroundColor: colors.destructive + '15', borderColor: colors.destructive + '44' }]}>
             <Feather name="alert-circle" size={18} color={colors.destructive} />
             <View style={styles.errorText}>
-              <Text style={[styles.errorTitle, { color: colors.destructive }]}>Diagnosis Failed</Text>
+              <Text style={[styles.errorTitle, { color: colors.destructiveText }]}>Diagnosis Failed</Text>
               <Text style={[styles.errorDesc, { color: colors.foreground }]}>
                 Could not reach the AI service. Please check your connection and try again.
               </Text>
@@ -155,7 +155,7 @@ export default function ClinicScreen() {
             <Text style={[styles.resultText, { color: colors.foreground }]}>{diagnosisData.result}</Text>
             <View style={[styles.disclaimerBox, { backgroundColor: colors.warning + '15', borderColor: colors.warning + '44' }]}>
               <Feather name="alert-triangle" size={12} color={colors.warning} />
-              <Text style={[styles.disclaimerText, { color: colors.warning }]}>
+              <Text style={[styles.disclaimerText, { color: colors.warningText }]}>
                 This is an AI-generated assessment. Always have a qualified mechanic inspect your vehicle before undertaking repairs.
               </Text>
             </View>

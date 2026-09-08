@@ -117,7 +117,7 @@ export default function SignUpScreen() {
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={[styles.brandMark, { backgroundColor: colors.primary }]}>
-            <Feather name="truck" size={28} color="#fff" />
+            <Feather name="truck" size={28} color={colors.primaryForeground} />
           </View>
           <Text style={[styles.brandName, { color: colors.foreground }]}>CocheTalk.NG</Text>
           <Text style={[styles.title, { color: colors.foreground }]}>{verificationSent ? 'Verify your email' : 'Create your account'}</Text>
@@ -138,7 +138,7 @@ export default function SignUpScreen() {
                       onPress={() => setRole(accountType.value)}
                     >
                       <Feather name={accountType.icon} size={17} color={selected ? colors.primary : colors.mutedForeground} />
-                      <Text style={[styles.roleText, { color: selected ? colors.primary : colors.mutedForeground }]}>{accountType.label}</Text>
+                      <Text style={[styles.roleText, { color: selected ? colors.primaryText : colors.mutedForeground }]}>{accountType.label}</Text>
                       {selected && <Feather name="check-circle" size={16} color={colors.primary} />}
                     </Pressable>
                   );
@@ -151,7 +151,7 @@ export default function SignUpScreen() {
                   onPress={handleGoogle}
                   disabled={isLoading}
                 >
-                  <Text style={[styles.googleG, { color: '#4285F4' }]}>G</Text>
+                  <Text style={[styles.googleG, { color: colors.google }]}>G</Text>
                   <Text style={[styles.socialText, { color: colors.foreground }]}>Continue with Google</Text>
                 </Pressable>
                 <View style={[styles.socialButton, styles.disabledButton, { backgroundColor: colors.muted, borderColor: colors.border }]}>
@@ -207,7 +207,7 @@ export default function SignUpScreen() {
                 onPress={handleStart}
                 disabled={!name.trim() || !emailAddress.trim() || !password || isLoading}
               >
-                {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={[styles.primaryButtonText, { color: name.trim() && emailAddress.trim() && password ? '#fff' : colors.mutedForeground }]}>Create account</Text>}
+                {isLoading ? <ActivityIndicator color={colors.primaryForeground} /> : <Text style={[styles.primaryButtonText, { color: name.trim() && emailAddress.trim() && password ? colors.primaryForeground : colors.mutedForeground }]}>Create account</Text>}
               </Pressable>
             </>
           ) : (
@@ -228,10 +228,10 @@ export default function SignUpScreen() {
                 onPress={handleVerify}
                 disabled={!code.trim() || isLoading}
               >
-                {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={[styles.primaryButtonText, { color: code.trim() ? '#fff' : colors.mutedForeground }]}>Verify and continue</Text>}
+                {isLoading ? <ActivityIndicator color={colors.primaryForeground} /> : <Text style={[styles.primaryButtonText, { color: code.trim() ? colors.primaryForeground : colors.mutedForeground }]}>Verify and continue</Text>}
               </Pressable>
               <Pressable style={styles.resendButton} onPress={() => signUp.verifications.sendEmailCode()} disabled={isLoading}>
-                <Text style={[styles.resendText, { color: colors.primary }]}>Send a new code</Text>
+                <Text style={[styles.resendText, { color: colors.primaryText }]}>Send a new code</Text>
               </Pressable>
               <Pressable style={styles.resendButton} onPress={() => { setVerificationSent(false); setCode(''); }} disabled={isLoading}>
                 <Text style={[styles.resendText, { color: colors.mutedForeground }]}>Change email address</Text>
@@ -241,13 +241,13 @@ export default function SignUpScreen() {
 
           <View nativeID="clerk-captcha" />
           {(errorMessage || errors.fields.emailAddress?.message || errors.fields.password?.message || errors.fields.code?.message) && (
-            <Text style={[styles.error, { color: colors.destructive }]}>
+            <Text style={[styles.error, { color: colors.destructiveText }]}>
               {errorMessage || errors.fields.emailAddress?.message || errors.fields.password?.message || errors.fields.code?.message}
             </Text>
           )}
           <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
             Already have an account?{' '}
-            <Link href="/(auth)/sign-in" style={[styles.link, { color: colors.primary }]}>Sign in</Link>
+            <Link href="/(auth)/sign-in" style={[styles.link, { color: colors.primaryText }]}>Sign in</Link>
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

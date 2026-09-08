@@ -5,6 +5,7 @@ import { Alert, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 
 
 import type { MarketplaceListing } from '@/context/AppContext';
 import { makeConvId, useApp } from '@/context/AppContext';
+import { getCategoryColor, getCategoryTextColor } from '@/constants/colors';
 import { useColors } from '@/hooks/useColors';
 
 function formatPrice(price: number): string {
@@ -20,12 +21,6 @@ function timeAgo(ts: number): string {
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
 }
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Parts: '#3B82F6',
-  Services: '#10B981',
-  'Car Sales': '#F59E0B',
-};
 
 interface Props {
   listing: MarketplaceListing;
@@ -45,10 +40,12 @@ function CarSalesMeta({ listing, colors }: { listing: MarketplaceListing; colors
   ].filter(Boolean) as { icon: React.ComponentProps<typeof Feather>['name']; label: string }[];
 
   const docBadges = [
-    listing.carRegistrationStatus === 'Registered' && { label: 'Registered', color: '#10B981' },
-    listing.carCustomsPapers?.startsWith('Yes') && { label: 'Customs Papers', color: '#10B981' },
-    listing.carAccidentHistory === 'None' || listing.carAccidentHistory === undefined ? null : { label: 'Accident History', color: '#EF4444' },
-  ].filter(Boolean) as { label: string; color: string }[];
+    listing.carRegistrationStatus === 'Registered' && { label: 'Registered', background: colors.success, text: colors.successText },
+    listing.carCustomsPapers?.startsWith('Yes') && { label: 'Customs Papers', background: colors.success, text: colors.successText },
+    listing.carAccidentHistory === 'None' || listing.carAccidentHistory === undefined
+      ? null
+      : { label: 'Accident History', background: colors.accidentStatus, text: colors.accidentStatusText },
+  ].filter(Boolean) as { label: string; background: string; text: string }[];
 
   if (specs.length === 0 && docBadges.length === 0) return null;
 
@@ -67,8 +64,8 @@ function CarSalesMeta({ listing, colors }: { listing: MarketplaceListing; colors
       {docBadges.length > 0 && (
         <View style={{ flexDirection: 'row', gap: 6 }}>
           {docBadges.map((b) => (
-            <View key={b.label} style={[carMetaStyles.docBadge, { backgroundColor: b.color + '22' }]}>
-              <Text style={[carMetaStyles.docText, { color: b.color }]}>{b.label}</Text>
+            <View key={b.label} style={[carMetaStyles.docBadge, { backgroundColor: b.background + '22' }]}>
+              <Text style={[carMetaStyles.docText, { color: b.text }]}>{b.label}</Text>
             </View>
           ))}
         </View>
@@ -87,7 +84,8 @@ const carMetaStyles = StyleSheet.create({
 export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: Props) {
   const colors = useColors();
   const { currentUser, users, conversations } = useApp();
-  const catColor = CATEGORY_COLORS[listing.category] ?? colors.primary;
+  const catColor = getCategoryColor(listing.category, colors);
+  const catTextColor = getCategoryTextColor(listing.category, colors);
   const isCarSale = listing.category === 'Car Sales';
 
   const seller = users.find((u) => u.id === listing.userId);
@@ -119,7 +117,7 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
       {!listing.isApproved && (
         <View style={[styles.pendingBanner, { backgroundColor: colors.warning + '22' }]}>
           <Feather name="clock" size={12} color={colors.warning} />
-          <Text style={[styles.pendingText, { color: colors.warning }]}>Pending Approval</Text>
+          <Text style={[styles.pendingText, { color: colors.warningText }]}>Pending Approval</Text>
         </View>
       )}
 
@@ -132,9 +130,9 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
         ) : null}
         <View style={styles.headerRow}>
           <View style={[styles.catBadge, { backgroundColor: catColor + '22' }]}>
-            <Text style={[styles.catText, { color: catColor }]}>{listing.category}</Text>
+            <Text style={[styles.catText, { color: catTextColor }]}>{listing.category}</Text>
           </View>
-          <Text style={[styles.price, { color: colors.primary }]}>{formatPrice(listing.price)}</Text>
+          <Text style={[styles.price, { color: colors.primaryText }]}>{formatPrice(listing.price)}</Text>
         </View>
 
         <Text style={[styles.title, { color: colors.cardForeground }]} numberOfLines={2}>
@@ -148,8 +146,8 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
         ) : null}
 
         <View style={[styles.viewMore, { borderColor: colors.border }]}>
-          <Text style={[styles.viewMoreText, { color: colors.primary }]}>View full details</Text>
-          <Feather name="chevron-right" size={13} color={colors.primary} />
+          <Text style={[styles.viewMoreText, { color: colors.primaryText }]}>View full details</Text>
+          <Feather name="chevron-right" size={13} color={colors.primaryText} />
         </View>
       </TouchableOpacity>
 
@@ -171,7 +169,7 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
           onPress={() => router.push(`/seller/${listing.userId}`)}
         >
           <View style={[styles.avatar, { backgroundColor: colors.primary + '33' }]}>
-            <Text style={[styles.avatarText, { color: colors.primary }]}>
+            <Text style={[styles.avatarText, { color: colors.primaryText }]}>
               {listing.userName.charAt(0).toUpperCase()}
             </Text>
           </View>
@@ -196,11 +194,11 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
             </TouchableOpacity>
             {whatsappEnabled && (
               <TouchableOpacity
-                style={[styles.whatsappBtnSmall, { borderColor: '#25D366' }]}
+                style={[styles.whatsappBtnSmall, { borderColor: colors.whatsapp }]}
                 onPress={handleWhatsApp}
               >
-                <Feather name="phone" size={13} color="#25D366" />
-                <Text style={styles.whatsappSmallText}>WhatsApp</Text>
+                <Feather name="phone" size={13} color={colors.whatsapp} />
+                <Text style={[styles.whatsappSmallText, { color: colors.whatsappText }]}>WhatsApp</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -356,7 +354,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderWidth: 1,
   },
-  whatsappSmallText: { color: '#25D366', fontSize: 12, fontWeight: '600' },
+  whatsappSmallText: { fontSize: 12, fontWeight: '600' },
   approveBtn: {
     borderWidth: 1,
     borderRadius: 8,

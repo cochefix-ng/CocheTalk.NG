@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DiscussionCard } from '@/components/DiscussionCard';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
+import { primitives } from '@/constants/colors';
 import { QuestionCard } from '@/components/QuestionCard';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
@@ -220,7 +221,7 @@ export default function ProCircleScreen() {
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Pro Circle</Text>
         </View>
         <View style={[styles.proBadge, { backgroundColor: colors.proCircle + '22' }]}>
-          <Text style={[styles.proBadgeText, { color: colors.proCircle }]}>Mechanics Only</Text>
+          <Text style={[styles.proBadgeText, { color: colors.proCircleText }]}>Mechanics Only</Text>
         </View>
       </View>
 
@@ -237,7 +238,7 @@ export default function ProCircleScreen() {
             ) : f === 'Questions' ? (
               <Feather name="help-circle" size={13} color={activeTypeFilter === f ? colors.proCircle : colors.mutedForeground} style={{ marginRight: 4 }} />
             ) : null}
-            <Text style={[styles.typeTabText, { color: activeTypeFilter === f ? colors.proCircle : colors.mutedForeground }]}>
+            <Text style={[styles.typeTabText, { color: activeTypeFilter === f ? colors.proCircleText : colors.mutedForeground }]}>
               {f}
             </Text>
           </TouchableOpacity>
@@ -252,7 +253,7 @@ export default function ProCircleScreen() {
             style={[styles.chip, { backgroundColor: activeSortFilter === f ? colors.proCircle : colors.muted, borderColor: activeSortFilter === f ? colors.proCircle : colors.border }]}
             onPress={() => setActiveSortFilter(f)}
           >
-            <Text style={[styles.chipText, { color: activeSortFilter === f ? '#fff' : colors.mutedForeground }]}>{f}</Text>
+            <Text style={[styles.chipText, { color: activeSortFilter === f ? colors.accentForeground : colors.mutedForeground }]}>{f}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -304,14 +305,14 @@ export default function ProCircleScreen() {
         style={[styles.fab, { backgroundColor: colors.proCircle }]}
         onPress={() => setShowFabMenu(true)}
       >
-        <Feather name="plus" size={24} color="#fff" />
+        <Feather name="plus" size={24} color={colors.proCircleForeground} />
       </TouchableOpacity>
 
       {/* ═══════════════════════════════════════════
           FAB menu
       ═══════════════════════════════════════════ */}
       <Modal visible={showFabMenu} animationType="fade" transparent onRequestClose={() => setShowFabMenu(false)}>
-        <Pressable style={styles.overlay} onPress={() => setShowFabMenu(false)} />
+        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => setShowFabMenu(false)} />
         <View style={[styles.fabMenu, { backgroundColor: colors.card }]}>
           <Text style={[styles.fabMenuTitle, { color: colors.mutedForeground }]}>What would you like to post?</Text>
 
@@ -349,7 +350,7 @@ export default function ProCircleScreen() {
           Ask a Technical Question modal
       ═══════════════════════════════════════════ */}
       <Modal visible={showAskModal} animationType="slide" transparent onRequestClose={() => { setShowAskModal(false); resetQForm(); }}>
-        <Pressable style={styles.overlay} onPress={() => { setShowAskModal(false); resetQForm(); }} />
+        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => { setShowAskModal(false); resetQForm(); }} />
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
           <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
@@ -375,7 +376,7 @@ export default function ProCircleScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {VEHICLE_TYPES.map((t) => (
                 <TouchableOpacity key={t} style={[styles.chip, { backgroundColor: qType === t ? colors.proCircle : colors.muted, borderColor: qType === t ? colors.proCircle : colors.border, marginRight: 6 }]} onPress={() => setQType(t)}>
-                  <Text style={[styles.chipText, { color: qType === t ? '#fff' : colors.mutedForeground }]}>{t}</Text>
+                  <Text style={[styles.chipText, { color: qType === t ? colors.proCircleForeground : colors.mutedForeground }]}>{t}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -384,7 +385,7 @@ export default function ProCircleScreen() {
             <View style={styles.tagGrid}>
               {COMMON_TAGS.map((tag) => (
                 <TouchableOpacity key={tag} style={[styles.chip, { backgroundColor: qTags.includes(tag) ? colors.proCircle + '33' : colors.muted, borderColor: qTags.includes(tag) ? colors.proCircle : colors.border }]} onPress={() => toggleQTag(tag)}>
-                  <Text style={[styles.chipText, { color: qTags.includes(tag) ? colors.proCircle : colors.mutedForeground }]}>{tag}</Text>
+                  <Text style={[styles.chipText, { color: qTags.includes(tag) ? colors.proCircleText : colors.mutedForeground }]}>{tag}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -394,13 +395,13 @@ export default function ProCircleScreen() {
               {CONCERNS.map((c) => (
                 <TouchableOpacity key={c.key} style={[styles.concernChip, { backgroundColor: qConcerns[c.key] ? colors.proCircle + '22' : colors.muted, borderColor: qConcerns[c.key] ? colors.proCircle : colors.border }]} onPress={() => toggleConcern(c.key)}>
                   {qConcerns[c.key] && <Feather name="check" size={10} color={colors.proCircle} />}
-                  <Text style={[styles.chipText, { color: qConcerns[c.key] ? colors.proCircle : colors.mutedForeground }]}>{c.label}</Text>
+                  <Text style={[styles.chipText, { color: qConcerns[c.key] ? colors.proCircleText : colors.mutedForeground }]}>{c.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             <TouchableOpacity style={[styles.submitBtn, { backgroundColor: !qTitle.trim() || !qDesc.trim() ? colors.muted : colors.proCircle }]} onPress={handleQSubmit} disabled={!qTitle.trim() || !qDesc.trim()}>
-              <Text style={[styles.submitBtnText, { color: !qTitle.trim() || !qDesc.trim() ? colors.mutedForeground : '#fff' }]}>Post to Pro Circle</Text>
+              <Text style={[styles.submitBtnText, { color: !qTitle.trim() || !qDesc.trim() ? colors.mutedForeground : colors.proCircleForeground }]}>Post to Pro Circle</Text>
             </TouchableOpacity>
             <View style={{ height: 40 }} />
           </KeyboardAwareScrollViewCompat>
@@ -411,7 +412,7 @@ export default function ProCircleScreen() {
           General Discussion modal
       ═══════════════════════════════════════════ */}
       <Modal visible={showDiscussModal} animationType="slide" transparent onRequestClose={() => { setShowDiscussModal(false); resetDForm(); }}>
-        <Pressable style={styles.overlay} onPress={() => { setShowDiscussModal(false); resetDForm(); }} />
+        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => { setShowDiscussModal(false); resetDForm(); }} />
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
           <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
@@ -460,7 +461,7 @@ export default function ProCircleScreen() {
                   style={[styles.chip, { backgroundColor: dTags.includes(tag) ? colors.proCircle + '33' : colors.muted, borderColor: dTags.includes(tag) ? colors.proCircle : colors.border }]}
                   onPress={() => toggleDTag(tag)}
                 >
-                  <Text style={[styles.chipText, { color: dTags.includes(tag) ? colors.proCircle : colors.mutedForeground }]}>{tag}</Text>
+                  <Text style={[styles.chipText, { color: dTags.includes(tag) ? colors.proCircleText : colors.mutedForeground }]}>{tag}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -481,7 +482,7 @@ export default function ProCircleScreen() {
                 onPress={addCustomTag}
                 disabled={!dCustomTag.trim()}
               >
-                <Feather name="plus" size={16} color={dCustomTag.trim() ? '#fff' : colors.mutedForeground} />
+                <Feather name="plus" size={16} color={dCustomTag.trim() ? colors.accentForeground : colors.mutedForeground} />
               </TouchableOpacity>
             </View>
 
@@ -494,7 +495,7 @@ export default function ProCircleScreen() {
                     style={[styles.chip, { backgroundColor: colors.proCircle + '33', borderColor: colors.proCircle, flexDirection: 'row', gap: 4 }]}
                     onPress={() => toggleDTag(tag)}
                   >
-                    <Text style={[styles.chipText, { color: colors.proCircle }]}>{tag}</Text>
+                    <Text style={[styles.chipText, { color: colors.proCircleText }]}>{tag}</Text>
                     <Feather name="x" size={10} color={colors.proCircle} />
                   </TouchableOpacity>
                 ))}
@@ -523,7 +524,7 @@ export default function ProCircleScreen() {
                   <View key={uri} style={styles.mediaPreviewItem}>
                     <Image source={{ uri }} style={styles.mediaPreviewThumb} resizeMode="cover" />
                     <TouchableOpacity style={styles.mediaRemoveBtn} onPress={() => removeMedia(uri)}>
-                      <Feather name="x" size={12} color="#fff" />
+                      <Feather name="x" size={12} color={colors.errorForeground} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -536,8 +537,8 @@ export default function ProCircleScreen() {
               onPress={handleDSubmit}
               disabled={!dContent.trim()}
             >
-              <Feather name="send" size={16} color={!dContent.trim() ? colors.mutedForeground : '#fff'} style={{ marginRight: 8 }} />
-              <Text style={[styles.submitBtnText, { color: !dContent.trim() ? colors.mutedForeground : '#fff' }]}>
+              <Feather name="send" size={16} color={!dContent.trim() ? colors.mutedForeground : colors.proCircleForeground} style={{ marginRight: 8 }} />
+              <Text style={[styles.submitBtnText, { color: !dContent.trim() ? colors.mutedForeground : colors.proCircleForeground }]}>
                 Post to Pro Circle
               </Text>
             </TouchableOpacity>
@@ -577,10 +578,10 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: '600' },
   emptyText: { fontSize: 14, textAlign: 'center', paddingHorizontal: 20 },
-  fab: { position: 'absolute', bottom: Platform.OS === 'ios' ? 95 : 75, right: 20, width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.5)' },
+  fab: { position: 'absolute', bottom: Platform.OS === 'ios' ? 95 : 75, right: 20, width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: primitives.BLACK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  overlay: { ...StyleSheet.absoluteFill },
   // FAB menu
-  fabMenu: { position: 'absolute', bottom: Platform.OS === 'ios' ? 160 : 140, right: 16, left: 16, borderRadius: 16, padding: 16, elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 },
+  fabMenu: { position: 'absolute', bottom: Platform.OS === 'ios' ? 160 : 140, right: 16, left: 16, borderRadius: 16, padding: 16, elevation: 8, shadowColor: primitives.BLACK, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 },
   fabMenuTitle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 },
   fabMenuOption: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: 1 },
   fabMenuIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
@@ -611,5 +612,5 @@ const styles = StyleSheet.create({
   mediaPickerText: { fontSize: 13, flex: 1 },
   mediaPreviewItem: { position: 'relative' },
   mediaPreviewThumb: { width: 80, height: 80, borderRadius: 8 },
-  mediaRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  mediaRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: primitives.IMAGE_SCRIM, alignItems: 'center', justifyContent: 'center' },
 });

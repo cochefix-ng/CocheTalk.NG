@@ -4,8 +4,31 @@
     <title>APP_NAME_PLACEHOLDER</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Encoded favicon keeps the existing --legacy-brand orange. -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='180' height='180' rx='36' fill='%23FF3C00'/%3E%3C/svg%3E" />
     <style>
+      :root {
+        --page-bg: #fff;
+        --text: #222;
+        --heading: #111;
+        --muted: #666;
+        --border: #ddd;
+        --strong: #333;
+        --legacy-brand: #FF3C00;
+        --subtle-bg: #fafafa;
+        --hover-bg: #f5f5f5;
+        --control-border: #999;
+        --quiet-border: #ccc;
+        --link-hover: #333;
+        --soft-text: #555;
+        --loading-text: #333;
+        --white: #fff;
+        --on-dark-border: rgba(255, 255, 255, 0.3);
+        --on-dark-border-strong: rgba(255, 255, 255, 0.5);
+        --on-dark-muted: rgba(255, 255, 255, 0.7);
+        --qr-dots: #333333;
+        --qr-background: #ffffff;
+      }
       * {
         box-sizing: border-box;
       }
@@ -14,8 +37,8 @@
         margin: 0;
         padding: 32px 20px;
         text-align: center;
-        background: #fff;
-        color: #222;
+        background: var(--page-bg);
+        color: var(--text);
         line-height: 1.5;
         min-height: 100vh;
       }
@@ -27,11 +50,11 @@
         font-size: 26px;
         font-weight: 600;
         margin: 0;
-        color: #111;
+        color: var(--heading);
       }
       .subtitle {
         font-size: 15px;
-        color: #666;
+        color: var(--muted);
         margin-top: 8px;
         margin-bottom: 32px;
       }
@@ -40,8 +63,8 @@
         margin: 60px 0;
       }
       .spinner {
-        border: 2px solid #ddd;
-        border-top-color: #333;
+        border: 2px solid var(--border);
+        border-top-color: var(--strong);
         border-radius: 50%;
         width: 32px;
         height: 32px;
@@ -55,7 +78,7 @@
       }
       .loading-text {
         font-size: 16px;
-        color: #444;
+        color: var(--loading-text);
       }
       .content {
         display: block;
@@ -69,10 +92,10 @@
 
       .step {
         padding: 24px;
-        border: 1px solid #ddd;
+        border: 1px solid var(--border);
         border-radius: 12px;
         text-align: center;
-        background: #fafafa;
+        background: var(--subtle-bg);
       }
       .step-header {
         display: flex;
@@ -84,7 +107,7 @@
       .step-number {
         width: 28px;
         height: 28px;
-        border: 1px solid #999;
+        border: 1px solid var(--control-border);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -92,18 +115,18 @@
         font-weight: 600;
         font-size: 14px;
         flex-shrink: 0;
-        color: #555;
+        color: var(--soft-text);
       }
       .step-title {
         font-size: 18px;
         font-weight: 600;
         margin: 0;
-        color: #222;
+        color: var(--text);
       }
       .step-description {
         font-size: 14px;
         margin-bottom: 16px;
-        color: #666;
+        color: var(--muted);
       }
 
       .store-buttons {
@@ -121,16 +144,16 @@
         padding: 12px 20px;
         font-size: 14px;
         font-weight: 500;
-        border: 1px solid #ccc;
+        border: 1px solid var(--quiet-border);
         border-radius: 8px;
         text-decoration: none;
-        color: #333;
-        background: #fff;
+        color: var(--strong);
+        background: var(--white);
         transition: all 0.15s;
       }
       .store-button:hover {
-        background: #f5f5f5;
-        border-color: #999;
+        background: var(--hover-bg);
+        border-color: var(--control-border);
       }
       .store-link {
         display: inline-flex;
@@ -142,13 +165,13 @@
         font-weight: 400;
         text-decoration: underline;
         text-underline-offset: 2px;
-        color: #666;
+        color: var(--muted);
         background: none;
         border: none;
         transition: color 0.15s;
       }
       .store-link:hover {
-        color: #333;
+        color: var(--strong);
       }
       .store-link .store-icon {
         width: 14px;
@@ -160,25 +183,25 @@
       }
 
       .qr-section {
-        background: #333;
-        color: #fff;
-        border-color: #333;
+        background: var(--strong);
+        color: var(--white);
+        border-color: var(--strong);
       }
       .qr-section .step-number {
-        border-color: rgba(255, 255, 255, 0.5);
-        color: #fff;
+         border-color: var(--on-dark-border-strong);
+        color: var(--white);
       }
       .qr-section .step-title {
-        color: #fff;
+        color: var(--white);
       }
       .qr-section .step-description {
-        color: rgba(255, 255, 255, 0.7);
+         color: var(--on-dark-muted);
       }
       .qr-code {
         width: 180px;
         height: 180px;
         margin: 0 auto 16px;
-        background: #fff;
+        background: var(--white);
         border-radius: 8px;
         padding: 12px;
       }
@@ -191,11 +214,11 @@
         padding: 12px 24px;
         font-size: 14px;
         font-weight: 500;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+         border: 1px solid var(--on-dark-border);
         border-radius: 8px;
         text-decoration: none;
-        color: #333;
-        background: #fff;
+        color: var(--strong);
+        background: var(--white);
         transition: opacity 0.15s;
       }
       .open-button:hover {
@@ -263,68 +286,74 @@
 
       /* Dark mode */
       @media (prefers-color-scheme: dark) {
+        :root {
+          --page-bg: #0d0d0d; --text: #e0e0e0; --heading: #f5f5f5; --muted: #999;
+          --border: #444; --strong: #333; --subtle-bg: #1a1a1a; --control-border: #666;
+          --soft-text: #bbb; --loading-text: #aaa; --quiet-border: #444; --link-hover: #ccc; --hover-bg: #2a2a2a; --dark-control-bg: #222; --white: #fff;
+          --dark-title: #f0f0f0; --dark-description: #888; --dark-qr: #111;
+        }
         body {
-          background: #0d0d0d;
-          color: #e0e0e0;
+          background: var(--page-bg);
+          color: var(--text);
         }
         h1 {
-          color: #f5f5f5;
+          color: var(--heading);
         }
         .subtitle {
-          color: #999;
+          color: var(--muted);
         }
         .spinner {
-          border-color: #444;
-          border-top-color: #ccc;
+          border-color: var(--border);
+          border-top-color: var(--quiet-border);
         }
         .loading-text {
-          color: #aaa;
+          color: var(--loading-text);
         }
         .step {
-          border-color: #333;
-          background: #1a1a1a;
+          border-color: var(--strong);
+          background: var(--subtle-bg);
         }
         .step-number {
-          border-color: #666;
-          color: #bbb;
+          border-color: var(--control-border);
+          color: var(--soft-text);
         }
         .step-title {
-          color: #f0f0f0;
+          color: var(--dark-title);
         }
         .step-description {
-          color: #888;
+          color: var(--dark-description);
         }
         .store-button {
-          border-color: #444;
-          color: #e0e0e0;
-          background: #222;
+          border-color: var(--border);
+          color: var(--text);
+          background: var(--dark-control-bg);
         }
         .store-button:hover {
-          background: #2a2a2a;
-          border-color: #666;
+          background: var(--hover-bg);
+          border-color: var(--control-border);
         }
         .store-link {
-          color: #888;
+          color: var(--dark-description);
         }
         .store-link:hover {
-          color: #ccc;
+          color: var(--link-hover);
         }
         .qr-section {
-          background: #111;
-          border-color: #333;
+          background: var(--dark-qr);
+          border-color: var(--strong);
         }
         .qr-section .step-number {
-          border-color: rgba(255, 255, 255, 0.4);
+          border-color: var(--on-dark-border-strong);
         }
         .qr-section .step-description {
-          color: rgba(255, 255, 255, 0.6);
+          color: var(--on-dark-muted);
         }
         .open-button {
-          background: #f0f0f0;
-          color: #111;
+          background: var(--dark-title);
+          color: var(--dark-qr);
         }
         .open-button:hover {
-          background: #e0e0e0;
+          background: var(--text);
         }
       }
     </style>
@@ -421,16 +450,17 @@
           storeButtonsContainer.insertBefore(playStoreBtn, appStoreBtn);
         }
 
-        const qrCode = new QRCodeStyling({
+         const cssTheme = getComputedStyle(document.documentElement);
+         const qrCode = new QRCodeStyling({
           width: 400,
           height: 400,
           data: deepLink,
           dotsOptions: {
-            color: "#333333",
+             color: cssTheme.getPropertyValue("--qr-dots").trim(),
             type: "rounded",
           },
           backgroundOptions: {
-            color: "#ffffff",
+             color: cssTheme.getPropertyValue("--qr-background").trim(),
           },
           cornersSquareOptions: {
             type: "extra-rounded",

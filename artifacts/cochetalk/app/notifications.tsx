@@ -88,7 +88,7 @@ export default function NotificationsScreen() {
       {unreadCount > 0 && (
         <TouchableOpacity onPress={() => void markAllRead()} style={styles.markAllButton}>
           <Feather name="check-circle" size={15} color={colors.primary} />
-          <Text style={[styles.markAllText, { color: colors.primary }]}>Mark all as read</Text>
+          <Text style={[styles.markAllText, { color: colors.primaryText }]}>Mark all as read</Text>
         </TouchableOpacity>
       )}
 
@@ -108,7 +108,7 @@ export default function NotificationsScreen() {
           </Text>
           <TouchableOpacity onPress={() => router.push('/notifications/settings')} style={[styles.settingsButton, { borderColor: colors.border }]}>
             <Feather name="sliders" size={15} color={colors.primary} />
-            <Text style={[styles.settingsButtonText, { color: colors.primary }]}>Notification settings</Text>
+            <Text style={[styles.settingsButtonText, { color: colors.primaryText }]}>Notification settings</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -117,7 +117,7 @@ export default function NotificationsScreen() {
           refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} tintColor={colors.primary} />}
           showsVerticalScrollIndicator={false}
         >
-          {error && <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>}
+          {error && <Text style={[styles.error, { color: colors.destructiveText }]}>{error}</Text>}
           {notifications.map((item) => (
             <TouchableOpacity
               key={item.id}

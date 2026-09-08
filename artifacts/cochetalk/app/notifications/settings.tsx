@@ -101,7 +101,7 @@ export default function NotificationSettingsScreen() {
             );
           })
         )}
-        {error && <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>}
+        {error && <Text style={[styles.error, { color: colors.destructiveText }]}>{error}</Text>}
         <Text style={[styles.footnote, { color: colors.mutedForeground }]}>
           Admin-disabled categories are temporarily unavailable. Your personal choices are saved and will be restored if a category is re-enabled.
         </Text>

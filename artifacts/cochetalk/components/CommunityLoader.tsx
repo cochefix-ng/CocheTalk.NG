@@ -6,10 +6,10 @@ import {
   StyleSheet,
   Text,
   View,
-  useColorScheme,
 } from 'react-native';
 
 import { useApp } from '@/context/AppContext';
+import { useColors } from '@/hooks/useColors';
 
 const MESSAGES = [
   'Brake issue solved in 5 mins',
@@ -21,24 +21,6 @@ const MESSAGES = [
   'Question answered in record time',
 ];
 
-const LIGHT = {
-  bg: '#FAFAFA',
-  card: '#FFFFFF',
-  primary: '#26d367',
-  foreground: '#121212',
-  muted: '#6B7280',
-  border: '#E5E7EB',
-};
-
-const DARK = {
-  bg: '#121212',
-  card: '#1E1E1E',
-  primary: '#26d367',
-  foreground: '#F9FAFB',
-  muted: '#9CA3AF',
-  border: '#2A2A2A',
-};
-
 interface Props {
   onFinished: () => void;
 }
@@ -46,8 +28,7 @@ interface Props {
 const { width } = Dimensions.get('window');
 
 export function CommunityLoader({ onFinished }: Props) {
-  const scheme = useColorScheme();
-  const c = scheme === 'dark' ? DARK : LIGHT;
+  const c = useColors();
   const { cmsConfig } = useApp();
   const loaderLogoUri = cmsConfig?.loaderLogoUri;
 
@@ -119,7 +100,7 @@ export function CommunityLoader({ onFinished }: Props) {
 
   return (
     <Animated.View
-      style={[styles.overlay, { backgroundColor: c.bg, opacity: overlayOpacity }]}
+      style={[styles.overlay, { backgroundColor: c.background, opacity: overlayOpacity }]}
       pointerEvents="none"
     >
       <View style={styles.center}>
@@ -143,7 +124,7 @@ export function CommunityLoader({ onFinished }: Props) {
 
         <Animated.View style={{ opacity: logoOpacity, marginTop: 16 }}>
           <Text style={[styles.appName, { color: c.foreground }]}>CocheTalk</Text>
-          <Text style={[styles.appTagline, { color: c.primary }]}>Nigeria's Vehicle Community</Text>
+          <Text style={[styles.appTagline, { color: c.primaryText }]}>Nigeria's Vehicle Community</Text>
         </Animated.View>
 
         <View style={styles.messageArea}>
@@ -165,7 +146,7 @@ export function CommunityLoader({ onFinished }: Props) {
       </View>
 
       <View style={styles.footer}>
-        <Text style={[styles.footerText, { color: c.muted }]}>Loading your community…</Text>
+        <Text style={[styles.footerText, { color: c.mutedForeground }]}>Loading your community…</Text>
         <View style={styles.dotsRow}>
           {[0, 1, 2].map((i) => (
             <Animated.View

@@ -101,13 +101,13 @@ export default function QuestionDetailScreen() {
           {question.isPrivateEcosystem && (
             <View style={[styles.proTag, { backgroundColor: colors.proCircle + '22', borderColor: colors.proCircle }]}>
               <Feather name="lock" size={10} color={colors.proCircle} />
-              <Text style={[styles.proTagText, { color: colors.proCircle }]}>Pro Circle</Text>
+              <Text style={[styles.proTagText, { color: colors.proCircleText }]}>Pro Circle</Text>
             </View>
           )}
 
           <Text style={[styles.questionTitle, { color: colors.foreground }]}>{question.title}</Text>
 
-          {question.yrModel ? <Text style={[styles.vehicleModel, { color: colors.primary }]}>{question.yrModel} · {question.vehicleType}</Text> : null}
+          {question.yrModel ? <Text style={[styles.vehicleModel, { color: colors.primaryText }]}>{question.yrModel} · {question.vehicleType}</Text> : null}
 
           <Text style={[styles.questionDesc, { color: colors.foreground }]}>{question.description}</Text>
 
@@ -115,7 +115,7 @@ export default function QuestionDetailScreen() {
             <View style={styles.tagRow}>
               {tags.map((tag) => (
                 <View key={tag} style={[styles.tag, { backgroundColor: colors.muted }]}>
-                  <Text style={[styles.tagText, { color: colors.primary }]}>{tag}</Text>
+                  <Text style={[styles.tagText, { color: colors.primaryText }]}>{tag}</Text>
                 </View>
               ))}
             </View>
@@ -125,7 +125,7 @@ export default function QuestionDetailScreen() {
             <View style={styles.tagRow}>
               {concerns.map((c) => (
                 <View key={c} style={[styles.tag, { backgroundColor: colors.warning + '22' }]}>
-                  <Text style={[styles.tagText, { color: colors.warning }]}>{c}</Text>
+                  <Text style={[styles.tagText, { color: colors.warningText }]}>{c}</Text>
                 </View>
               ))}
             </View>
@@ -137,7 +137,7 @@ export default function QuestionDetailScreen() {
               onPress={() => router.push(`/seller/${encodeURIComponent(question.userId)}`)}
             >
               <View style={[styles.avatar, { backgroundColor: colors.primary + '33' }]}>
-                <Text style={[styles.avatarText, { color: colors.primary }]}>{question.userName.charAt(0)}</Text>
+                <Text style={[styles.avatarText, { color: colors.primaryText }]}>{question.userName.charAt(0)}</Text>
               </View>
               <View>
                 <View style={styles.nameRow}>
@@ -154,7 +154,7 @@ export default function QuestionDetailScreen() {
                 onPress={() => currentUser && upvoteQuestion(question.id)}
               >
                 <Feather name="arrow-up" size={14} color={hasVotedQ ? colors.primary : colors.mutedForeground} />
-                <Text style={[styles.voteCount, { color: hasVotedQ ? colors.primary : colors.mutedForeground }]}>{question.upvotes}</Text>
+                <Text style={[styles.voteCount, { color: hasVotedQ ? colors.primaryText : colors.mutedForeground }]}>{question.upvotes}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.commentBtn, { backgroundColor: colors.muted }]}
@@ -170,7 +170,7 @@ export default function QuestionDetailScreen() {
             <View style={[styles.commentsSection, { borderTopColor: colors.border }]}>
               {questionComments.map((c) => (
                 <View key={c.id} style={[styles.comment, { borderLeftColor: colors.border }]}>
-                  <Text style={[styles.commentAuthor, { color: colors.primary }]}>{c.userName}</Text>
+                  <Text style={[styles.commentAuthor, { color: colors.primaryText }]}>{c.userName}</Text>
                   <Text style={[styles.commentText, { color: colors.foreground }]}> {c.content}</Text>
                   <Text style={[styles.commentTime, { color: colors.mutedForeground }]}> · {timeAgo(c.timestamp)}</Text>
                 </View>
@@ -202,7 +202,7 @@ export default function QuestionDetailScreen() {
           {question.acceptedAnswerId > 0 && (
             <View style={[styles.acceptedBadge, { backgroundColor: colors.success + '22' }]}>
               <Feather name="check-circle" size={13} color={colors.success} />
-              <Text style={[styles.acceptedBadgeText, { color: colors.success }]}>Resolved</Text>
+              <Text style={[styles.acceptedBadgeText, { color: colors.successText }]}>Resolved</Text>
             </View>
           )}
         </View>
@@ -224,7 +224,7 @@ export default function QuestionDetailScreen() {
               {answer.isAccepted && (
                 <View style={[styles.acceptedTag, { backgroundColor: colors.success + '22' }]}>
                   <Feather name="check-circle" size={12} color={colors.success} />
-                  <Text style={[styles.acceptedTagText, { color: colors.success }]}>Accepted Answer</Text>
+                  <Text style={[styles.acceptedTagText, { color: colors.successText }]}>Accepted Answer</Text>
                 </View>
               )}
 
@@ -253,7 +253,7 @@ export default function QuestionDetailScreen() {
                   onPress={() => currentUser && upvoteAnswer(answer.id)}
                 >
                   <Feather name="arrow-up" size={13} color={hasVotedA ? colors.primary : colors.mutedForeground} />
-                  <Text style={[styles.voteCount, { color: hasVotedA ? colors.primary : colors.mutedForeground }]}>{answer.upvotes}</Text>
+                  <Text style={[styles.voteCount, { color: hasVotedA ? colors.primaryText : colors.mutedForeground }]}>{answer.upvotes}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -272,7 +272,7 @@ export default function QuestionDetailScreen() {
                     onPress={() => acceptAnswer(question.id, answer.id)}
                   >
                     <Feather name="check" size={13} color={colors.success} />
-                    <Text style={[styles.acceptBtnText, { color: colors.success }]}>Accept</Text>
+                  <Text style={[styles.acceptBtnText, { color: colors.successText }]}>Accept</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -281,7 +281,7 @@ export default function QuestionDetailScreen() {
                 <View style={[styles.commentsSection, { borderTopColor: colors.border }]}>
                   {answerComments.map((c) => (
                     <View key={c.id} style={[styles.comment, { borderLeftColor: colors.border }]}>
-                      <Text style={[styles.commentAuthor, { color: colors.primary }]}>{c.userName}</Text>
+                      <Text style={[styles.commentAuthor, { color: colors.primaryText }]}>{c.userName}</Text>
                       <Text style={[styles.commentText, { color: colors.foreground }]}> {c.content}</Text>
                       <Text style={[styles.commentTime, { color: colors.mutedForeground }]}> · {timeAgo(c.timestamp)}</Text>
                     </View>
@@ -344,7 +344,7 @@ export default function QuestionDetailScreen() {
           <View style={[styles.loginPrompt, { backgroundColor: colors.muted, borderColor: colors.border }]}>
             <Text style={[styles.loginPromptText, { color: colors.mutedForeground }]}>Sign in to answer this question</Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
-              <Text style={[styles.loginLink, { color: colors.primary }]}>Sign In</Text>
+              <Text style={[styles.loginLink, { color: colors.primaryText }]}>Sign In</Text>
             </TouchableOpacity>
           </View>
         )}

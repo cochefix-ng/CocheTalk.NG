@@ -91,7 +91,7 @@ export default function SignInScreen() {
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={[styles.brandMark, { backgroundColor: colors.primary }]}>
-            <Feather name="truck" size={28} color="#fff" />
+            <Feather name="truck" size={28} color={colors.primaryForeground} />
           </View>
           <Text style={[styles.brandName, { color: colors.foreground }]}>CocheTalk.NG</Text>
           <Text style={[styles.title, { color: colors.foreground }]}>Welcome back</Text>
@@ -105,7 +105,7 @@ export default function SignInScreen() {
               onPress={handleGoogle}
               disabled={isLoading}
             >
-              <Text style={[styles.googleG, { color: '#4285F4' }]}>G</Text>
+              <Text style={[styles.googleG, { color: colors.google }]}>G</Text>
               <Text style={[styles.socialText, { color: colors.foreground }]}>Continue with Google</Text>
             </Pressable>
             <View style={[styles.socialButton, styles.disabledButton, { backgroundColor: colors.muted, borderColor: colors.border }]}>
@@ -146,7 +146,7 @@ export default function SignInScreen() {
           />
 
           {(errorMessage || errors.fields.identifier?.message || errors.fields.password?.message) && (
-            <Text style={[styles.error, { color: colors.destructive }]}>
+            <Text style={[styles.error, { color: colors.destructiveText }]}>
               {errorMessage || errors.fields.identifier?.message || errors.fields.password?.message}
             </Text>
           )}
@@ -160,12 +160,12 @@ export default function SignInScreen() {
             onPress={handleSubmit}
             disabled={!emailAddress.trim() || !password || isLoading}
           >
-            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={[styles.primaryButtonText, { color: emailAddress.trim() && password ? '#fff' : colors.mutedForeground }]}>Sign in</Text>}
+            {isLoading ? <ActivityIndicator color={colors.primaryForeground} /> : <Text style={[styles.primaryButtonText, { color: emailAddress.trim() && password ? colors.primaryForeground : colors.mutedForeground }]}>Sign in</Text>}
           </Pressable>
 
           <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
             Don&apos;t have an account?{' '}
-            <Link href="/(auth)/sign-up" style={[styles.link, { color: colors.primary }]}>Create one</Link>
+            <Link href="/(auth)/sign-up" style={[styles.link, { color: colors.primaryText }]}>Create one</Link>
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
