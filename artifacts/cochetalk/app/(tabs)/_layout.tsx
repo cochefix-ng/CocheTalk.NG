@@ -1,6 +1,5 @@
 import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
-import { BottomTabBar, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { SymbolView } from 'expo-symbols';
 import { Feather } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
@@ -24,40 +23,28 @@ function UnreadBadge({ count }: { count: number }) {
   );
 }
 
-function AnimatedTabBar(props: BottomTabBarProps) {
-  const { isVisible } = useTabBarVisibility();
-  const translateY = useRef(new Animated.Value(0)).current;
-  const hiddenOffset = Platform.OS === 'web' ? WEB_TAB_BAR_HEIGHT : TAB_BAR_HEIGHT + Math.max(TAB_BAR_BOTTOM_GAP, props.insets.bottom);
-
-  useEffect(() => {
-    const animation = Animated.timing(translateY, {
-      toValue: isVisible ? 0 : hiddenOffset,
-      duration: 280,
-      useNativeDriver: true,
-    });
-    animation.start();
-    return () => animation.stop();
-  }, [hiddenOffset, isVisible, translateY]);
-
-  return (
-    <BottomTabBar
-      {...props}
-      style={{
-        transform: [{ translateY }],
-      }}
-    />
-  );
-}
-
 function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount }: { hideProTab: boolean; hideMarketplace: boolean; hideClinic: boolean; unreadCount: number }) {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const safeAreaInsets = useSafeAreaInsets();
+  const { isVisible } = useTabBarVisibility();
+  const translateY = useRef(new Animated.Value(0)).current;
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
   const safeBottomGap = Math.max(TAB_BAR_BOTTOM_GAP, safeAreaInsets.bottom);
   const contentBottomPadding = isWeb ? WEB_TAB_BAR_HEIGHT : TAB_BAR_HEIGHT + safeBottomGap;
+  const hiddenOffset = isWeb ? WEB_TAB_BAR_HEIGHT : contentBottomPadding;
+
+  useEffect(() => {
+    const animation = Animated.timing(translateY, {
+      toValue: isVisible ? 0 : hiddenOffset,
+      duration: 280,
+      useNativeDriver: !isWeb,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [hiddenOffset, isVisible, isWeb, translateY]);
 
   return (
     <Tabs
@@ -79,6 +66,7 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
               borderTopColor: colors.border,
               elevation: 0,
               height: WEB_TAB_BAR_HEIGHT,
+              transform: [{ translateY }],
             }
           : {
               position: 'absolute',
@@ -95,6 +83,7 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
               shadowOpacity: isDark ? 0.45 : 0.18,
               shadowRadius: 16,
               overflow: 'hidden',
+              transform: [{ translateY }],
             },
         tabBarItemStyle: isWeb ? {} : { paddingVertical: 4 },
         tabBarBackground: () =>
@@ -108,7 +97,6 @@ function ClassicTabLayout({ hideProTab, hideMarketplace, hideClinic, unreadCount
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
           ) : null,
       }}
-      tabBar={(props) => <AnimatedTabBar {...props} />}
     >
       <Tabs.Screen
         name="index"
