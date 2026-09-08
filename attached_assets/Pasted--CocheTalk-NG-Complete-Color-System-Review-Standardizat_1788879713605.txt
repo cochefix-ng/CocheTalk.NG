@@ -1,0 +1,287 @@
+## CocheTalk.NG — Complete Color System Review & Standardization
+
+I want you to perform a **complete color audit and standardization of the CocheTalk.NG codebase**.
+
+### Primary brand color
+
+I have decided that the new official CocheTalk primary color should be:
+
+**PRIMARY: `#26D367`**
+
+Do NOT simply find-and-replace every existing green/teal color with `#26D367`.
+
+First, review how every color is currently being used and determine its **semantic purpose**.
+
+### 1. Audit the entire codebase
+
+Scan the entire CocheTalk.NG codebase for:
+
+* Hex colors
+* RGB/RGBA colors
+* HSL colors
+* Tailwind color classes
+* CSS variables/design tokens
+* Theme definitions
+* Inline React Native styles
+* Hard-coded colors
+* Colors used for icons
+* Button colors
+* Text colors
+* Backgrounds
+* Borders/dividers
+* Status indicators
+* Success/warning/error/info states
+* Loading states
+* Navigation/tab colors
+* Marketplace colors
+* Forum/community colors
+* Profile/account colors
+* AI Vehicle Clinic colors
+* Admin/CMS colors
+* WhatsApp-specific colors
+* Google/Facebook authentication colors
+
+Create an inventory of the colors currently being used and where they are being used.
+
+### 2. Categorize the existing colors
+
+Group the colors into:
+
+**Brand**
+
+* Primary
+* Primary Dark
+* Primary Light
+* Secondary
+* Accent
+
+**UI**
+
+* Background
+* Surface/Card
+* Elevated Surface
+* Text Primary
+* Text Secondary
+* Text Muted
+* Border
+* Divider
+
+**Semantic**
+
+* Success
+* Warning
+* Error
+* Info
+
+**Third-party brand colors**
+
+* WhatsApp
+* Google
+* Facebook
+* Any other third-party service colors
+
+Do NOT force third-party brand colors into the CocheTalk brand palette.
+
+### 3. Build a proper CocheTalk design token system
+
+Create a centralized color system so colors are not scattered throughout the application.
+
+For example:
+
+```ts
+PRIMARY
+PRIMARY_DARK
+PRIMARY_LIGHT
+
+SECONDARY
+ACCENT
+
+BACKGROUND
+SURFACE
+SURFACE_ELEVATED
+
+TEXT_PRIMARY
+TEXT_SECONDARY
+TEXT_MUTED
+
+BORDER
+DIVIDER
+
+SUCCESS
+WARNING
+ERROR
+INFO
+
+WHATSAPP
+GOOGLE
+FACEBOOK
+```
+
+Use the existing project architecture where appropriate rather than creating unnecessary new systems.
+
+### 4. Establish the new default palette
+
+Use:
+
+**Primary**
+`#26D367`
+
+Then determine appropriate supporting shades and neutral colors based on good UI/UX and accessibility principles.
+
+Do NOT arbitrarily choose colors.
+
+The supporting palette should:
+
+* Work well with `#26D367`
+* Maintain good contrast
+* Look professional on mobile
+* Work across the entire CocheTalk app
+* Avoid making the app look like WhatsApp
+* Maintain clear visual hierarchy
+* Work with buttons, cards, navigation, forms and status messages
+
+Keep `#25D366` specifically for WhatsApp where applicable, since that is the WhatsApp brand color.
+
+### 5. Review existing CocheTalk colors
+
+Pay particular attention to existing colors such as:
+
+* `#00EBBA`
+* `#00BFA5`
+* `#50FFDC`
+* `#10B981`
+* `#25D366`
+* `#F59E0B`
+* `#EF4444`
+* `#3B82F6`
+* `#A78BFA`
+
+Determine whether each should:
+
+1. Be replaced
+2. Become a design token
+3. Remain as a semantic status color
+4. Remain as a third-party brand color
+5. Be removed because it is redundant
+
+Do not remove a color without checking where it is used.
+
+### 6. Check for inconsistencies
+
+Identify situations where the same purpose currently uses different colors.
+
+For example:
+
+* Multiple different greens for buttons
+* Multiple greys for text
+* Different background colors for similar screens
+* Different error colors
+* Different success colors
+* Different active-tab colors
+
+Recommend one standardized token for each purpose.
+
+### 7. Accessibility and contrast
+
+Check the proposed palette for:
+
+* Text/background contrast
+* Button text contrast
+* Disabled-state visibility
+* Input/form readability
+* Navigation readability
+* Light and dark surfaces
+* Accessibility concerns
+
+Do not sacrifice readability simply to maintain brand color.
+
+If `#26D367` does not provide sufficient contrast with white text in a particular component, use the appropriate darker shade or dark text instead.
+
+### 8. Prepare for future Admin Theme Control
+
+Structure the color system so that I can later allow:
+
+**Admin → Appearance → Theme**
+
+to control selected colors centrally.
+
+The system should eventually support:
+
+* Primary
+* Secondary
+* Accent
+* Background
+* Surface
+* Text
+* Border
+
+However, do NOT implement the Admin theme management feature yet unless it already exists.
+
+For now, make the codebase **theme-ready**.
+
+### 9. Important implementation rule
+
+Before modifying the UI:
+
+**AUDIT → PROPOSE → STANDARDIZE → IMPLEMENT**
+
+Do not redesign the UI.
+
+Do not change layouts, spacing, typography, navigation, component structure or user flows.
+
+The goal is to make the existing interface visually consistent through a professional color system.
+
+### 10. Deliver an audit report before making major changes
+
+First provide me with a concise report containing:
+
+**A. Current colors found**
+
+| Current Color | Usage | Frequency | Recommended Action |
+| ------------- | ----- | --------: | ------------------ |
+
+**B. Proposed CocheTalk palette**
+
+| Token          | Color   | Purpose               |
+| -------------- | ------- | --------------------- |
+| PRIMARY        | #26D367 | Main brand/action     |
+| PRIMARY_DARK   | TBD     | Pressed/darker states |
+| PRIMARY_LIGHT  | TBD     | Background/highlight  |
+| SECONDARY      | TBD     | Supporting brand      |
+| ACCENT         | TBD     | Accent                |
+| BACKGROUND     | TBD     | App background        |
+| SURFACE        | TBD     | Cards/surfaces        |
+| TEXT_PRIMARY   | TBD     | Main text             |
+| TEXT_SECONDARY | TBD     | Supporting text       |
+| BORDER         | TBD     | Borders/dividers      |
+| SUCCESS        | TBD     | Success               |
+| WARNING        | TBD     | Warning               |
+| ERROR          | TBD     | Error                 |
+| INFO           | TBD     | Information           |
+| WHATSAPP       | #25D366 | WhatsApp only         |
+
+**C. Duplicate/redundant colors**
+
+Identify colors that can be consolidated.
+
+**D. Potential accessibility problems**
+
+Identify any important contrast issues.
+
+**E. Recommended implementation plan**
+
+Explain exactly which files/components should be updated.
+
+### Final instruction
+
+Do not make destructive changes.
+
+Do not replace colors blindly.
+
+Do not introduce unnecessary dependencies.
+
+Do not change the existing product design.
+
+First audit the existing system and show me the proposed standardized palette.
+
+After I approve the palette, implement the changes throughout the codebase using centralized design tokens.
