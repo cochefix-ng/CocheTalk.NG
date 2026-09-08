@@ -1,0 +1,570 @@
+Implement a complete **Favorites / Saved Content feature** in the existing CocheTalk.NG application.
+
+The goal is to allow authenticated users to save useful CocheTalk content and easily return to it later.
+
+## 1. IMPORTANT — PRESERVE THE EXISTING APP
+
+Before making changes:
+
+* Inspect the existing CocheTalk codebase and understand its current architecture.
+* Do NOT redesign the application.
+* Do NOT change existing navigation, layouts, typography, colors, spacing, or user flows unnecessarily.
+* Do NOT break existing Forum, Questions, Articles, Marketplace, Profile, Messaging, AI Vehicle Clinic, or authentication functionality.
+* Reuse the existing components, API patterns, database architecture, authentication system, and design system wherever possible.
+* Do not implement Favorites using AsyncStorage as the primary data store.
+* Favorites must be associated with the authenticated user in the backend/database.
+
+---
+
+# 2. CONTENT USERS SHOULD BE ABLE TO SAVE
+
+Implement Favorites in a way that supports multiple CocheTalk content types.
+
+Initially support:
+
+1. Forum discussions/posts
+2. Questions
+3. Answers/replies where appropriate
+4. Articles/knowledge content
+5. Marketplace listings, if Marketplace content is already supported by the current application
+
+Use a generic favorite relationship rather than creating completely separate systems for every content type.
+
+Recommended structure:
+
+```text
+user_id
+content_type
+content_id
+created_at
+```
+
+Add an appropriate unique constraint so the same user cannot favorite the same content twice.
+
+Example:
+
+```text
+user_id + content_type + content_id = UNIQUE
+```
+
+---
+
+# 3. SAVE / UNSAVE UI
+
+On every supported content detail screen, add a Favorites action.
+
+For example:
+
+```text
+♡ Save
+```
+
+When saved:
+
+```text
+♥ Saved
+```
+
+The exact icon/style should follow the existing CocheTalk design language.
+
+The action must:
+
+* Save the content when tapped
+* Immediately update the UI
+* Change from Save → Saved
+* Allow the user to tap again to remove it
+* Change from Saved → Save
+* Persist after closing/reopening the app
+* Persist after logout/login
+* Persist across devices for the same account
+
+Do not rely solely on optimistic local state.
+
+The backend must remain the source of truth.
+
+---
+
+# 4. AUTHENTICATION
+
+Favorites are user-specific.
+
+Therefore:
+
+* Only authenticated users can save content.
+* If an unauthenticated user taps Save/Favorite, use the existing authentication flow to ask them to sign in.
+* Never create anonymous/global favorites.
+* Favorites belonging to one user must never be visible to another user.
+
+Use the existing Clerk authentication system already present in the application.
+
+---
+
+# 5. DATABASE
+
+Inspect the existing database schema and Drizzle setup before creating anything.
+
+Create the appropriate Favorites table using the existing database conventions.
+
+Suggested structure:
+
+```text
+favorites
+
+id
+user_id
+content_type
+content_id
+created_at
+```
+
+Add:
+
+* Primary key
+* User relationship/reference where appropriate
+* Unique constraint on `(user_id, content_type, content_id)`
+* Index on `user_id`
+* Index on `(content_type, content_id)` where useful
+* Created timestamp
+
+Do not duplicate content data inside the Favorites table.
+
+Favorites should reference the original content.
+
+---
+
+# 6. BACKEND API
+
+Create/reuse appropriate API endpoints.
+
+At minimum support:
+
+### Add favorite
+
+```text
+POST /api/favorites
+```
+
+### Remove favorite
+
+```text
+DELETE /api/favorites/:contentType/:contentId
+```
+
+### Check whether content is favorited
+
+```text
+GET /api/favorites/check/:contentType/:contentId
+```
+
+### Get user's favorites
+
+```text
+GET /api/favorites
+```
+
+### Optional
+
+Support filtering:
+
+```text
+GET /api/favorites?type=discussion
+GET /api/favorites?type=question
+GET /api/favorites?type=article
+GET /api/favorites?type=listing
+```
+
+Use the existing API architecture and naming conventions if different from the examples above.
+
+Do not create duplicate API infrastructure.
+
+---
+
+# 7. FAVORITES SCREEN
+
+Add a **Favorites** section to the user's existing Profile/Account area.
+
+Do not create unnecessary new bottom navigation unless the current product structure clearly requires it.
+
+Recommended flow:
+
+```text
+Profile
+   ↓
+Favorites
+   ↓
+Saved Content
+```
+
+The Favorites screen should display the user's saved content.
+
+Each item should show enough information for the user to recognize what they saved.
+
+For example:
+
+* Title
+* Content type
+* Short preview/excerpt
+* Author where applicable
+* Date
+* Relevant thumbnail/image where already available
+
+Tapping a favorite should open the **original content screen**, not a duplicate Favorites version.
+
+For example:
+
+```text
+Saved Question
+      ↓
+Original Question Detail
+```
+
+```text
+Saved Discussion
+      ↓
+Original Discussion
+```
+
+```text
+Saved Marketplace Listing
+      ↓
+Original Listing
+```
+
+---
+
+# 8. FILTERING
+
+If multiple content types are supported, provide simple filters at the top of Favorites.
+
+For example:
+
+```text
+All | Discussions | Questions | Articles | Marketplace
+```
+
+Only show filters for content types that actually exist in the application.
+
+The "All" view should show the most recently saved items first.
+
+---
+
+# 9. EMPTY STATE
+
+Create a useful empty state.
+
+When the user has no Favorites:
+
+```text
+No saved content yet
+
+Save useful discussions, questions and vehicle
+tips to easily find them again later.
+
+[Explore CocheTalk]
+```
+
+Use the existing CocheTalk visual style.
+
+Do not over-design the empty state.
+
+---
+
+# 10. LOADING / ERROR STATES
+
+Implement proper states for:
+
+* Loading Favorites
+* Saving
+* Removing
+* Loading the Favorites screen
+* Network failure
+* Deleted/unavailable content
+
+If content that was previously favorited has subsequently been deleted, handle it gracefully.
+
+Do not let one invalid/deleted favorite crash the entire Favorites screen.
+
+---
+
+# 11. PERFORMANCE
+
+Avoid making a separate API request for every favorite item if the backend architecture allows a more efficient approach.
+
+For the Favorites screen:
+
+* Fetch the user's favorites efficiently.
+* Resolve the referenced content efficiently.
+* Avoid N+1 API/database queries where possible.
+* Paginate if the Favorites list can become large.
+
+Use a sensible initial page size such as 20–30 items.
+
+Implement pagination/infinite scrolling only where it fits the existing application architecture.
+
+---
+
+# 12. CACHING
+
+You may use local caching for better UX, but:
+
+**Backend/database must remain the source of truth.**
+
+Do not make AsyncStorage the permanent Favorites database.
+
+If cached:
+
+```text
+Backend → Cache → UI
+```
+
+not:
+
+```text
+AsyncStorage → permanent Favorites storage
+```
+
+Handle stale cache appropriately.
+
+---
+
+# 13. REAL-TIME UI BEHAVIOR
+
+When a user saves content:
+
+```text
+♡ → ♥
+```
+
+immediately.
+
+When they unsave:
+
+```text
+♥ → ♡
+```
+
+immediately.
+
+The state should remain correct when:
+
+* Navigating away and back
+* Refreshing the screen
+* Closing/reopening the app
+* Logging out and back in
+* Signing in on another device
+
+---
+
+# 14. FAVORITE COUNTS
+
+Do NOT automatically add public favorite counts to every content item unless the existing product design already supports social metrics.
+
+The initial goal is:
+
+**Private personal saving/bookmarking.**
+
+If a public "number of saves" feature is useful later, it can be added separately.
+
+---
+
+# 15. SECURITY
+
+This is important.
+
+Ensure:
+
+* Users can only create favorites for themselves.
+* Users can only delete their own favorites.
+* Users cannot manipulate another user's `user_id`.
+* Backend authorization is enforced.
+* Do not trust user-supplied user IDs.
+* Use the authenticated Clerk user identity on the server.
+* Validate `content_type`.
+* Validate `content_id`.
+* Prevent duplicate favorites.
+* Prevent unauthorized access to another user's Favorites list.
+
+---
+
+# 16. CONTENT VALIDATION
+
+Before creating a favorite, validate that the referenced content actually exists and is accessible to the user.
+
+Do not allow arbitrary IDs to be stored as Favorites.
+
+For example:
+
+```text
+User → Favorite Question #123
+              ↓
+Check Question #123 exists
+              ↓
+Create Favorite
+```
+
+If it does not exist:
+
+```text
+Return appropriate error
+```
+
+---
+
+# 17. COMPONENT REUSE
+
+If the application already has reusable:
+
+* Icon buttons
+* Cards
+* List items
+* Loading components
+* Empty states
+* Toasts
+* Modals
+* API hooks
+
+reuse them.
+
+Do not create duplicate components unnecessarily.
+
+Consider creating reusable components/hooks such as:
+
+```text
+FavoriteButton
+useFavorite()
+useFavorites()
+FavoritesScreen
+```
+
+Use naming conventions consistent with the existing project.
+
+---
+
+# 18. ANALYTICS
+
+If the application already has an analytics system, optionally track:
+
+```text
+favorite_added
+favorite_removed
+favorites_viewed
+favorite_content_opened
+```
+
+Do not introduce a new analytics platform just for this feature.
+
+---
+
+# 19. TESTING
+
+Test all major scenarios.
+
+### Save
+
+* User saves discussion
+* User saves question
+* User saves article
+* User saves listing where applicable
+
+### Unsave
+
+* User removes a favorite
+* Item disappears from Favorites
+* Original content shows Save again
+
+### Authentication
+
+* Logged-out user taps Save
+* User is prompted to authenticate
+* Logged-in user can save normally
+
+### Persistence
+
+Verify Favorites remain after:
+
+* App restart
+* Logout/login
+* Device change
+* Refresh
+
+### Security
+
+Verify:
+
+* User A cannot access User B's Favorites
+* User A cannot delete User B's Favorite
+* Invalid content IDs cannot be favorited
+
+### Edge cases
+
+Test:
+
+* Deleted content
+* Network failure
+* Slow connection
+* Duplicate taps
+* Repeated save/unsave
+* Empty Favorites
+* Large Favorites list
+
+---
+
+# 20. DO NOT BREAK EXISTING FEATURES
+
+After implementation, verify that these continue working:
+
+* Authentication
+* Sign up
+* Sign in
+* Forum
+* Discussions
+* Questions
+* Answers
+* Marketplace
+* Messaging
+* AI Vehicle Clinic
+* Profile
+* Notifications
+* Admin functionality
+* Existing navigation
+
+Run the project's existing lint/type-check/build/test commands.
+
+Fix any errors introduced by this implementation.
+
+---
+
+# 21. FINAL DELIVERABLE
+
+When finished, provide a concise implementation report containing:
+
+### Database
+
+* Tables/columns added
+* Indexes/constraints added
+* Migration status
+
+### Backend
+
+* API endpoints added
+* Authorization implemented
+
+### Frontend
+
+* Screens/components modified
+* Favorites screen location
+* Content types supported
+
+### Testing
+
+* Tests performed
+* Build/type-check status
+* Any remaining issues
+
+### Important
+
+Do not stop at creating the UI.
+
+This must be a **fully functional production-ready Favorites system connected to the backend/database**.
+
+The existing CocheTalk UI and product experience should remain intact except for the necessary Favorites additions.
