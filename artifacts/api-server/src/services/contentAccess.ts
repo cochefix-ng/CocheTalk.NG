@@ -6,7 +6,8 @@ export type Viewer = { userId: string; isAdmin: boolean; isVerifiedProvider: boo
 
 export async function viewerFor(userId: string): Promise<Viewer> {
   const profile = (await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).limit(1))[0];
-  return { userId, isAdmin: profile?.admin === true, isVerifiedProvider: profile?.accountType === "Service Provider" && profile.verified === true };
+  const configuredAdmins = new Set((process.env.COCHETALK_ADMIN_USER_IDS ?? "").split(",").map((value) => value.trim()).filter(Boolean));
+  return { userId, isAdmin: profile?.admin === true || configuredAdmins.has(userId), isVerifiedProvider: profile?.accountType === "Service Provider" && profile.verified === true };
 }
 export function canViewQuestion(row: typeof questions.$inferSelect, viewer: Viewer) { return !row.isPrivateEcosystem || row.userId === viewer.userId || viewer.isAdmin || viewer.isVerifiedProvider; }
 export function canViewDiscussion(row: typeof discussions.$inferSelect, viewer: Viewer) { return !row.isProCircle || row.userId === viewer.userId || viewer.isAdmin || viewer.isVerifiedProvider; }
@@ -30,6 +31,17 @@ export async function deleteQuestionGraph(questionId: number, userId: string) {
     for (const answer of answerRows) await tx.delete(comments).where(and(eq(comments.questionOrAnswerId,answer.id),eq(comments.isAnswer,true)));
     await tx.delete(questions).where(eq(questions.id,questionId));
     return question;
+  });
+}
+
+export async function deleteAnswerGraph(answerId: number, userId: string) {
+  return db.transaction(async (tx) => {
+    const answer = (await tx.select().from(answers).where(and(eq(answers.id, answerId), eq(answers.userId, userId))).limit(1))[0];
+    if (!answer) return null;
+    await tx.delete(comments).where(and(eq(comments.questionOrAnswerId, answerId), eq(comments.isAnswer, true)));
+    await tx.update(questions).set({ acceptedAnswerId: null, updatedAt: new Date() }).where(eq(questions.acceptedAnswerId, answerId));
+    await tx.delete(answers).where(eq(answers.id, answerId));
+    return answer;
   });
 }
 export async function deleteDiscussionGraph(id: number, userId: string) {

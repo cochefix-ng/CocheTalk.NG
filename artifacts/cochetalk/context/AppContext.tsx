@@ -1,13 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { emitNotificationEvent } from '@/utils/notificationEvents';
 import {
-  listQuestions, listDiscussions, listListings, listQuestionAnswers,
-  listQuestionComments, listAnswerComments, listDiscussionComments,
   createQuestion, deleteQuestion as deleteQuestionApi, upvoteQuestion as upvoteQuestionApi, createAnswer, deleteAnswer,
   upvoteAnswer as upvoteAnswerApi, acceptQuestionAnswer, createDiscussion as createDiscussionApi, deleteDiscussion as deleteDiscussionApi,
   upvoteDiscussion as upvoteDiscussionApi, createListing as createListingApi, deleteListing as deleteListingApi, setListingApproval,
   setListingFeatured, createQuestionComment, createAnswerComment,
-  createDiscussionComment
+  createDiscussionComment, requestUploadUrl, getContentBootstrap
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
@@ -432,37 +430,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const syncBackend = useCallback(async () => {
     try {
-      const [qs, ds, ls] = await Promise.all([
-        listQuestions({ limit: 100 }),
-        listDiscussions({ limit: 100 }),
-        listListings({ limit: 100 })
-      ]);
-
-      const questions = qs.items as Question[];
-      const discussions = ds.items as DiscussionPost[];
-      const listings = ls.items as MarketplaceListing[];
-
-      const answersArr: Answer[] = [];
-      const commentsArr: Comment[] = [];
-      const discussionCommentsArr: DiscussionComment[] = [];
-
-      await Promise.all(questions.map(async (q) => {
-        const [ans, qC] = await Promise.all([
-          listQuestionAnswers(q.id),
-          listQuestionComments(q.id)
-        ]);
-        answersArr.push(...(ans.items as Answer[]));
-        commentsArr.push(...(qC.items as Comment[]));
-        await Promise.all(ans.items.map(async (a) => {
-          const aC = await listAnswerComments(a.id);
-          commentsArr.push(...(aC.items as Comment[]));
-        }));
-      }));
-
-      await Promise.all(discussions.map(async (d) => {
-        const dC = await listDiscussionComments(d.id);
-        discussionCommentsArr.push(...(dC.items as DiscussionComment[]));
-      }));
+      const bootstrap = await getContentBootstrap();
+      const questions = bootstrap.questions as Question[];
+      const discussions = bootstrap.discussions as DiscussionPost[];
+      const listings = bootstrap.listings as MarketplaceListing[];
+      const answersArr = bootstrap.answers as Answer[];
+      const commentsArr = bootstrap.comments as Comment[];
+      const discussionCommentsArr = bootstrap.discussionComments as DiscussionComment[];
 
       setState(prev => {
         if (!prev) return prev;
@@ -774,8 +748,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (data: any) => {
       if (!state || !currentUser) return;
       try {
+        const localImages = Array.isArray(data.imageUris) ? data.imageUris.filter((uri: string) => uri.startsWith('file://') || uri.startsWith('content://')) : [];
+        const uploadedImages = await Promise.all(localImages.map(async (uri: string) => {
+          const response = await fetch(uri);
+          const blob = await response.blob();
+          const contentType = blob.type === 'image/png' ? 'image/png' : blob.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
+          const upload = await requestUploadUrl({ name: `listing-${Date.now()}.jpg`, size: blob.size, contentType });
+          const put = await fetch(upload.uploadURL, { method: 'PUT', headers: { 'Content-Type': contentType }, body: blob });
+          if (!put.ok) throw new Error('Image upload failed');
+          const origin = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : '';
+          return `${origin}/api/storage/objects/${upload.objectPath.replace(/^\/objects\//, '')}`;
+        }));
+        const imageUris = [
+          ...(Array.isArray(data.imageUris) ? data.imageUris.filter((uri: string) => !uri.startsWith('file://') && !uri.startsWith('content://')) : []),
+          ...uploadedImages,
+        ];
         await createListingApi({
           ...data,
+          imageUris,
           userName: currentUser.name,
           userRole: currentUser.role,
           userPhone: currentUser.phone,

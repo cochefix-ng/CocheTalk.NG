@@ -220,6 +220,198 @@ export const CreateNotificationEventBody = zod.object({
 })
 
 
+/**
+ * @summary Get the current user's server-owned profile
+ */
+export const GetCurrentProfileResponse = zod.object({
+  "userId": zod.string(),
+  "displayName": zod.string(),
+  "accountType": zod.enum(['Car Owner', 'Service Provider']),
+  "verified": zod.boolean(),
+  "admin": zod.boolean(),
+  "specialization": zod.string()
+})
+
+
+/**
+ * @summary Update editable profile fields
+ */
+export const updateCurrentProfileBodyDisplayNameMax = 150;
+
+export const updateCurrentProfileBodySpecializationMax = 500;
+
+
+
+export const UpdateCurrentProfileBody = zod.object({
+  "displayName": zod.string().min(1).max(updateCurrentProfileBodyDisplayNameMax).optional(),
+  "accountType": zod.enum(['Car Owner', 'Service Provider']).optional(),
+  "specialization": zod.string().max(updateCurrentProfileBodySpecializationMax).optional()
+})
+
+export const UpdateCurrentProfileResponse = zod.object({
+  "userId": zod.string(),
+  "displayName": zod.string(),
+  "accountType": zod.enum(['Car Owner', 'Service Provider']),
+  "verified": zod.boolean(),
+  "admin": zod.boolean(),
+  "specialization": zod.string()
+})
+
+
+/**
+ * @summary Request a presigned upload URL
+ */
+export const requestUploadUrlBodyNameMax = 255;
+
+export const requestUploadUrlBodySizeMax = 10485760;
+
+
+
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string().min(1).max(requestUploadUrlBodyNameMax),
+  "size": zod.number().min(1).max(requestUploadUrlBodySizeMax),
+  "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
+})
+
+export const requestUploadUrlResponseMetadataNameMax = 255;
+
+export const requestUploadUrlResponseMetadataSizeMax = 10485760;
+
+
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string().url(),
+  "objectPath": zod.string(),
+  "metadata": zod.object({
+  "name": zod.string().min(1).max(requestUploadUrlResponseMetadataNameMax),
+  "size": zod.number().min(1).max(requestUploadUrlResponseMetadataSizeMax),
+  "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
+}).optional()
+})
+
+
+/**
+ * @summary Load the current user's visible content in one request
+ */
+export const GetContentBootstrapResponse = zod.object({
+  "questions": zod.array(zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "tags": zod.string(),
+  "timestamp": zod.number(),
+  "isPrivateEcosystem": zod.boolean(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string()),
+  "acceptedAnswerId": zod.number().nullable(),
+  "yrModel": zod.string(),
+  "vehicleType": zod.string(),
+  "seeConcern": zod.boolean(),
+  "hearConcern": zod.boolean(),
+  "smellConcern": zod.boolean(),
+  "feelConcern": zod.boolean(),
+  "notStarting": zod.boolean(),
+  "performanceConcern": zod.boolean(),
+  "dashboardWarningLights": zod.boolean()
+}))),
+  "answers": zod.array(zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "questionId": zod.number(),
+  "content": zod.string(),
+  "timestamp": zod.number(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string()),
+  "isAccepted": zod.boolean()
+}))),
+  "comments": zod.array(zod.object({
+  "id": zod.number(),
+  "questionOrAnswerId": zod.number(),
+  "isAnswer": zod.boolean(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "content": zod.string(),
+  "timestamp": zod.number()
+})),
+  "discussions": zod.array(zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "tags": zod.string(),
+  "mediaUris": zod.array(zod.string()).optional(),
+  "isProCircle": zod.boolean(),
+  "timestamp": zod.number(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string())
+}))),
+  "discussionComments": zod.array(zod.object({
+  "id": zod.number(),
+  "postId": zod.number(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "content": zod.string(),
+  "timestamp": zod.number()
+})),
+  "listings": zod.array(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "price": zod.number(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userPhone": zod.string(),
+  "category": zod.enum(['Parts', 'Services', 'Car Sales']),
+  "location": zod.string(),
+  "isApproved": zod.boolean(),
+  "partsGrade": zod.string(),
+  "application": zod.string(),
+  "partBrand": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "imageUris": zod.array(zod.string()).optional(),
+  "isFeaturedBottom": zod.boolean(),
+  "timestamp": zod.number(),
+  "carMake": zod.string().nullish(),
+  "carModel": zod.string().nullish(),
+  "carYear": zod.number().nullish(),
+  "carMileage": zod.number().nullish(),
+  "carVin": zod.string().nullish(),
+  "carTrim": zod.string().nullish(),
+  "carBodyType": zod.string().nullish(),
+  "carExteriorColor": zod.string().nullish(),
+  "carInteriorColor": zod.string().nullish(),
+  "carEngineType": zod.string().nullish(),
+  "carTransmission": zod.string().nullish(),
+  "carFuelType": zod.string().nullish(),
+  "carDriveType": zod.string().nullish(),
+  "carCondition": zod.string().nullish(),
+  "carAccidentHistory": zod.string().nullish(),
+  "carServiceHistory": zod.string().nullish(),
+  "carPreviousOwners": zod.number().nullish(),
+  "carRegistrationStatus": zod.string().nullish(),
+  "carCustomsPapers": zod.string().nullish(),
+  "carPlateNumber": zod.string().nullish()
+}))
+})
+
+
 export const listQuestionsQueryLimitDefault = 100;
 export const listQuestionsQueryLimitMax = 100;
 

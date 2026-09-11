@@ -18,6 +18,10 @@ tags:
     description: CocheTalk community and marketplace content
   - name: favorites
     description: Current user's saved content
+  - name: profile
+    description: Current user's server-owned profile
+  - name: storage
+    description: Authenticated listing media uploads
 paths:
   /healthz:
     get:
@@ -306,6 +310,69 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+  /profile:
+    get:
+      operationId: getCurrentProfile
+      tags: [profile]
+      security: [{ bearerAuth: [] }]
+      summary: Get the current user's server-owned profile
+      responses:
+        "200":
+          description: Current profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    patch:
+      operationId: updateCurrentProfile
+      tags: [profile]
+      security: [{ bearerAuth: [] }]
+      summary: Update editable profile fields
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      security: [{ bearerAuth: [] }]
+      summary: Request a presigned upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+  /content/bootstrap:
+    get:
+      operationId: getContentBootstrap
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      summary: Load the current user's visible content in one request
+      responses:
+        "200":
+          description: Visible content and related records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentBootstrapResponse"
   /questions:
     get:
       operationId: listQuestions
@@ -1020,3 +1087,43 @@ components:
       type: object
       required: [items]
       properties: {items: {type: array, items: {$ref: "#/components/schemas/DiscussionComment"}}}
+    UserProfile:
+      type: object
+      required: [userId, displayName, accountType, verified, admin, specialization]
+      properties:
+        userId: {type: string}
+        displayName: {type: string}
+        accountType: {type: string, enum: [Car Owner, Service Provider]}
+        verified: {type: boolean}
+        admin: {type: boolean}
+        specialization: {type: string}
+    UserProfileUpdate:
+      type: object
+      properties:
+        displayName: {type: string, minLength: 1, maxLength: 150}
+        accountType: {type: string, enum: [Car Owner, Service Provider]}
+        specialization: {type: string, maxLength: 500}
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 255}
+        size: {type: integer, minimum: 1, maximum: 10485760}
+        contentType: {type: string, enum: [image/jpeg, image/png, image/webp]}
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL: {type: string, format: uri}
+        objectPath: {type: string}
+        metadata: {$ref: "#/components/schemas/UploadUrlRequest"}
+    ContentBootstrapResponse:
+      type: object
+      required: [questions, answers, comments, discussions, discussionComments, listings]
+      properties:
+        questions: {type: array, items: {$ref: "#/components/schemas/Question"}}
+        answers: {type: array, items: {$ref: "#/components/schemas/Answer"}}
+        comments: {type: array, items: {$ref: "#/components/schemas/Comment"}}
+        discussions: {type: array, items: {$ref: "#/components/schemas/Discussion"}}
+        discussionComments: {type: array, items: {$ref: "#/components/schemas/DiscussionComment"}}
+        listings: {type: array, items: {$ref: "#/components/schemas/Listing"}}

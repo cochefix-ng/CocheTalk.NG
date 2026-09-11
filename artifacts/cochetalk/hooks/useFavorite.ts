@@ -1,5 +1,6 @@
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
+import { Alert } from 'react-native';
 import { 
   checkFavorite, 
   createFavorite, 
@@ -17,6 +18,7 @@ export function useFavorite(contentType: FavoriteContentType, contentId: number)
   const { data: checkData, isLoading: isQueryLoading } = useQuery({
     queryKey,
     queryFn: () => checkFavorite(contentType, contentId),
+    enabled: contentId > 0,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -31,9 +33,8 @@ export function useFavorite(contentType: FavoriteContentType, contentId: number)
       return { previous };
     },
     onError: (err, variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
-      }
+      queryClient.setQueryData(queryKey, context?.previous);
+      Alert.alert('Could not save favorite', 'Please try again.');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -50,9 +51,8 @@ export function useFavorite(contentType: FavoriteContentType, contentId: number)
       return { previous };
     },
     onError: (err, variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
-      }
+      queryClient.setQueryData(queryKey, context?.previous);
+      Alert.alert('Could not remove favorite', 'Please try again.');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });

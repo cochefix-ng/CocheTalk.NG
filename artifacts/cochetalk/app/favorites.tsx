@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { getListFavoritesQueryOptions, listFavorites } from '@workspace/api-client-react';
+import { getListFavoritesQueryKey, listFavorites } from '@workspace/api-client-react';
 
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
@@ -33,7 +33,34 @@ export default function FavoritesScreen() {
   const { currentUser } = useApp();
   const [filter, setFilter] = useState<FilterType>('All');
 
-  // Authenticated guard handled by (tabs) layout usually, but for safe navigation behavior:
+  const favoriteParams = {
+    limit: 20,
+    contentType: filter === 'All' ? undefined : filter,
+  };
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    refetch
+  } = useInfiniteQuery({
+    queryKey: getListFavoritesQueryKey(favoriteParams),
+    queryFn: ({ pageParam = 0 }) =>
+      listFavorites({
+        offset: pageParam,
+        limit: 20,
+        contentType: filter === 'All' ? undefined : filter
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.items.length === lastPage.limit
+        ? lastPage.offset + lastPage.limit
+        : undefined,
+    initialPageParam: 0,
+    enabled: !!currentUser,
+  });
+
   if (!currentUser) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -55,34 +82,6 @@ export default function FavoritesScreen() {
       </SafeAreaView>
     );
   }
-
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-    refetch
-  } = useInfiniteQuery({
-    queryKey: ['favorites', filter],
-    queryFn: ({ pageParam = 0 }) => 
-      listFavorites({ 
-        offset: pageParam, 
-        limit: 20, 
-        contentType: filter === 'All' ? undefined : filter 
-      }),
-    getNextPageParam: (lastPage) => {
-      const nextOffset = lastPage.offset + lastPage.limit;
-      return nextOffset < lastPage.items.length ? nextOffset : undefined; // wait, limit is per page, but backend returns offset/limit
-      // Actually backend just returns items. If items.length === limit, there MIGHT be a next page.
-      if (lastPage.items.length === lastPage.limit) {
-        return lastPage.offset + lastPage.limit;
-      }
-      return undefined;
-    },
-    initialPageParam: 0,
-  });
 
   const flattenItems = data?.pages.flatMap((page) => page.items) ?? [];
 

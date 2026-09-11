@@ -6,7 +6,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/inter';
 import { setBaseUrl } from '@workspace/api-client-react';
-import { setAuthTokenGetter } from '@workspace/api-client-react';
+import { setAuthTokenGetter, updateCurrentProfile } from '@workspace/api-client-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ClerkLoaded, ClerkProvider, useAuth, useUser } from '@clerk/expo';
@@ -61,16 +61,12 @@ function AuthSessionBridge({ children }: { children: React.ReactNode }) {
 
     const syncUser = async () => {
       const email = user.primaryEmailAddress?.emailAddress ?? '';
-      const existing = users.find(
-        (candidate) =>
-          candidate.id === user.id ||
-          (email && candidate.email.toLowerCase() === email.toLowerCase()),
-      );
+      const existing = users.find((candidate) => candidate.id === user.id);
 
+      const pendingRole = await AsyncStorage.getItem(PENDING_ROLE_KEY);
       if (existing) {
         if (currentUser?.id !== existing.id) login(existing.id);
       } else {
-        const pendingRole = await AsyncStorage.getItem(PENDING_ROLE_KEY);
         const role = pendingRole === 'Service Provider' ? 'Service Provider' : 'Car Owner';
         const name =
           user.fullName?.trim() ||
@@ -91,6 +87,13 @@ function AuthSessionBridge({ children }: { children: React.ReactNode }) {
         });
         await AsyncStorage.removeItem(PENDING_ROLE_KEY);
       }
+
+      const localRole = existing?.role ?? (pendingRole === 'Service Provider' ? 'Service Provider' : 'Car Owner');
+      await updateCurrentProfile({
+        displayName: user.fullName?.trim() || user.firstName?.trim() || email.split('@')[0] || 'CocheTalk member',
+        accountType: localRole === 'Service Provider' ? 'Service Provider' : 'Car Owner',
+        specialization: existing?.specialization?.join(', ') ?? '',
+      }).catch((error) => console.warn('Profile sync failed', error));
 
       syncedUserRef.current = user.id;
     };

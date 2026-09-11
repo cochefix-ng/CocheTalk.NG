@@ -514,6 +514,80 @@ export interface DiscussionCommentList {
   items: DiscussionComment[];
 }
 
+export type UserProfileAccountType = typeof UserProfileAccountType[keyof typeof UserProfileAccountType];
+
+
+export const UserProfileAccountType = {
+  Car_Owner: 'Car Owner',
+  Service_Provider: 'Service Provider',
+} as const;
+
+export interface UserProfile {
+  userId: string;
+  displayName: string;
+  accountType: UserProfileAccountType;
+  verified: boolean;
+  admin: boolean;
+  specialization: string;
+}
+
+export type UserProfileUpdateAccountType = typeof UserProfileUpdateAccountType[keyof typeof UserProfileUpdateAccountType];
+
+
+export const UserProfileUpdateAccountType = {
+  Car_Owner: 'Car Owner',
+  Service_Provider: 'Service Provider',
+} as const;
+
+export interface UserProfileUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 150
+     */
+  displayName?: string;
+  accountType?: UserProfileUpdateAccountType;
+  /** @maxLength 500 */
+  specialization?: string;
+}
+
+export type UploadUrlRequestContentType = typeof UploadUrlRequestContentType[keyof typeof UploadUrlRequestContentType];
+
+
+export const UploadUrlRequestContentType = {
+  'image/jpeg': 'image/jpeg',
+  'image/png': 'image/png',
+  'image/webp': 'image/webp',
+} as const;
+
+export interface UploadUrlRequest {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  name: string;
+  /**
+     * @minimum 1
+     * @maximum 10485760
+     */
+  size: number;
+  contentType: UploadUrlRequestContentType;
+}
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata?: UploadUrlRequest;
+}
+
+export interface ContentBootstrapResponse {
+  questions: Question[];
+  answers: Answer[];
+  comments: Comment[];
+  discussions: Discussion[];
+  discussionComments: DiscussionComment[];
+  listings: Listing[];
+}
+
 export type LimitParameter = number;
 
 export type OffsetParameter = number;
