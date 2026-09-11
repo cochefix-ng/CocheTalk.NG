@@ -143,6 +143,381 @@ export interface NotificationEventRequest {
   dedupeKey?: string;
 }
 
+export type FavoriteContentType = typeof FavoriteContentType[keyof typeof FavoriteContentType];
+
+
+export const FavoriteContentType = {
+  discussion: 'discussion',
+  question: 'question',
+  answer: 'answer',
+  listing: 'listing',
+} as const;
+
+export interface ContentAuthor {
+  userId: string;
+  userName: string;
+  userRole: string;
+  userSpecialization: string;
+  userVerified: boolean;
+}
+
+export type Question = ContentAuthor & ({
+  id: number;
+  title: string;
+  description: string;
+  tags: string;
+  timestamp: number;
+  isPrivateEcosystem: boolean;
+  upvotes: number;
+  upvotedBy: string[];
+  /** @nullable */
+  acceptedAnswerId: number | null;
+  yrModel: string;
+  vehicleType: string;
+  seeConcern: boolean;
+  hearConcern: boolean;
+  smellConcern: boolean;
+  feelConcern: boolean;
+  notStarting: boolean;
+  performanceConcern: boolean;
+  dashboardWarningLights: boolean;
+});
+
+export interface QuestionInput {
+  /**
+     * @minLength 1
+     * @maxLength 300
+     */
+  title: string;
+  /** @maxLength 10000 */
+  description: string;
+  tags?: string;
+  isPrivateEcosystem?: boolean;
+  yrModel?: string;
+  vehicleType?: string;
+  seeConcern?: boolean;
+  hearConcern?: boolean;
+  smellConcern?: boolean;
+  feelConcern?: boolean;
+  notStarting?: boolean;
+  performanceConcern?: boolean;
+  dashboardWarningLights?: boolean;
+  /** @minLength 1 */
+  userName?: string;
+  /** @minLength 1 */
+  userRole?: string;
+  userSpecialization?: string;
+  userVerified?: boolean;
+}
+
+export type Answer = ContentAuthor & {
+  id: number;
+  questionId: number;
+  content: string;
+  timestamp: number;
+  upvotes: number;
+  upvotedBy: string[];
+  isAccepted: boolean;
+};
+
+export interface AnswerInput {
+  /** @maxLength 10000 */
+  content: string;
+  /** @minLength 1 */
+  userName?: string;
+  /** @minLength 1 */
+  userRole?: string;
+  userSpecialization?: string;
+  userVerified?: boolean;
+}
+
+export type Discussion = ContentAuthor & ({
+  id: number;
+  /** @nullable */
+  title?: string | null;
+  content: string;
+  tags: string;
+  mediaUris?: string[];
+  isProCircle: boolean;
+  timestamp: number;
+  upvotes: number;
+  upvotedBy: string[];
+});
+
+export interface DiscussionInput {
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  title?: string | null;
+  /** @maxLength 10000 */
+  content: string;
+  tags?: string;
+  /** @maxItems 10 */
+  mediaUris?: string[];
+  isProCircle?: boolean;
+  /** @minLength 1 */
+  userName?: string;
+  /** @minLength 1 */
+  userRole?: string;
+  userSpecialization?: string;
+  userVerified?: boolean;
+}
+
+export type ListingCategory = typeof ListingCategory[keyof typeof ListingCategory];
+
+
+export const ListingCategory = {
+  Parts: 'Parts',
+  Services: 'Services',
+  Car_Sales: 'Car Sales',
+} as const;
+
+export interface Listing {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  userId: string;
+  userName: string;
+  userRole: string;
+  userPhone: string;
+  category: ListingCategory;
+  location: string;
+  isApproved: boolean;
+  partsGrade: string;
+  application: string;
+  partBrand: string;
+  /** @nullable */
+  partNumber?: string | null;
+  imageUris?: string[];
+  isFeaturedBottom: boolean;
+  timestamp: number;
+  /** @nullable */
+  carMake?: string | null;
+  /** @nullable */
+  carModel?: string | null;
+  /** @nullable */
+  carYear?: number | null;
+  /** @nullable */
+  carMileage?: number | null;
+  /** @nullable */
+  carVin?: string | null;
+  /** @nullable */
+  carTrim?: string | null;
+  /** @nullable */
+  carBodyType?: string | null;
+  /** @nullable */
+  carExteriorColor?: string | null;
+  /** @nullable */
+  carInteriorColor?: string | null;
+  /** @nullable */
+  carEngineType?: string | null;
+  /** @nullable */
+  carTransmission?: string | null;
+  /** @nullable */
+  carFuelType?: string | null;
+  /** @nullable */
+  carDriveType?: string | null;
+  /** @nullable */
+  carCondition?: string | null;
+  /** @nullable */
+  carAccidentHistory?: string | null;
+  /** @nullable */
+  carServiceHistory?: string | null;
+  /** @nullable */
+  carPreviousOwners?: number | null;
+  /** @nullable */
+  carRegistrationStatus?: string | null;
+  /** @nullable */
+  carCustomsPapers?: string | null;
+  /** @nullable */
+  carPlateNumber?: string | null;
+}
+
+export type ListingInputCategory = typeof ListingInputCategory[keyof typeof ListingInputCategory];
+
+
+export const ListingInputCategory = {
+  Parts: 'Parts',
+  Services: 'Services',
+  Car_Sales: 'Car Sales',
+} as const;
+
+export interface ListingInput {
+  /**
+     * @minLength 1
+     * @maxLength 300
+     */
+  title: string;
+  /** @maxLength 10000 */
+  description: string;
+  /** @minimum 0 */
+  price: number;
+  category: ListingInputCategory;
+  location?: string;
+  partsGrade?: string;
+  application?: string;
+  partBrand?: string;
+  /** @nullable */
+  partNumber?: string | null;
+  /** @maxItems 20 */
+  imageUris?: string[];
+  /** @minLength 1 */
+  userName?: string;
+  /** @minLength 1 */
+  userRole?: string;
+  userPhone?: string;
+  /** @nullable */
+  carMake?: string | null;
+  /** @nullable */
+  carModel?: string | null;
+  /** @nullable */
+  carYear?: number | null;
+  /** @nullable */
+  carTrim?: string | null;
+  /** @nullable */
+  carBodyType?: string | null;
+  /** @nullable */
+  carExteriorColor?: string | null;
+  /** @nullable */
+  carInteriorColor?: string | null;
+  /** @nullable */
+  carEngineType?: string | null;
+  /** @nullable */
+  carTransmission?: string | null;
+  /** @nullable */
+  carFuelType?: string | null;
+  /** @nullable */
+  carMileage?: number | null;
+  /** @nullable */
+  carDriveType?: string | null;
+  /** @nullable */
+  carCondition?: string | null;
+  /** @nullable */
+  carAccidentHistory?: string | null;
+  /** @nullable */
+  carServiceHistory?: string | null;
+  /** @nullable */
+  carPreviousOwners?: number | null;
+  /** @nullable */
+  carRegistrationStatus?: string | null;
+  /** @nullable */
+  carCustomsPapers?: string | null;
+  /** @nullable */
+  carVin?: string | null;
+  /** @nullable */
+  carPlateNumber?: string | null;
+}
+
+export interface ListingApprovalInput {
+  approved: boolean;
+}
+
+export interface ListingFeaturedInput {
+  featured: boolean;
+}
+
+export interface QuestionList {
+  items: Question[];
+  limit: number;
+  offset: number;
+}
+
+export interface AnswerList {
+  items: Answer[];
+}
+
+export interface DiscussionList {
+  items: Discussion[];
+  limit: number;
+  offset: number;
+}
+
+export interface ListingList {
+  items: Listing[];
+  limit: number;
+  offset: number;
+}
+
+export interface FavoriteInput {
+  contentType: FavoriteContentType;
+  /** @minimum 1 */
+  contentId: number;
+}
+
+export interface Favorite {
+  id: number;
+  userId: string;
+  contentType: FavoriteContentType;
+  contentId: number;
+  createdAt: string;
+}
+
+export interface FavoriteCheck {
+  favorited: boolean;
+  favorite?: Favorite;
+}
+
+/**
+ * @nullable
+ */
+export type FavoriteResolvedItemItem = { [key: string]: unknown } | null;
+
+export interface FavoriteResolvedItem {
+  favorite: Favorite;
+  available: boolean;
+  /** @nullable */
+  item?: FavoriteResolvedItemItem;
+}
+
+export interface FavoriteList {
+  items: FavoriteResolvedItem[];
+  limit: number;
+  offset: number;
+}
+
+export interface Comment {
+  id: number;
+  questionOrAnswerId: number;
+  isAnswer: boolean;
+  userId: string;
+  userName: string;
+  content: string;
+  timestamp: number;
+}
+
+export interface DiscussionComment {
+  id: number;
+  postId: number;
+  userId: string;
+  userName: string;
+  content: string;
+  timestamp: number;
+}
+
+export interface CommentInput {
+  /** @maxLength 5000 */
+  content: string;
+  /**
+     * @minLength 1
+     * @maxLength 150
+     */
+  userName: string;
+}
+
+export interface CommentList {
+  items: Comment[];
+}
+
+export interface DiscussionCommentList {
+  items: DiscussionComment[];
+}
+
+export type LimitParameter = number;
+
+export type OffsetParameter = number;
+
 export type UpdateNotificationPreferences200 = {
   preferences: NotificationPreferences;
 };
@@ -189,4 +564,53 @@ export type SendNotificationAnnouncement201 = {
 };
 
 export type CreateNotificationEvent202 = { [key: string]: unknown };
+
+export type ListQuestionsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: LimitParameter;
+/**
+ * @minimum 0
+ */
+offset?: OffsetParameter;
+};
+
+export type ListDiscussionsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: LimitParameter;
+/**
+ * @minimum 0
+ */
+offset?: OffsetParameter;
+};
+
+export type ListListingsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: LimitParameter;
+/**
+ * @minimum 0
+ */
+offset?: OffsetParameter;
+};
+
+export type ListFavoritesParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: LimitParameter;
+/**
+ * @minimum 0
+ */
+offset?: OffsetParameter;
+contentType?: FavoriteContentType;
+};
 

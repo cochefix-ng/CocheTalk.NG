@@ -797,6 +797,15 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+          onPress={() => router.push('/favorites')}
+        >
+          <Feather name="bookmark" size={16} color={colors.foreground} />
+          <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Favorites</Text>
+          <Feather name="chevron-right" size={16} color={colors.mutedForeground} style={styles.actionChevron} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
           onPress={() => setShowSwitchModal(true)}
         >
           <Feather name="users" size={16} color={colors.foreground} />

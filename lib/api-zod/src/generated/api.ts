@@ -220,3 +220,860 @@ export const CreateNotificationEventBody = zod.object({
 })
 
 
+export const listQuestionsQueryLimitDefault = 100;
+export const listQuestionsQueryLimitMax = 100;
+
+export const listQuestionsQueryOffsetDefault = 0;
+export const listQuestionsQueryOffsetMin = 0;
+
+
+
+export const ListQuestionsQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(listQuestionsQueryLimitMax).default(listQuestionsQueryLimitDefault),
+  "offset": zod.coerce.number().min(listQuestionsQueryOffsetMin).default(listQuestionsQueryOffsetDefault)
+})
+
+export const ListQuestionsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "tags": zod.string(),
+  "timestamp": zod.number(),
+  "isPrivateEcosystem": zod.boolean(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string()),
+  "acceptedAnswerId": zod.number().nullable(),
+  "yrModel": zod.string(),
+  "vehicleType": zod.string(),
+  "seeConcern": zod.boolean(),
+  "hearConcern": zod.boolean(),
+  "smellConcern": zod.boolean(),
+  "feelConcern": zod.boolean(),
+  "notStarting": zod.boolean(),
+  "performanceConcern": zod.boolean(),
+  "dashboardWarningLights": zod.boolean()
+}))),
+  "limit": zod.number(),
+  "offset": zod.number()
+})
+
+
+export const createQuestionBodyTitleMax = 300;
+
+export const createQuestionBodyDescriptionMax = 10000;
+
+
+
+
+
+export const CreateQuestionBody = zod.object({
+  "title": zod.string().min(1).max(createQuestionBodyTitleMax),
+  "description": zod.string().max(createQuestionBodyDescriptionMax),
+  "tags": zod.string().optional(),
+  "isPrivateEcosystem": zod.boolean().optional(),
+  "yrModel": zod.string().optional(),
+  "vehicleType": zod.string().optional(),
+  "seeConcern": zod.boolean().optional(),
+  "hearConcern": zod.boolean().optional(),
+  "smellConcern": zod.boolean().optional(),
+  "feelConcern": zod.boolean().optional(),
+  "notStarting": zod.boolean().optional(),
+  "performanceConcern": zod.boolean().optional(),
+  "dashboardWarningLights": zod.boolean().optional(),
+  "userName": zod.string().min(1).optional(),
+  "userRole": zod.string().min(1).optional(),
+  "userSpecialization": zod.string().optional(),
+  "userVerified": zod.boolean().optional()
+})
+
+
+
+
+
+export const GetQuestionParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const GetQuestionResponse = zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "tags": zod.string(),
+  "timestamp": zod.number(),
+  "isPrivateEcosystem": zod.boolean(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string()),
+  "acceptedAnswerId": zod.number().nullable(),
+  "yrModel": zod.string(),
+  "vehicleType": zod.string(),
+  "seeConcern": zod.boolean(),
+  "hearConcern": zod.boolean(),
+  "smellConcern": zod.boolean(),
+  "feelConcern": zod.boolean(),
+  "notStarting": zod.boolean(),
+  "performanceConcern": zod.boolean(),
+  "dashboardWarningLights": zod.boolean()
+}))
+
+
+
+
+
+export const DeleteQuestionParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+
+
+
+
+export const UpvoteQuestionParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const UpvoteQuestionResponse = zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "tags": zod.string(),
+  "timestamp": zod.number(),
+  "isPrivateEcosystem": zod.boolean(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string()),
+  "acceptedAnswerId": zod.number().nullable(),
+  "yrModel": zod.string(),
+  "vehicleType": zod.string(),
+  "seeConcern": zod.boolean(),
+  "hearConcern": zod.boolean(),
+  "smellConcern": zod.boolean(),
+  "feelConcern": zod.boolean(),
+  "notStarting": zod.boolean(),
+  "performanceConcern": zod.boolean(),
+  "dashboardWarningLights": zod.boolean()
+}))
+
+
+
+
+
+export const ListQuestionAnswersParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const ListQuestionAnswersResponse = zod.object({
+  "items": zod.array(zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "questionId": zod.number(),
+  "content": zod.string(),
+  "timestamp": zod.number(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string()),
+  "isAccepted": zod.boolean()
+})))
+})
+
+
+
+
+
+export const CreateAnswerParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const createAnswerBodyContentMax = 10000;
+
+
+
+
+
+export const CreateAnswerBody = zod.object({
+  "content": zod.string().max(createAnswerBodyContentMax),
+  "userName": zod.string().min(1).optional(),
+  "userRole": zod.string().min(1).optional(),
+  "userSpecialization": zod.string().optional(),
+  "userVerified": zod.boolean().optional()
+})
+
+
+
+
+
+
+export const AcceptQuestionAnswerParams = zod.object({
+  "questionId": zod.coerce.number().min(1),
+  "answerId": zod.coerce.number().min(1)
+})
+
+export const AcceptQuestionAnswerResponse = zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "questionId": zod.number(),
+  "content": zod.string(),
+  "timestamp": zod.number(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string()),
+  "isAccepted": zod.boolean()
+}))
+
+
+
+
+
+export const GetAnswerParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const GetAnswerResponse = zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "questionId": zod.number(),
+  "content": zod.string(),
+  "timestamp": zod.number(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string()),
+  "isAccepted": zod.boolean()
+}))
+
+
+
+
+
+export const DeleteAnswerParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+
+
+
+
+export const UpvoteAnswerParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const UpvoteAnswerResponse = zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "questionId": zod.number(),
+  "content": zod.string(),
+  "timestamp": zod.number(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string()),
+  "isAccepted": zod.boolean()
+}))
+
+
+export const listDiscussionsQueryLimitDefault = 100;
+export const listDiscussionsQueryLimitMax = 100;
+
+export const listDiscussionsQueryOffsetDefault = 0;
+export const listDiscussionsQueryOffsetMin = 0;
+
+
+
+export const ListDiscussionsQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(listDiscussionsQueryLimitMax).default(listDiscussionsQueryLimitDefault),
+  "offset": zod.coerce.number().min(listDiscussionsQueryOffsetMin).default(listDiscussionsQueryOffsetDefault)
+})
+
+export const ListDiscussionsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "tags": zod.string(),
+  "mediaUris": zod.array(zod.string()).optional(),
+  "isProCircle": zod.boolean(),
+  "timestamp": zod.number(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string())
+}))),
+  "limit": zod.number(),
+  "offset": zod.number()
+})
+
+
+export const createDiscussionBodyTitleMax = 300;
+
+export const createDiscussionBodyContentMax = 10000;
+
+export const createDiscussionBodyMediaUrisMax = 10;
+
+
+
+
+
+export const CreateDiscussionBody = zod.object({
+  "title": zod.string().max(createDiscussionBodyTitleMax).nullish(),
+  "content": zod.string().max(createDiscussionBodyContentMax),
+  "tags": zod.string().optional(),
+  "mediaUris": zod.array(zod.string()).max(createDiscussionBodyMediaUrisMax).optional(),
+  "isProCircle": zod.boolean().optional(),
+  "userName": zod.string().min(1).optional(),
+  "userRole": zod.string().min(1).optional(),
+  "userSpecialization": zod.string().optional(),
+  "userVerified": zod.boolean().optional()
+})
+
+
+
+
+
+export const GetDiscussionParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const GetDiscussionResponse = zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "tags": zod.string(),
+  "mediaUris": zod.array(zod.string()).optional(),
+  "isProCircle": zod.boolean(),
+  "timestamp": zod.number(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string())
+}))
+
+
+
+
+
+export const DeleteDiscussionParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+
+
+
+
+export const UpvoteDiscussionParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const UpvoteDiscussionResponse = zod.object({
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userSpecialization": zod.string(),
+  "userVerified": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "tags": zod.string(),
+  "mediaUris": zod.array(zod.string()).optional(),
+  "isProCircle": zod.boolean(),
+  "timestamp": zod.number(),
+  "upvotes": zod.number(),
+  "upvotedBy": zod.array(zod.string())
+}))
+
+
+export const listListingsQueryLimitDefault = 100;
+export const listListingsQueryLimitMax = 100;
+
+export const listListingsQueryOffsetDefault = 0;
+export const listListingsQueryOffsetMin = 0;
+
+
+
+export const ListListingsQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(listListingsQueryLimitMax).default(listListingsQueryLimitDefault),
+  "offset": zod.coerce.number().min(listListingsQueryOffsetMin).default(listListingsQueryOffsetDefault)
+})
+
+export const ListListingsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "price": zod.number(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userPhone": zod.string(),
+  "category": zod.enum(['Parts', 'Services', 'Car Sales']),
+  "location": zod.string(),
+  "isApproved": zod.boolean(),
+  "partsGrade": zod.string(),
+  "application": zod.string(),
+  "partBrand": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "imageUris": zod.array(zod.string()).optional(),
+  "isFeaturedBottom": zod.boolean(),
+  "timestamp": zod.number(),
+  "carMake": zod.string().nullish(),
+  "carModel": zod.string().nullish(),
+  "carYear": zod.number().nullish(),
+  "carMileage": zod.number().nullish(),
+  "carVin": zod.string().nullish(),
+  "carTrim": zod.string().nullish(),
+  "carBodyType": zod.string().nullish(),
+  "carExteriorColor": zod.string().nullish(),
+  "carInteriorColor": zod.string().nullish(),
+  "carEngineType": zod.string().nullish(),
+  "carTransmission": zod.string().nullish(),
+  "carFuelType": zod.string().nullish(),
+  "carDriveType": zod.string().nullish(),
+  "carCondition": zod.string().nullish(),
+  "carAccidentHistory": zod.string().nullish(),
+  "carServiceHistory": zod.string().nullish(),
+  "carPreviousOwners": zod.number().nullish(),
+  "carRegistrationStatus": zod.string().nullish(),
+  "carCustomsPapers": zod.string().nullish(),
+  "carPlateNumber": zod.string().nullish()
+})),
+  "limit": zod.number(),
+  "offset": zod.number()
+})
+
+
+export const createListingBodyTitleMax = 300;
+
+export const createListingBodyDescriptionMax = 10000;
+
+export const createListingBodyPriceMin = 0;
+
+export const createListingBodyImageUrisMax = 20;
+
+
+
+
+
+export const CreateListingBody = zod.object({
+  "title": zod.string().min(1).max(createListingBodyTitleMax),
+  "description": zod.string().max(createListingBodyDescriptionMax),
+  "price": zod.number().min(createListingBodyPriceMin),
+  "category": zod.enum(['Parts', 'Services', 'Car Sales']),
+  "location": zod.string().optional(),
+  "partsGrade": zod.string().optional(),
+  "application": zod.string().optional(),
+  "partBrand": zod.string().optional(),
+  "partNumber": zod.string().nullish(),
+  "imageUris": zod.array(zod.string()).max(createListingBodyImageUrisMax).optional(),
+  "userName": zod.string().min(1).optional(),
+  "userRole": zod.string().min(1).optional(),
+  "userPhone": zod.string().optional(),
+  "carMake": zod.string().nullish(),
+  "carModel": zod.string().nullish(),
+  "carYear": zod.number().nullish(),
+  "carTrim": zod.string().nullish(),
+  "carBodyType": zod.string().nullish(),
+  "carExteriorColor": zod.string().nullish(),
+  "carInteriorColor": zod.string().nullish(),
+  "carEngineType": zod.string().nullish(),
+  "carTransmission": zod.string().nullish(),
+  "carFuelType": zod.string().nullish(),
+  "carMileage": zod.number().nullish(),
+  "carDriveType": zod.string().nullish(),
+  "carCondition": zod.string().nullish(),
+  "carAccidentHistory": zod.string().nullish(),
+  "carServiceHistory": zod.string().nullish(),
+  "carPreviousOwners": zod.number().nullish(),
+  "carRegistrationStatus": zod.string().nullish(),
+  "carCustomsPapers": zod.string().nullish(),
+  "carVin": zod.string().nullish(),
+  "carPlateNumber": zod.string().nullish()
+})
+
+
+
+
+
+export const GetListingParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const GetListingResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "price": zod.number(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userPhone": zod.string(),
+  "category": zod.enum(['Parts', 'Services', 'Car Sales']),
+  "location": zod.string(),
+  "isApproved": zod.boolean(),
+  "partsGrade": zod.string(),
+  "application": zod.string(),
+  "partBrand": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "imageUris": zod.array(zod.string()).optional(),
+  "isFeaturedBottom": zod.boolean(),
+  "timestamp": zod.number(),
+  "carMake": zod.string().nullish(),
+  "carModel": zod.string().nullish(),
+  "carYear": zod.number().nullish(),
+  "carMileage": zod.number().nullish(),
+  "carVin": zod.string().nullish(),
+  "carTrim": zod.string().nullish(),
+  "carBodyType": zod.string().nullish(),
+  "carExteriorColor": zod.string().nullish(),
+  "carInteriorColor": zod.string().nullish(),
+  "carEngineType": zod.string().nullish(),
+  "carTransmission": zod.string().nullish(),
+  "carFuelType": zod.string().nullish(),
+  "carDriveType": zod.string().nullish(),
+  "carCondition": zod.string().nullish(),
+  "carAccidentHistory": zod.string().nullish(),
+  "carServiceHistory": zod.string().nullish(),
+  "carPreviousOwners": zod.number().nullish(),
+  "carRegistrationStatus": zod.string().nullish(),
+  "carCustomsPapers": zod.string().nullish(),
+  "carPlateNumber": zod.string().nullish()
+})
+
+
+
+
+
+export const DeleteListingParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+
+
+
+
+export const SetListingApprovalParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const SetListingApprovalBody = zod.object({
+  "approved": zod.boolean()
+})
+
+export const SetListingApprovalResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "price": zod.number(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userPhone": zod.string(),
+  "category": zod.enum(['Parts', 'Services', 'Car Sales']),
+  "location": zod.string(),
+  "isApproved": zod.boolean(),
+  "partsGrade": zod.string(),
+  "application": zod.string(),
+  "partBrand": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "imageUris": zod.array(zod.string()).optional(),
+  "isFeaturedBottom": zod.boolean(),
+  "timestamp": zod.number(),
+  "carMake": zod.string().nullish(),
+  "carModel": zod.string().nullish(),
+  "carYear": zod.number().nullish(),
+  "carMileage": zod.number().nullish(),
+  "carVin": zod.string().nullish(),
+  "carTrim": zod.string().nullish(),
+  "carBodyType": zod.string().nullish(),
+  "carExteriorColor": zod.string().nullish(),
+  "carInteriorColor": zod.string().nullish(),
+  "carEngineType": zod.string().nullish(),
+  "carTransmission": zod.string().nullish(),
+  "carFuelType": zod.string().nullish(),
+  "carDriveType": zod.string().nullish(),
+  "carCondition": zod.string().nullish(),
+  "carAccidentHistory": zod.string().nullish(),
+  "carServiceHistory": zod.string().nullish(),
+  "carPreviousOwners": zod.number().nullish(),
+  "carRegistrationStatus": zod.string().nullish(),
+  "carCustomsPapers": zod.string().nullish(),
+  "carPlateNumber": zod.string().nullish()
+})
+
+
+
+
+
+export const SetListingFeaturedParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const SetListingFeaturedBody = zod.object({
+  "featured": zod.boolean()
+})
+
+export const SetListingFeaturedResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "price": zod.number(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "userRole": zod.string(),
+  "userPhone": zod.string(),
+  "category": zod.enum(['Parts', 'Services', 'Car Sales']),
+  "location": zod.string(),
+  "isApproved": zod.boolean(),
+  "partsGrade": zod.string(),
+  "application": zod.string(),
+  "partBrand": zod.string(),
+  "partNumber": zod.string().nullish(),
+  "imageUris": zod.array(zod.string()).optional(),
+  "isFeaturedBottom": zod.boolean(),
+  "timestamp": zod.number(),
+  "carMake": zod.string().nullish(),
+  "carModel": zod.string().nullish(),
+  "carYear": zod.number().nullish(),
+  "carMileage": zod.number().nullish(),
+  "carVin": zod.string().nullish(),
+  "carTrim": zod.string().nullish(),
+  "carBodyType": zod.string().nullish(),
+  "carExteriorColor": zod.string().nullish(),
+  "carInteriorColor": zod.string().nullish(),
+  "carEngineType": zod.string().nullish(),
+  "carTransmission": zod.string().nullish(),
+  "carFuelType": zod.string().nullish(),
+  "carDriveType": zod.string().nullish(),
+  "carCondition": zod.string().nullish(),
+  "carAccidentHistory": zod.string().nullish(),
+  "carServiceHistory": zod.string().nullish(),
+  "carPreviousOwners": zod.number().nullish(),
+  "carRegistrationStatus": zod.string().nullish(),
+  "carCustomsPapers": zod.string().nullish(),
+  "carPlateNumber": zod.string().nullish()
+})
+
+
+export const listFavoritesQueryLimitDefault = 100;
+export const listFavoritesQueryLimitMax = 100;
+
+export const listFavoritesQueryOffsetDefault = 0;
+export const listFavoritesQueryOffsetMin = 0;
+
+
+
+export const ListFavoritesQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(listFavoritesQueryLimitMax).default(listFavoritesQueryLimitDefault),
+  "offset": zod.coerce.number().min(listFavoritesQueryOffsetMin).default(listFavoritesQueryOffsetDefault),
+  "contentType": zod.enum(['discussion', 'question', 'answer', 'listing']).optional()
+})
+
+export const ListFavoritesResponse = zod.object({
+  "items": zod.array(zod.object({
+  "favorite": zod.object({
+  "id": zod.number(),
+  "userId": zod.string(),
+  "contentType": zod.enum(['discussion', 'question', 'answer', 'listing']),
+  "contentId": zod.number(),
+  "createdAt": zod.coerce.date()
+}),
+  "available": zod.boolean(),
+  "item": zod.record(zod.string(), zod.unknown()).nullish()
+})),
+  "limit": zod.number(),
+  "offset": zod.number()
+})
+
+
+
+
+
+export const CreateFavoriteBody = zod.object({
+  "contentType": zod.enum(['discussion', 'question', 'answer', 'listing']),
+  "contentId": zod.number().min(1)
+})
+
+
+
+
+
+export const CheckFavoriteParams = zod.object({
+  "contentType": zod.enum(['discussion', 'question', 'answer', 'listing']),
+  "contentId": zod.coerce.number().min(1)
+})
+
+export const CheckFavoriteResponse = zod.object({
+  "favorited": zod.boolean(),
+  "favorite": zod.object({
+  "id": zod.number(),
+  "userId": zod.string(),
+  "contentType": zod.enum(['discussion', 'question', 'answer', 'listing']),
+  "contentId": zod.number(),
+  "createdAt": zod.coerce.date()
+}).optional()
+})
+
+
+
+
+
+export const DeleteFavoriteParams = zod.object({
+  "contentType": zod.enum(['discussion', 'question', 'answer', 'listing']),
+  "contentId": zod.coerce.number().min(1)
+})
+
+
+
+
+
+export const ListQuestionCommentsParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const ListQuestionCommentsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "questionOrAnswerId": zod.number(),
+  "isAnswer": zod.boolean(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "content": zod.string(),
+  "timestamp": zod.number()
+}))
+})
+
+
+
+
+
+export const CreateQuestionCommentParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const createQuestionCommentBodyContentMax = 5000;
+
+export const createQuestionCommentBodyUserNameMax = 150;
+
+
+
+export const CreateQuestionCommentBody = zod.object({
+  "content": zod.string().max(createQuestionCommentBodyContentMax),
+  "userName": zod.string().min(1).max(createQuestionCommentBodyUserNameMax)
+})
+
+
+
+
+
+export const ListAnswerCommentsParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const ListAnswerCommentsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "questionOrAnswerId": zod.number(),
+  "isAnswer": zod.boolean(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "content": zod.string(),
+  "timestamp": zod.number()
+}))
+})
+
+
+
+
+
+export const CreateAnswerCommentParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const createAnswerCommentBodyContentMax = 5000;
+
+export const createAnswerCommentBodyUserNameMax = 150;
+
+
+
+export const CreateAnswerCommentBody = zod.object({
+  "content": zod.string().max(createAnswerCommentBodyContentMax),
+  "userName": zod.string().min(1).max(createAnswerCommentBodyUserNameMax)
+})
+
+
+
+
+
+export const ListDiscussionCommentsParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const ListDiscussionCommentsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "postId": zod.number(),
+  "userId": zod.string(),
+  "userName": zod.string(),
+  "content": zod.string(),
+  "timestamp": zod.number()
+}))
+})
+
+
+
+
+
+export const CreateDiscussionCommentParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const createDiscussionCommentBodyContentMax = 5000;
+
+export const createDiscussionCommentBodyUserNameMax = 150;
+
+
+
+export const CreateDiscussionCommentBody = zod.object({
+  "content": zod.string().max(createDiscussionCommentBodyContentMax),
+  "userName": zod.string().min(1).max(createDiscussionCommentBodyUserNameMax)
+})
+
+

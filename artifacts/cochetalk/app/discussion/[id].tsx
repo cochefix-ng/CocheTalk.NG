@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
@@ -150,15 +151,18 @@ export default function DiscussionDetailScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.voteBtn, { backgroundColor: hasVoted ? colors.primary + '22' : colors.muted }]}
-              onPress={() => currentUser && upvoteDiscussion(post.id)}
-            >
-              <Feather name="arrow-up" size={14} color={hasVoted ? colors.primary : colors.mutedForeground} />
-              <Text style={[styles.voteCount, { color: hasVoted ? colors.primaryText : colors.mutedForeground }]}>
-                {post.upvotes}
-              </Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              <TouchableOpacity
+                style={[styles.voteBtn, { backgroundColor: hasVoted ? colors.primary + '22' : colors.muted }]}
+                onPress={() => currentUser && upvoteDiscussion(post.id)}
+              >
+                <Feather name="arrow-up" size={14} color={hasVoted ? colors.primary : colors.mutedForeground} />
+                <Text style={[styles.voteCount, { color: hasVoted ? colors.primaryText : colors.mutedForeground }]}>
+                  {post.upvotes}
+                </Text>
+              </TouchableOpacity>
+              <FavoriteButton contentType="discussion" contentId={post.id} />
+            </View>
           </View>
         </View>
 

@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getCategoryColor, getCategoryTextColor } from '@/constants/colors';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { makeConvId, useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
@@ -149,11 +150,14 @@ export default function ListingDetail() {
         <Text style={[styles.title, { color: colors.foreground }]}>{listing.title}</Text>
 
         {/* Meta row */}
-        <View style={styles.metaRow}>
-          <Feather name="map-pin" size={12} color={colors.mutedForeground} />
-          <Text style={[styles.metaText, { color: colors.mutedForeground }]}>{listing.location}</Text>
-          <Text style={[styles.metaDot, { color: colors.mutedForeground }]}>·</Text>
-          <Text style={[styles.metaText, { color: colors.mutedForeground }]}>{timeAgo(listing.timestamp)}</Text>
+        <View style={[styles.metaRow, { justifyContent: 'space-between' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Feather name="map-pin" size={12} color={colors.mutedForeground} />
+            <Text style={[styles.metaText, { color: colors.mutedForeground }]}>{listing.location}</Text>
+            <Text style={[styles.metaDot, { color: colors.mutedForeground }]}>·</Text>
+            <Text style={[styles.metaText, { color: colors.mutedForeground }]}>{timeAgo(listing.timestamp)}</Text>
+          </View>
+          <FavoriteButton contentType="listing" contentId={listing.id} />
         </View>
 
         {/* Description */}

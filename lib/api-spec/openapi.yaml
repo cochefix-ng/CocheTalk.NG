@@ -14,6 +14,10 @@ tags:
     description: AI vehicle diagnostics
   - name: notifications
     description: User notification preferences, push tokens, and in-app notifications
+  - name: content
+    description: CocheTalk community and marketplace content
+  - name: favorites
+    description: Current user's saved content
 paths:
   /healthz:
     get:
@@ -302,7 +306,232 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+  /questions:
+    get:
+      operationId: listQuestions
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/Limit"}, {$ref: "#/components/parameters/Offset"}]
+      responses: {"200": {description: Questions, content: {application/json: {schema: {$ref: "#/components/schemas/QuestionList"}}}}}
+    post:
+      operationId: createQuestion
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/QuestionInput"}}}}
+      responses: {"201": {description: Created question, content: {application/json: {schema: {$ref: "#/components/schemas/Question"}}}}}
+  /questions/{id}:
+    get:
+      operationId: getQuestion
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Question, content: {application/json: {schema: {$ref: "#/components/schemas/Question"}}}}}
+    delete:
+      operationId: deleteQuestion
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"204": {description: Deleted}}
+  /questions/{id}/upvote:
+    post:
+      operationId: upvoteQuestion
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Updated question, content: {application/json: {schema: {$ref: "#/components/schemas/Question"}}}}}
+  /questions/{id}/answers:
+    get:
+      operationId: listQuestionAnswers
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Answers, content: {application/json: {schema: {$ref: "#/components/schemas/AnswerList"}}}}}
+    post:
+      operationId: createAnswer
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/AnswerInput"}}}}
+      responses: {"201": {description: Created answer, content: {application/json: {schema: {$ref: "#/components/schemas/Answer"}}}}}
+  /questions/{questionId}/answers/{answerId}/accept:
+    post:
+      operationId: acceptQuestionAnswer
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - {name: questionId, in: path, required: true, schema: {type: integer, minimum: 1}}
+        - {name: answerId, in: path, required: true, schema: {type: integer, minimum: 1}}
+      responses: {"200": {description: Accepted answer, content: {application/json: {schema: {$ref: "#/components/schemas/Answer"}}}}}
+  /answers/{id}:
+    get:
+      operationId: getAnswer
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Answer, content: {application/json: {schema: {$ref: "#/components/schemas/Answer"}}}}}
+    delete:
+      operationId: deleteAnswer
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"204": {description: Deleted}}
+  /answers/{id}/upvote:
+    post:
+      operationId: upvoteAnswer
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Updated answer, content: {application/json: {schema: {$ref: "#/components/schemas/Answer"}}}}}
+  /discussions:
+    get:
+      operationId: listDiscussions
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/Limit"}, {$ref: "#/components/parameters/Offset"}]
+      responses: {"200": {description: Discussions, content: {application/json: {schema: {$ref: "#/components/schemas/DiscussionList"}}}}}
+    post:
+      operationId: createDiscussion
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/DiscussionInput"}}}}
+      responses: {"201": {description: Created discussion, content: {application/json: {schema: {$ref: "#/components/schemas/Discussion"}}}}}
+  /discussions/{id}:
+    get:
+      operationId: getDiscussion
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Discussion, content: {application/json: {schema: {$ref: "#/components/schemas/Discussion"}}}}}
+    delete:
+      operationId: deleteDiscussion
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"204": {description: Deleted}}
+  /discussions/{id}/upvote:
+    post:
+      operationId: upvoteDiscussion
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Updated discussion, content: {application/json: {schema: {$ref: "#/components/schemas/Discussion"}}}}}
+  /listings:
+    get:
+      operationId: listListings
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/Limit"}, {$ref: "#/components/parameters/Offset"}]
+      responses: {"200": {description: Listings, content: {application/json: {schema: {$ref: "#/components/schemas/ListingList"}}}}}
+    post:
+      operationId: createListing
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/ListingInput"}}}}
+      responses: {"201": {description: Created listing, content: {application/json: {schema: {$ref: "#/components/schemas/Listing"}}}}}
+  /listings/{id}:
+    get:
+      operationId: getListing
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Listing, content: {application/json: {schema: {$ref: "#/components/schemas/Listing"}}}}}
+    delete:
+      operationId: deleteListing
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"204": {description: Deleted}}
+  /listings/{id}/approval:
+    patch:
+      operationId: setListingApproval
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/ListingApprovalInput"}}}}
+      responses: {"200": {description: Updated listing, content: {application/json: {schema: {$ref: "#/components/schemas/Listing"}}}}}
+  /listings/{id}/featured:
+    patch:
+      operationId: setListingFeatured
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/ListingFeaturedInput"}}}}
+      responses: {"200": {description: Updated listing, content: {application/json: {schema: {$ref: "#/components/schemas/Listing"}}}}}
+  /favorites:
+    get:
+      operationId: listFavorites
+      tags: [favorites]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/Limit"}, {$ref: "#/components/parameters/Offset"}, {name: contentType, in: query, schema: {$ref: "#/components/schemas/FavoriteContentType"}}]
+      responses: {"200": {description: Saved content, content: {application/json: {schema: {$ref: "#/components/schemas/FavoriteList"}}}}}
+    post:
+      operationId: createFavorite
+      tags: [favorites]
+      security: [{ bearerAuth: [] }]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/FavoriteInput"}}}}
+      responses: {"201": {description: Saved content, content: {application/json: {schema: {$ref: "#/components/schemas/Favorite"}}}}}
+  /favorites/{contentType}/{contentId}:
+    get:
+      operationId: checkFavorite
+      tags: [favorites]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/FavoriteContentType"}, {$ref: "#/components/parameters/FavoriteContentId"}]
+      responses: {"200": {description: Favorite state, content: {application/json: {schema: {$ref: "#/components/schemas/FavoriteCheck"}}}}}
+    delete:
+      operationId: deleteFavorite
+      tags: [favorites]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/FavoriteContentType"}, {$ref: "#/components/parameters/FavoriteContentId"}]
+      responses: {"204": {description: Removed}}
+  /questions/{id}/comments:
+    get:
+      operationId: listQuestionComments
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Comments, content: {application/json: {schema: {$ref: "#/components/schemas/CommentList"}}}}}
+    post:
+      operationId: createQuestionComment
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/CommentInput"}}}}
+      responses: {"201": {description: Comment, content: {application/json: {schema: {$ref: "#/components/schemas/Comment"}}}}}
+  /answers/{id}/comments:
+    get:
+      operationId: listAnswerComments
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Comments, content: {application/json: {schema: {$ref: "#/components/schemas/CommentList"}}}}}
+    post:
+      operationId: createAnswerComment
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/CommentInput"}}}}
+      responses: {"201": {description: Comment, content: {application/json: {schema: {$ref: "#/components/schemas/Comment"}}}}}
+  /discussions/{id}/comments:
+    get:
+      operationId: listDiscussionComments
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      responses: {"200": {description: Comments, content: {application/json: {schema: {$ref: "#/components/schemas/DiscussionCommentList"}}}}}
+    post:
+      operationId: createDiscussionComment
+      tags: [content]
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: "#/components/parameters/ContentId"}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/CommentInput"}}}}
+      responses: {"201": {description: Comment, content: {application/json: {schema: {$ref: "#/components/schemas/DiscussionComment"}}}}}
 components:
+  parameters:
+    ContentId: {name: id, in: path, required: true, schema: {type: integer, minimum: 1}}
+    FavoriteContentType: {name: contentType, in: path, required: true, schema: {$ref: "#/components/schemas/FavoriteContentType"}}
+    FavoriteContentId: {name: contentId, in: path, required: true, schema: {type: integer, minimum: 1}}
+    Limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 100}}
+    Offset: {name: offset, in: query, schema: {type: integer, minimum: 0, default: 0}}
   securitySchemes:
     bearerAuth:
       type: http
@@ -536,3 +765,258 @@ components:
           additionalProperties: true
         dedupeKey:
           type: string
+    FavoriteContentType:
+      type: string
+      enum: [discussion, question, answer, listing]
+    ContentAuthor:
+      type: object
+      required: [userId, userName, userRole, userSpecialization, userVerified]
+      properties:
+        userId: {type: string}
+        userName: {type: string}
+        userRole: {type: string}
+        userSpecialization: {type: string}
+        userVerified: {type: boolean}
+    Question:
+      allOf:
+        - $ref: "#/components/schemas/ContentAuthor"
+        - type: object
+          required: [id, title, description, tags, timestamp, isPrivateEcosystem, upvotes, upvotedBy, acceptedAnswerId, yrModel, vehicleType, seeConcern, hearConcern, smellConcern, feelConcern, notStarting, performanceConcern, dashboardWarningLights]
+          properties:
+            id: {type: integer}
+            title: {type: string}
+            description: {type: string}
+            tags: {type: string}
+            timestamp: {type: number}
+            isPrivateEcosystem: {type: boolean}
+            upvotes: {type: integer}
+            upvotedBy: {type: array, items: {type: string}}
+            acceptedAnswerId: {type: ["integer", "null"]}
+            yrModel: {type: string}
+            vehicleType: {type: string}
+            seeConcern: {type: boolean}
+            hearConcern: {type: boolean}
+            smellConcern: {type: boolean}
+            feelConcern: {type: boolean}
+            notStarting: {type: boolean}
+            performanceConcern: {type: boolean}
+            dashboardWarningLights: {type: boolean}
+    QuestionInput:
+      type: object
+      required: [title, description]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 300}
+        description: {type: string, maxLength: 10000}
+        tags: {type: string}
+        isPrivateEcosystem: {type: boolean}
+        yrModel: {type: string}
+        vehicleType: {type: string}
+        seeConcern: {type: boolean}
+        hearConcern: {type: boolean}
+        smellConcern: {type: boolean}
+        feelConcern: {type: boolean}
+        notStarting: {type: boolean}
+        performanceConcern: {type: boolean}
+        dashboardWarningLights: {type: boolean}
+        userName: {type: string, minLength: 1}
+        userRole: {type: string, minLength: 1}
+        userSpecialization: {type: string}
+        userVerified: {type: boolean}
+    Answer:
+      allOf:
+        - $ref: "#/components/schemas/ContentAuthor"
+        - type: object
+          required: [id, questionId, content, timestamp, upvotes, upvotedBy, isAccepted]
+          properties:
+            id: {type: integer}
+            questionId: {type: integer}
+            content: {type: string}
+            timestamp: {type: number}
+            upvotes: {type: integer}
+            upvotedBy: {type: array, items: {type: string}}
+            isAccepted: {type: boolean}
+    AnswerInput:
+      type: object
+      required: [content]
+      properties: {content: {type: string, maxLength: 10000}, userName: {type: string, minLength: 1}, userRole: {type: string, minLength: 1}, userSpecialization: {type: string}, userVerified: {type: boolean}}
+    Discussion:
+      allOf:
+        - $ref: "#/components/schemas/ContentAuthor"
+        - type: object
+          required: [id, content, tags, timestamp, upvotes, upvotedBy, isProCircle]
+          properties:
+            id: {type: integer}
+            title: {type: ["string", "null"]}
+            content: {type: string}
+            tags: {type: string}
+            mediaUris: {type: array, items: {type: string}}
+            isProCircle: {type: boolean}
+            timestamp: {type: number}
+            upvotes: {type: integer}
+            upvotedBy: {type: array, items: {type: string}}
+    DiscussionInput:
+      type: object
+      required: [content]
+      properties:
+        title: {type: ["string", "null"], maxLength: 300}
+        content: {type: string, maxLength: 10000}
+        tags: {type: string}
+        mediaUris: {type: array, items: {type: string}, maxItems: 10}
+        isProCircle: {type: boolean}
+        userName: {type: string, minLength: 1}
+        userRole: {type: string, minLength: 1}
+        userSpecialization: {type: string}
+        userVerified: {type: boolean}
+    Listing:
+      type: object
+      required: [id, title, description, price, userId, userName, userRole, userPhone, category, location, isApproved, partsGrade, application, partBrand, isFeaturedBottom, timestamp]
+      properties:
+        id: {type: integer}
+        title: {type: string}
+        description: {type: string}
+        price: {type: number}
+        userId: {type: string}
+        userName: {type: string}
+        userRole: {type: string}
+        userPhone: {type: string}
+        category: {type: string, enum: [Parts, Services, Car Sales]}
+        location: {type: string}
+        isApproved: {type: boolean}
+        partsGrade: {type: string}
+        application: {type: string}
+        partBrand: {type: string}
+        partNumber: {type: ["string", "null"]}
+        imageUris: {type: array, items: {type: string}}
+        isFeaturedBottom: {type: boolean}
+        timestamp: {type: number}
+        carMake: {type: ["string", "null"]}
+        carModel: {type: ["string", "null"]}
+        carYear: {type: ["integer", "null"]}
+        carMileage: {type: ["integer", "null"]}
+        carVin: {type: ["string", "null"]}
+        carTrim: {type: ["string", "null"]}
+        carBodyType: {type: ["string", "null"]}
+        carExteriorColor: {type: ["string", "null"]}
+        carInteriorColor: {type: ["string", "null"]}
+        carEngineType: {type: ["string", "null"]}
+        carTransmission: {type: ["string", "null"]}
+        carFuelType: {type: ["string", "null"]}
+        carDriveType: {type: ["string", "null"]}
+        carCondition: {type: ["string", "null"]}
+        carAccidentHistory: {type: ["string", "null"]}
+        carServiceHistory: {type: ["string", "null"]}
+        carPreviousOwners: {type: ["integer", "null"]}
+        carRegistrationStatus: {type: ["string", "null"]}
+        carCustomsPapers: {type: ["string", "null"]}
+        carPlateNumber: {type: ["string", "null"]}
+    ListingInput:
+      type: object
+      required: [title, description, price, category]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 300}
+        description: {type: string, maxLength: 10000}
+        price: {type: number, minimum: 0}
+        category: {type: string, enum: [Parts, Services, Car Sales]}
+        location: {type: string}
+        partsGrade: {type: string}
+        application: {type: string}
+        partBrand: {type: string}
+        partNumber: {type: ["string", "null"]}
+        imageUris: {type: array, items: {type: string}, maxItems: 20}
+        userName: {type: string, minLength: 1}
+        userRole: {type: string, minLength: 1}
+        userPhone: {type: string}
+        carMake: {type: ["string", "null"]}
+        carModel: {type: ["string", "null"]}
+        carYear: {type: ["integer", "null"]}
+        carTrim: {type: ["string", "null"]}
+        carBodyType: {type: ["string", "null"]}
+        carExteriorColor: {type: ["string", "null"]}
+        carInteriorColor: {type: ["string", "null"]}
+        carEngineType: {type: ["string", "null"]}
+        carTransmission: {type: ["string", "null"]}
+        carFuelType: {type: ["string", "null"]}
+        carMileage: {type: ["integer", "null"]}
+        carDriveType: {type: ["string", "null"]}
+        carCondition: {type: ["string", "null"]}
+        carAccidentHistory: {type: ["string", "null"]}
+        carServiceHistory: {type: ["string", "null"]}
+        carPreviousOwners: {type: ["integer", "null"]}
+        carRegistrationStatus: {type: ["string", "null"]}
+        carCustomsPapers: {type: ["string", "null"]}
+        carVin: {type: ["string", "null"]}
+        carPlateNumber: {type: ["string", "null"]}
+    ListingApprovalInput:
+      type: object
+      required: [approved]
+      properties: {approved: {type: boolean}}
+    ListingFeaturedInput:
+      type: object
+      required: [featured]
+      properties: {featured: {type: boolean}}
+    QuestionList:
+      type: object
+      required: [items, limit, offset]
+      properties: {items: {type: array, items: {$ref: "#/components/schemas/Question"}}, limit: {type: integer}, offset: {type: integer}}
+    AnswerList:
+      type: object
+      required: [items]
+      properties: {items: {type: array, items: {$ref: "#/components/schemas/Answer"}}}
+    DiscussionList:
+      type: object
+      required: [items, limit, offset]
+      properties: {items: {type: array, items: {$ref: "#/components/schemas/Discussion"}}, limit: {type: integer}, offset: {type: integer}}
+    ListingList:
+      type: object
+      required: [items, limit, offset]
+      properties: {items: {type: array, items: {$ref: "#/components/schemas/Listing"}}, limit: {type: integer}, offset: {type: integer}}
+    FavoriteInput:
+      type: object
+      required: [contentType, contentId]
+      properties:
+        contentType: {$ref: "#/components/schemas/FavoriteContentType"}
+        contentId: {type: integer, minimum: 1}
+    Favorite:
+      type: object
+      required: [id, userId, contentType, contentId, createdAt]
+      properties:
+        id: {type: integer}
+        userId: {type: string}
+        contentType: {$ref: "#/components/schemas/FavoriteContentType"}
+        contentId: {type: integer}
+        createdAt: {type: string, format: date-time}
+    FavoriteCheck:
+      type: object
+      required: [favorited]
+      properties: {favorited: {type: boolean}, favorite: {$ref: "#/components/schemas/Favorite"}}
+    FavoriteResolvedItem:
+      type: object
+      required: [favorite, available]
+      properties:
+        favorite: {$ref: "#/components/schemas/Favorite"}
+        available: {type: boolean}
+        item: {type: [object, "null"], additionalProperties: true}
+    FavoriteList:
+      type: object
+      required: [items, limit, offset]
+      properties: {items: {type: array, items: {$ref: "#/components/schemas/FavoriteResolvedItem"}}, limit: {type: integer}, offset: {type: integer}}
+    Comment:
+      type: object
+      required: [id, questionOrAnswerId, isAnswer, userId, userName, content, timestamp]
+      properties: {id: {type: integer}, questionOrAnswerId: {type: integer}, isAnswer: {type: boolean}, userId: {type: string}, userName: {type: string}, content: {type: string}, timestamp: {type: number}}
+    DiscussionComment:
+      type: object
+      required: [id, postId, userId, userName, content, timestamp]
+      properties: {id: {type: integer}, postId: {type: integer}, userId: {type: string}, userName: {type: string}, content: {type: string}, timestamp: {type: number}}
+    CommentInput:
+      type: object
+      required: [content, userName]
+      properties: {content: {type: string, maxLength: 5000}, userName: {type: string, minLength: 1, maxLength: 150}}
+    CommentList:
+      type: object
+      required: [items]
+      properties: {items: {type: array, items: {$ref: "#/components/schemas/Comment"}}}
+    DiscussionCommentList:
+      type: object
+      required: [items]
+      properties: {items: {type: array, items: {$ref: "#/components/schemas/DiscussionComment"}}}

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
@@ -163,6 +164,7 @@ export default function QuestionDetailScreen() {
                 <Feather name="message-circle" size={14} color={colors.mutedForeground} />
                 <Text style={[styles.voteCount, { color: colors.mutedForeground }]}>Comment</Text>
               </TouchableOpacity>
+              <FavoriteButton contentType="question" contentId={question.id} />
             </View>
           </View>
 
@@ -265,6 +267,7 @@ export default function QuestionDetailScreen() {
                     {answerComments.length > 0 ? `${answerComments.length}` : 'Comment'}
                   </Text>
                 </TouchableOpacity>
+                <FavoriteButton contentType="answer" contentId={answer.id} />
 
                 {isOwner && !answer.isAccepted && (
                   <TouchableOpacity

@@ -176,11 +176,12 @@ export default function RootLayout() {
       <ClerkLoaded>
         <SafeAreaProvider>
           <ErrorBoundary>
-            <AppProvider>
+            <QueryClientProvider client={queryClient}>
+              <AppProvider>
               <AnalyticsTracker />
               <AuthSessionBridge>
                 <NotificationProvider>
-                  <QueryClientProvider client={queryClient}>
+
                     <GestureHandlerRootView>
                       <KeyboardProvider>
                         <RootLayoutNav />
@@ -189,10 +190,11 @@ export default function RootLayout() {
                         )}
                       </KeyboardProvider>
                     </GestureHandlerRootView>
-                  </QueryClientProvider>
+
                 </NotificationProvider>
               </AuthSessionBridge>
             </AppProvider>
+            </QueryClientProvider>
           </ErrorBoundary>
         </SafeAreaProvider>
       </ClerkLoaded>
