@@ -30,6 +30,7 @@ externalPort = 8081
 [[ports]]
 localPort = 8082
 externalPort = 3001
+exposeLocalhost = true
 
 [[ports]]
 localPort = 26107
@@ -42,3 +43,8 @@ externalPort = 3000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.production]
+CORS_ALLOWED_ORIGINS = "https://codebase-transfer--brainhenry3.replit.app"
