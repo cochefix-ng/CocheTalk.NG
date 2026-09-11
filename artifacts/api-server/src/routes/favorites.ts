@@ -11,8 +11,10 @@ import {
 } from "@workspace/api-zod";
 import { answers, db, discussions, favorites, marketplaceListings, questions } from "@workspace/db";
 import { canViewDiscussion, canViewListing, canViewQuestion, viewerFor, visibleContent } from "../services/contentAccess";
+import { rateLimit } from "../middleware/rateLimit";
 
 const router: IRouter = Router();
+router.use(rateLimit({ windowMs: 60_000, max: 120 }));
 type ContentType = "discussion" | "question" | "answer" | "listing";
 
 function requireUser(req: Request, res: Response): string | null {

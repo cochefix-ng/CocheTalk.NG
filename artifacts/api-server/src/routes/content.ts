@@ -4,8 +4,12 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import * as api from "@workspace/api-zod";
 import { answers, comments, db, discussionComments, discussions, marketplaceListings, questions, userProfiles } from "@workspace/db";
 import { deleteAnswerGraph, deleteDiscussionGraph, deleteQuestionGraph, viewerFor, visibleAnswer, visibleDiscussion, visibleListing, visibleQuestion } from "../services/contentAccess";
+import { createAndSendNotification } from "../services/notifications";
+import { rateLimit } from "../middleware/rateLimit";
+import { hasDeviceLocalUri } from "../lib/inputValidation";
 
 const router: IRouter = Router();
+router.use(rateLimit({ windowMs: 60_000, max: 240 }));
 const schema = (name: string) => (api as unknown as Record<string, { parse(value: unknown): any; safeParse(value: unknown): any }>)[name];
 function authenticated(req: Request, res: Response) { const value = getAuth(req).userId; if (!value) { res.status(401).json({ error: "Authentication required" }); return null; } return value; }
 function parsed(schemaName: string, value: unknown, res: Response) { const result = schema(schemaName).safeParse(value); if (!result.success) { res.status(400).json({ error: result.error.message }); return null; } return result.data; }
@@ -113,6 +117,16 @@ router.post("/questions/:id/answers", async (req, res) => {
   const p = parsed("CreateAnswerParams", req.params, res); const body = parsed("CreateAnswerBody", req.body, res); if (!p || !body) return;
   if (!await visibleQuestion(p.id, await viewerFor(userId))) return res.status(404).json({ error: "Question not found" });
   const [row] = await db.insert(answers).values({ questionId: p.id, content: body.content, ...await author(userId) }).returning();
+  const parent = (await db.select({ userId: questions.userId, title: questions.title }).from(questions).where(eq(questions.id, p.id)).limit(1))[0];
+  if (parent) void createAndSendNotification({
+    actorId: userId,
+    recipientId: parent.userId,
+    notificationType: "new_answers",
+    title: "New answer to your question",
+    body: `${row.userName} answered “${parent.title}”`,
+    data: { screen: "question", questionId: p.id, answerId: row.id },
+    dedupeKey: `answer:${row.id}`,
+  }).catch((error) => req.log.error({ error }, "Failed to notify question owner"));
   return res.status(201).json(schema("GetAnswerResponse").parse(a(row)));
 });
 
@@ -168,9 +182,21 @@ function commentRoutes(path: string, isAnswer: boolean, params: string, listResp
   router.post(path, async (req, res) => {
     const userId = authenticated(req, res); if (!userId) return;
     const p = parsed(params, req.params, res); const body = parsed(createBody, req.body, res); if (!p || !body) return;
-    if (!await parentVisible(p.id, isAnswer, userId)) return res.status(404).json({ error: "Parent not found" });
+    const parent = isAnswer
+      ? await visibleAnswer(p.id, await viewerFor(userId))
+      : await visibleQuestion(p.id, await viewerFor(userId));
+    if (!parent) return res.status(404).json({ error: "Parent not found" });
     const profile = await author(userId);
     const [row] = await db.insert(comments).values({ questionOrAnswerId: p.id, isAnswer, userId, userName: profile.userName, content: body.content }).returning();
+    void createAndSendNotification({
+      actorId: userId,
+      recipientId: parent.userId,
+      notificationType: "comments_replies",
+      title: "New comment",
+      body: `${profile.userName} commented on your ${isAnswer ? "answer" : "question"}`,
+      data: { screen: isAnswer ? "question" : "question", contentId: p.id },
+      dedupeKey: `comment:${row.id}`,
+    }).catch((error) => req.log.error({ error }, "Failed to notify content owner"));
     return res.status(201).json(schema(listResponse).parse({ items: [c(row)] }));
   });
 }
@@ -225,9 +251,19 @@ router.get("/discussions/:id/comments", async (req, res) => {
 router.post("/discussions/:id/comments", async (req, res) => {
   const userId = authenticated(req, res); if (!userId) return;
   const p = parsed("CreateDiscussionCommentParams", req.params, res); const body = parsed("CreateDiscussionCommentBody", req.body, res); if (!p || !body) return;
-  if (!await visibleDiscussion(p.id, await viewerFor(userId))) return res.status(404).json({ error: "Discussion not found" });
+  const post = await visibleDiscussion(p.id, await viewerFor(userId));
+  if (!post) return res.status(404).json({ error: "Discussion not found" });
   const profile = await author(userId);
   const [row] = await db.insert(discussionComments).values({ postId: p.id, userId, userName: profile.userName, content: body.content }).returning();
+  void createAndSendNotification({
+    actorId: userId,
+    recipientId: post.userId,
+    notificationType: "comments_replies",
+    title: "New discussion comment",
+    body: `${profile.userName} commented on your discussion`,
+    data: { screen: "discussion", discussionId: p.id },
+    dedupeKey: `discussion-comment:${row.id}`,
+  }).catch((error) => req.log.error({ error }, "Failed to notify discussion owner"));
   return res.status(201).json(schema("ListDiscussionCommentsResponse").parse({ items: [c(row)] }));
 });
 
@@ -244,7 +280,7 @@ router.post("/listings", async (req, res) => {
   const userId = authenticated(req, res); if (!userId) return;
   const body = parsed("CreateListingBody", req.body, res); if (!body) return;
   const imageUris = Array.isArray(body.imageUris) ? body.imageUris : [];
-  if (imageUris.some((uri: string) => uri.startsWith("file://") || uri.startsWith("content://"))) {
+  if (imageUris.some(hasDeviceLocalUri)) {
     return res.status(400).json({ error: "Listing images must be uploaded before creating a listing" });
   }
   const profile = await author(userId);
@@ -276,6 +312,15 @@ for (const [path, param, body] of [["/listings/:id/approval", "SetListingApprova
     const values = path.endsWith("approval") ? { isApproved: b.approved, updatedAt: new Date() } : { isFeaturedBottom: b.featured, updatedAt: new Date() };
     const [row] = await db.update(marketplaceListings).set(values).where(eq(marketplaceListings.id, p.id)).returning();
     if (!row) return res.status(404).json({ error: "Listing not found" });
+    void createAndSendNotification({
+      actorId: userId,
+      recipientId: row.userId,
+      notificationType: "marketplace_updates",
+      title: path.endsWith("approval") ? (b.approved ? "Listing approved" : "Listing rejected") : (b.featured ? "Listing featured" : "Listing unfeatured"),
+      body: path.endsWith("approval") ? (b.approved ? "Your marketplace listing is now visible." : "Your marketplace listing is not approved.") : "Your marketplace listing's featured status changed.",
+      data: { screen: "listing", listingId: row.id },
+      dedupeKey: `listing-update:${row.id}:${path.endsWith("approval") ? "approval" : "featured"}:${Date.now()}`,
+    }).catch((error) => req.log.error({ error }, "Failed to notify listing owner"));
     return res.json(schema("GetListingResponse").parse(l(row)));
   });
 }

@@ -15,8 +15,11 @@ import {
   updateGlobalNotificationSetting,
   updateUserNotificationPreferences,
 } from "../services/notifications";
+import { rateLimit } from "../middleware/rateLimit";
 
 const router: IRouter = Router();
+router.use("/notifications/events", rateLimit({ windowMs: 60_000, max: 30 }));
+router.use("/notifications/admin/announcements", rateLimit({ windowMs: 60_000, max: 5 }));
 
 function requireUser(req: Request, res: Response) {
   const { userId } = getAuth(req);
@@ -31,7 +34,7 @@ function isAdmin(req: Request) {
   const auth = getAuth(req);
   if (!auth.userId) return false;
 
-  const configuredIds = (process.env.CLERK_ADMIN_USER_IDS ?? "")
+  const configuredIds = `${process.env.COCHETALK_ADMIN_USER_IDS ?? ""},${process.env.CLERK_ADMIN_USER_IDS ?? ""}`
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);

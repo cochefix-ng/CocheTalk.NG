@@ -294,6 +294,7 @@ async function sendExpoPushMessages(messages: ExpoPushMessage[]) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(messages),
+    signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) {
     throw new Error(`Expo Push Service returned ${response.status}`);

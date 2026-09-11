@@ -39,6 +39,9 @@ const allowedOrigins = new Set(
     .map((value) => value.trim())
     .filter(Boolean),
 );
+if (process.env.NODE_ENV === "production" && allowedOrigins.size === 0) {
+  throw new Error("CORS_ALLOWED_ORIGINS must be configured in production");
+}
 app.use(cors({
   credentials: true,
   origin(origin, callback) {
@@ -47,7 +50,7 @@ app.use(cors({
   },
 }));
 app.use(express.json({ limit: "256kb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "256kb" }));
 app.use(
   clerkMiddleware((req) => ({
     publishableKey: publishableKeyFromHost(
@@ -58,5 +61,13 @@ app.use(
 );
 
 app.use("/api", router);
+
+app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  req.log.error({ error }, "Unhandled API error");
+  if (res.headersSent) return;
+  const message = error instanceof Error ? error.message : "Request failed";
+  const status = message.includes("entity.too.large") ? 413 : message === "Origin not allowed" ? 403 : 500;
+  return res.status(status).json({ error: status === 500 ? "Internal server error" : message });
+});
 
 export default app;
