@@ -16,6 +16,7 @@ export * from './commentList';
 export * from './contentAuthor';
 export * from './contentBootstrapResponse';
 export * from './createNotificationEvent202';
+export * from './cursorParameter';
 export * from './deactivateNotificationPushTokenRequest';
 export * from './diagnoseRequest';
 export * from './diagnoseResponse';

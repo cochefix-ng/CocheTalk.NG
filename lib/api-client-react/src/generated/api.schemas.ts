@@ -475,6 +475,8 @@ export interface FavoriteList {
   items: FavoriteResolvedItem[];
   limit: number;
   offset: number;
+  /** @nullable */
+  nextCursor?: string | null;
 }
 
 export interface Comment {
@@ -592,6 +594,8 @@ export type LimitParameter = number;
 
 export type OffsetParameter = number;
 
+export type CursorParameter = string;
+
 export type UpdateNotificationPreferences200 = {
   preferences: NotificationPreferences;
 };
@@ -685,6 +689,10 @@ limit?: LimitParameter;
  * @minimum 0
  */
 offset?: OffsetParameter;
+/**
+ * @maxLength 200
+ */
+cursor?: CursorParameter;
 contentType?: FavoriteContentType;
 };
 

@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { CursorParameter } from './cursorParameter';
 import type { FavoriteContentType } from './favoriteContentType';
 import type { LimitParameter } from './limitParameter';
 import type { OffsetParameter } from './offsetParameter';
@@ -19,5 +20,9 @@ limit?: LimitParameter;
  * @minimum 0
  */
 offset?: OffsetParameter;
+/**
+ * @maxLength 200
+ */
+cursor?: CursorParameter;
 contentType?: FavoriteContentType;
 };

@@ -1,5 +1,5 @@
 import { getAuth } from "@clerk/express";
-import { and, desc, eq, inArray, or } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { Router, type IRouter, type Request, type Response } from "express";
 import * as api from "@workspace/api-zod";
 import { answers, comments, db, discussionComments, discussions, marketplaceListings, questions, userProfiles } from "@workspace/db";
@@ -7,8 +7,10 @@ import { deleteAnswerGraph, deleteDiscussionGraph, deleteQuestionGraph, viewerFo
 import { createAndSendNotification } from "../services/notifications";
 import { rateLimit } from "../middleware/rateLimit";
 import { hasDeviceLocalUri } from "../lib/inputValidation";
+import { ObjectStorageService } from "../lib/objectStorage";
 
 const router: IRouter = Router();
+const storage = new ObjectStorageService();
 router.use(rateLimit({ windowMs: 60_000, max: 240 }));
 const schema = (name: string) => (api as unknown as Record<string, { parse(value: unknown): any; safeParse(value: unknown): any }>)[name];
 function authenticated(req: Request, res: Response) { const value = getAuth(req).userId; if (!value) { res.status(401).json({ error: "Authentication required" }); return null; } return value; }
@@ -24,11 +26,28 @@ async function author(userId: string) {
   return { userId, userName: profile?.displayName ?? "Member", userRole: profile?.accountType ?? "Car Owner", userSpecialization: profile?.specialization ?? "", userVerified: profile?.verified === true };
 }
 
+async function cleanupStoredObjects(values: unknown[] | null | undefined, log: Request["log"]) {
+  const paths = (values ?? [])
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => {
+      const marker = "/objects/";
+      const index = value.indexOf(marker);
+      return index >= 0 ? value.slice(index) : null;
+    })
+    .filter((value): value is string => Boolean(value));
+  await Promise.all(paths.map((path) => storage.deleteObject(path).catch((error) => log.warn({ error, path }, "Stored object cleanup failed"))));
+}
+
 async function toggle(table: any, rowId: number, userId: string, map: (row: any) => any, output: string, res: Response, canView: (row: any) => Promise<boolean>) {
   const row = (await db.select().from(table).where(eq(table.id, rowId)).limit(1))[0];
   if (!row || !(await canView(row))) return res.status(404).json({ error: "Content not found" });
-  const voters = row.upvotedBy.includes(userId) ? row.upvotedBy.filter((x: string) => x !== userId) : [...row.upvotedBy, userId];
-  const [updated] = await db.update(table).set({ upvotedBy: voters, upvotes: voters.length, updatedAt: new Date() }).where(eq(table.id, rowId)).returning();
+  const voterArray = sql`ARRAY[${userId}]::text[]`;
+  const hasVote = sql`${table.upvotedBy} @> ${voterArray}`;
+  const [updated] = await db.update(table).set({
+    upvotedBy: sql`CASE WHEN ${hasVote} THEN array_remove(${table.upvotedBy}, ${userId}) ELSE array_append(${table.upvotedBy}, ${userId}) END`,
+    upvotes: sql`CASE WHEN ${hasVote} THEN GREATEST(${table.upvotes} - 1, 0) ELSE ${table.upvotes} + 1 END`,
+    updatedAt: new Date(),
+  }).where(eq(table.id, rowId)).returning();
   return res.json(schema(output).parse(map(updated)));
 }
 
@@ -230,7 +249,9 @@ router.get("/discussions/:id", async (req, res) => {
 router.delete("/discussions/:id", async (req, res) => {
   const userId = authenticated(req, res); if (!userId) return;
   const p = parsed("DeleteDiscussionParams", req.params, res); if (!p) return;
-  if (!await deleteDiscussionGraph(p.id, userId)) return res.status(404).json({ error: "Discussion not found" });
+  const deleted = await deleteDiscussionGraph(p.id, userId);
+  if (!deleted) return res.status(404).json({ error: "Discussion not found" });
+  void cleanupStoredObjects(deleted.mediaUris, req.log);
   return res.status(204).send();
 });
 
@@ -301,6 +322,7 @@ router.delete("/listings/:id", async (req, res) => {
   const p = parsed("DeleteListingParams", req.params, res); if (!p) return;
   const [row] = await db.delete(marketplaceListings).where(and(eq(marketplaceListings.id, p.id), eq(marketplaceListings.userId, userId))).returning();
   if (!row) return res.status(404).json({ error: "Listing not found" });
+  void cleanupStoredObjects(row.imageUris, req.log);
   return res.status(204).send();
 });
 

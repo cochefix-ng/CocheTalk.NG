@@ -1,5 +1,5 @@
 import { getAuth } from "@clerk/express";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, or } from "drizzle-orm";
 import { Router, type IRouter, type Request, type Response } from "express";
 import {
   CheckFavoriteParams,
@@ -16,6 +16,23 @@ import { rateLimit } from "../middleware/rateLimit";
 const router: IRouter = Router();
 router.use(rateLimit({ windowMs: 60_000, max: 120 }));
 type ContentType = "discussion" | "question" | "answer" | "listing";
+
+function encodeCursor(createdAt: Date, id: number) {
+  return Buffer.from(`${createdAt.toISOString()}|${id}`).toString("base64url");
+}
+
+function decodeCursor(value: string | undefined) {
+  if (!value) return null;
+  try {
+    const [rawDate, rawId] = Buffer.from(value, "base64url").toString("utf8").split("|");
+    const id = Number(rawId);
+    const date = new Date(rawDate);
+    if (!Number.isInteger(id) || id <= 0 || Number.isNaN(date.getTime())) return null;
+    return { date, id };
+  } catch {
+    return null;
+  }
+}
 
 function requireUser(req: Request, res: Response): string | null {
   const { userId } = getAuth(req);
@@ -68,9 +85,21 @@ router.get("/favorites", async (req: Request, res: Response): Promise<void> => {
   const query = ListFavoritesQueryParams.safeParse(req.query);
   if (!query.success) { res.status(400).json({ error: query.error.message }); return; }
   const limit = query.data.limit ?? 100, offset = query.data.offset ?? 0, type = query.data.contentType;
+  const cursor = decodeCursor(query.data.cursor);
+  if (query.data.cursor && !cursor) { res.status(400).json({ error: "Invalid favorites cursor" }); return; }
   try {
-    const saved = await db.select().from(favorites).where(type ? and(eq(favorites.userId, userId), eq(favorites.contentType, type)) : eq(favorites.userId, userId)).orderBy(desc(favorites.createdAt)).limit(limit).offset(offset);
-    const ids = (kind: ContentType) => saved.filter((f) => f.contentType === kind).map((f) => f.contentId);
+    const baseCondition = type ? and(eq(favorites.userId, userId), eq(favorites.contentType, type)) : eq(favorites.userId, userId);
+    const cursorCondition = cursor
+      ? and(baseCondition, or(lt(favorites.createdAt, cursor.date), and(eq(favorites.createdAt, cursor.date), lt(favorites.id, cursor.id))))
+      : baseCondition;
+    const saved = await db.select().from(favorites)
+      .where(cursorCondition)
+      .orderBy(desc(favorites.createdAt), desc(favorites.id))
+      .limit(limit + 1)
+      .offset(cursor ? 0 : offset);
+    const hasMore = saved.length > limit;
+    const page = hasMore ? saved.slice(0, limit) : saved;
+    const ids = (kind: ContentType) => page.filter((f) => f.contentType === kind).map((f) => f.contentId);
     const viewer = await viewerFor(userId);
     const [questionRows, answerRows, discussionRows, listingRows] = await Promise.all([
       ids("question").length ? db.select().from(questions).where(inArray(questions.id, ids("question"))) : [],
@@ -86,7 +115,13 @@ router.get("/favorites", async (req: Request, res: Response): Promise<void> => {
     for (const row of answerRows) { const parent=parentById.get(row.questionId); if (parent && canViewQuestion(parent,viewer)) lookup.set(`answer:${row.id}`, row); }
     for (const row of discussionRows) if (canViewDiscussion(row, viewer)) lookup.set(`discussion:${row.id}`, row);
     for (const row of listingRows) if (canViewListing(row, viewer)) lookup.set(`listing:${row.id}`, row);
-    res.json(ListFavoritesResponse.parse({ items: saved.map((favorite) => ({ favorite, available: lookup.has(`${favorite.contentType}:${favorite.contentId}`), item: lookup.get(`${favorite.contentType}:${favorite.contentId}`) ?? null })), limit, offset }));
+    const last = page.at(-1);
+    res.json(ListFavoritesResponse.parse({
+      items: page.map((favorite) => ({ favorite, available: lookup.has(`${favorite.contentType}:${favorite.contentId}`), item: lookup.get(`${favorite.contentType}:${favorite.contentId}`) ?? null })),
+      limit,
+      offset: cursor ? 0 : offset,
+      nextCursor: hasMore && last ? encodeCursor(last.createdAt, last.id) : null,
+    }));
   } catch (error) { req.log.error({ error }, "Failed to list favorites"); res.status(500).json({ error: "Failed to list favorites" }); }
 });
 

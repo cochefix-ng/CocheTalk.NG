@@ -17,7 +17,7 @@ function parsePath(value: string) {
   return { bucket: parts[0], object: parts.slice(1).join("/") };
 }
 
-async function sign(bucket: string, object: string, method: "GET" | "PUT") {
+async function sign(bucket: string, object: string, method: "GET" | "PUT" | "DELETE") {
   const response = await fetch(`${SIDECAR}/object-storage/signed-object-url`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -42,5 +42,13 @@ export class ObjectStorageService {
     const response = await fetch(signedURL, { signal: AbortSignal.timeout(30_000) });
     if (!response.ok) throw new ObjectNotFoundError("Object not found");
     return response;
+  }
+
+  async deleteObject(objectPath: string) {
+    if (!objectPath.startsWith("/objects/")) throw new ObjectNotFoundError("Invalid object path");
+    const { bucket, object } = parsePath(`${privateDir()}/${objectPath.slice("/objects/".length)}`);
+    const signedURL = await sign(bucket, object, "DELETE");
+    const response = await fetch(signedURL, { method: "DELETE", signal: AbortSignal.timeout(30_000) });
+    if (!response.ok && response.status !== 404) throw new Error(`Object deletion failed: ${response.status}`);
   }
 }

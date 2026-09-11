@@ -11,4 +11,6 @@ export interface FavoriteList {
   items: FavoriteResolvedItem[];
   limit: number;
   offset: number;
+  /** @nullable */
+  nextCursor?: string | null;
 }

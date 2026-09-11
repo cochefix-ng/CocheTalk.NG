@@ -47,17 +47,14 @@ export default function FavoritesScreen() {
     refetch
   } = useInfiniteQuery({
     queryKey: getListFavoritesQueryKey(favoriteParams),
-    queryFn: ({ pageParam = 0 }) =>
+    queryFn: ({ pageParam = null }) =>
       listFavorites({
-        offset: pageParam,
+        cursor: pageParam ?? undefined,
         limit: 20,
         contentType: filter === 'All' ? undefined : filter
       }),
-    getNextPageParam: (lastPage) =>
-      lastPage.items.length === lastPage.limit
-        ? lastPage.offset + lastPage.limit
-        : undefined,
-    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null,
     enabled: !!currentUser,
   });
 

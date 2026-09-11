@@ -1090,11 +1090,14 @@ export const listFavoritesQueryLimitMax = 100;
 export const listFavoritesQueryOffsetDefault = 0;
 export const listFavoritesQueryOffsetMin = 0;
 
+export const listFavoritesQueryCursorMax = 200;
+
 
 
 export const ListFavoritesQueryParams = zod.object({
   "limit": zod.coerce.number().min(1).max(listFavoritesQueryLimitMax).default(listFavoritesQueryLimitDefault),
   "offset": zod.coerce.number().min(listFavoritesQueryOffsetMin).default(listFavoritesQueryOffsetDefault),
+  "cursor": zod.coerce.string().max(listFavoritesQueryCursorMax).optional(),
   "contentType": zod.enum(['discussion', 'question', 'answer', 'listing']).optional()
 })
 
@@ -1111,7 +1114,8 @@ export const ListFavoritesResponse = zod.object({
   "item": zod.record(zod.string(), zod.unknown()).nullish()
 })),
   "limit": zod.number(),
-  "offset": zod.number()
+  "offset": zod.number(),
+  "nextCursor": zod.string().nullish()
 })
 
 
