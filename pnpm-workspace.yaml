@@ -1,7 +1,6 @@
 packages:
-  - artifacts/*
-  - lib/*
-  - lib/integrations/*
+  - apps/*
+  - packages/*
 
 catalog:
   '@tanstack/react-query': ^5.90.21
@@ -24,10 +23,18 @@ catalog:
   wouter: ^3.3.5
   zod: ^3.25.76
 
-autoInstallPeers: false
+settings:
+  onlyBuiltDependencies:
+    - '@swc/core'
+    - esbuild
+    - msw
+    - unrs-resolver
+    - browser-tabs-lock
+    - core-js
 
-onlyBuiltDependencies:
-  - '@swc/core'
-  - esbuild
-  - msw
-  - unrs-resolver
+allowBuilds:
+  browser-tabs-lock: true
+  bufferutil: true
+  core-js: true
+  esbuild: true
+  utf-8-validate: true

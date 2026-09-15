@@ -1,5 +1,5 @@
 {
-  "name": "workspace",
+  "name": "cochetalk-ng",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
@@ -7,10 +7,11 @@
     "dev:app": "pnpm --filter @workspace/cochetalk run dev",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./apps/**\" --if-present run typecheck"
   },
   "private": true,
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "prettier": "^3.8.3",
     "typescript": "~6.0.3"
   }
