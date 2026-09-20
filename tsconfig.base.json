@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "incremental": true,
     "isolatedModules": true,
     "lib": ["es2022"],
