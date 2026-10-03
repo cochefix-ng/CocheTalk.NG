@@ -22,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/context/AppContext';
 import type { AnalyticsState, User, UserRole } from '@/context/AppContext';
 import { useNotifications } from '@/context/NotificationContext';
+import { useAuth } from '@/context/SupabaseAuthContext';
 import { useColors } from '@/hooks/useColors';
 import { updateGlobalNotificationSetting, type NotificationType } from '@workspace/api-client-react';
 import {
@@ -425,7 +426,13 @@ export default function ProfileScreen() {
   const { users, currentUser, login, logout, questions, answers, comments, discussions, discussionComments, listings, ratings, messages, analytics, toggleVerified, banUser, approveListing, featureListing, deleteListing, updateCmsConfig, cmsConfig, isLoading, adminAddUser, adminUpdateUser, adminDeleteUser, editProfile, adminToggleWhatsApp } = useApp();
   const { unreadCount: notificationUnreadCount } = useNotifications();
 
-  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    logout();
+    await signOut().catch((err) => console.warn('Supabase signOut error:', err));
+  };
+
   const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'listings' | 'cms' | 'export'>('users');
   const [logoUploading, setLogoUploading] = useState<'forum' | 'loader' | null>(null);
 
@@ -632,30 +639,14 @@ export default function ProfileScreen() {
             <Text style={[styles.guestDesc, { color: colors.mutedForeground }]}>
               Sign in to ask questions, post listings, and access all CocheTalk features.
             </Text>
-          </View>
-
-          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>DEMO ACCOUNTS</Text>
-          {users.map((u) => (
             <TouchableOpacity
-              key={u.id}
-              style={[styles.userItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => login(u.id)}
+              style={[styles.exportBtn, { backgroundColor: colors.primary, width: '100%', marginTop: 12 }]}
+              onPress={() => router.push('/(auth)/sign-in')}
             >
-              <View style={[styles.userAvatar, { backgroundColor: colors.primary + '33' }]}>
-                <Text style={[styles.userAvatarText, { color: colors.primaryText }]}>{u.name.charAt(0)}</Text>
-              </View>
-              <View style={styles.userInfo}>
-                <View style={styles.nameRow}>
-                  <Text style={[styles.userName, { color: colors.foreground }]}>{u.name}</Text>
-                  {u.verified && <Feather name="check-circle" size={13} color={colors.verified} />}
-                </View>
-                <Text style={[styles.userRole, { color: colors.mutedForeground }]}>
-                  {u.specialization?.length > 0 ? `${u.role} — ${u.specialization.join(', ')}` : u.role}
-                </Text>
-              </View>
-              <Feather name="log-in" size={16} color={colors.primary} />
+              <Feather name="log-in" size={16} color={colors.primaryForeground} />
+              <Text style={[styles.exportBtnText, { color: colors.primaryForeground }]}>Sign In to CocheTalk</Text>
             </TouchableOpacity>
-          ))}
+          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -815,17 +806,8 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
-          onPress={() => setShowSwitchModal(true)}
-        >
-          <Feather name="users" size={16} color={colors.foreground} />
-          <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Switch Account</Text>
-          <Feather name="chevron-right" size={16} color={colors.mutedForeground} style={styles.actionChevron} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: colors.destructive + '15', borderColor: colors.destructive + '33' }]}
-          onPress={logout}
+          onPress={handleLogout}
         >
           <Feather name="log-out" size={16} color={colors.destructive} />
           <Text style={[styles.actionBtnText, { color: colors.destructiveText }]}>Sign Out</Text>
@@ -1311,28 +1293,7 @@ export default function ProfileScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      <Modal visible={showSwitchModal} animationType="fade" transparent onRequestClose={() => setShowSwitchModal(false)}>
-        <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={() => setShowSwitchModal(false)} />
-        <View style={[styles.switchSheet, { backgroundColor: colors.card }]}>
-          <Text style={[styles.switchTitle, { color: colors.foreground }]}>Switch Account</Text>
-          {users.map((u) => (
-            <TouchableOpacity
-              key={u.id}
-              style={[styles.switchItem, { backgroundColor: u.id === currentUser?.id ? colors.primary + '22' : 'transparent', borderColor: u.id === currentUser?.id ? colors.primary : colors.border }]}
-              onPress={() => { login(u.id); setShowSwitchModal(false); }}
-            >
-              <View style={[styles.userAvatar, { backgroundColor: colors.primary + '33' }]}>
-                <Text style={[styles.userAvatarText, { color: colors.primaryText }]}>{u.name.charAt(0)}</Text>
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={[styles.userName, { color: colors.foreground }]}>{u.name}</Text>
-                <Text style={[styles.userRole, { color: colors.mutedForeground }]}>{u.role}</Text>
-              </View>
-              {u.id === currentUser?.id && <Feather name="check" size={16} color={colors.primary} />}
-            </TouchableOpacity>
-          ))}
-        </View>
-      </Modal>
+
 
       {/* ── One-Time Self-Edit Modal ── */}
       <Modal visible={showSelfEditModal} animationType="slide" transparent onRequestClose={() => setShowSelfEditModal(false)}>
@@ -1808,10 +1769,6 @@ const styles = StyleSheet.create({
   exportBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8, paddingVertical: 9, marginTop: 2 },
   exportBtnText: { fontSize: 13, fontWeight: '700' },
   overlay: { ...StyleSheet.absoluteFill },
-  switchSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40, gap: 8 },
-  switchTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
-  switchItem: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 10, borderWidth: 1, padding: 12 },
-  userItem: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 10, borderWidth: 1, padding: 12, marginBottom: 8 },
   userAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   userAvatarText: { fontSize: 14, fontWeight: '700' },
   userInfo: { flex: 1 },

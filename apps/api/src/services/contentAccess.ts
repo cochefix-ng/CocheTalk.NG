@@ -4,7 +4,10 @@ import { answers, comments, db, discussionComments, discussions, marketplaceList
 export type ContentType = "question" | "answer" | "discussion" | "listing";
 export type Viewer = { userId: string; isAdmin: boolean; isVerifiedProvider: boolean };
 
-export async function viewerFor(userId: string): Promise<Viewer> {
+export async function viewerFor(userId?: string | null): Promise<Viewer> {
+  if (!userId) {
+    return { userId: "", isAdmin: false, isVerifiedProvider: false };
+  }
   const profile = (await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).limit(1))[0];
   const configuredAdmins = new Set((process.env.COCHETALK_ADMIN_USER_IDS ?? "").split(",").map((value) => value.trim()).filter(Boolean));
   return { userId, isAdmin: profile?.admin === true || configuredAdmins.has(userId), isVerifiedProvider: profile?.accountType === "Service Provider" && profile.verified === true };

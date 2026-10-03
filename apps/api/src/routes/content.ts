@@ -52,16 +52,16 @@ async function toggle(table: any, rowId: number, userId: string, map: (row: any)
 }
 
 router.get("/content/bootstrap", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const viewer = await viewerFor(userId);
   const [questionRows, discussionRows, listingRows] = await Promise.all([
     db.select().from(questions).orderBy(desc(questions.createdAt)),
     db.select().from(discussions).orderBy(desc(discussions.createdAt)),
     db.select().from(marketplaceListings).orderBy(desc(marketplaceListings.createdAt)),
   ]);
-  const visibleQuestions = questionRows.filter((row) => !row.isPrivateEcosystem || row.userId === userId || viewer.isAdmin || viewer.isVerifiedProvider);
-  const visibleDiscussions = discussionRows.filter((row) => !row.isProCircle || row.userId === userId || viewer.isAdmin || viewer.isVerifiedProvider);
-  const visibleListings = listingRows.filter((row) => row.isApproved || row.userId === userId || viewer.isAdmin);
+  const visibleQuestions = questionRows.filter((row) => !row.isPrivateEcosystem || (userId && row.userId === userId) || viewer.isAdmin || viewer.isVerifiedProvider);
+  const visibleDiscussions = discussionRows.filter((row) => !row.isProCircle || (userId && row.userId === userId) || viewer.isAdmin || viewer.isVerifiedProvider);
+  const visibleListings = listingRows.filter((row) => row.isApproved || (userId && row.userId === userId) || viewer.isAdmin);
   const questionIds = visibleQuestions.map((row) => row.id);
   const discussionIds = visibleDiscussions.map((row) => row.id);
   const answerRows = questionIds.length ? await db.select().from(answers).where(inArray(answers.questionId, questionIds)).orderBy(answers.createdAt) : [];
@@ -86,11 +86,11 @@ router.get("/content/bootstrap", async (req, res) => {
 });
 
 router.get("/questions", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const p = parsed("ListQuestionsQueryParams", req.query, res); if (!p) return;
   const viewer = await viewerFor(userId);
   const rows = await db.select().from(questions).orderBy(desc(questions.createdAt));
-  const visible = rows.filter((row) => !row.isPrivateEcosystem || row.userId === viewer.userId || viewer.isAdmin || viewer.isVerifiedProvider);
+  const visible = rows.filter((row) => !row.isPrivateEcosystem || (userId && row.userId === viewer.userId) || viewer.isAdmin || viewer.isVerifiedProvider);
   res.json(schema("ListQuestionsResponse").parse({ items: visible.slice(p.offset, p.offset + p.limit).map(q), limit: p.limit, offset: p.offset }));
 });
 
@@ -102,7 +102,7 @@ router.post("/questions", async (req, res) => {
 });
 
 router.get("/questions/:id", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const p = parsed("GetQuestionParams", req.params, res); if (!p) return;
   const row = await visibleQuestion(p.id, await viewerFor(userId));
   if (!row) return res.status(404).json({ error: "Question not found" });
@@ -124,7 +124,7 @@ router.post("/questions/:id/upvote", async (req, res) => {
 });
 
 router.get("/questions/:id/answers", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const p = parsed("ListQuestionAnswersParams", req.params, res); if (!p) return;
   if (!await visibleQuestion(p.id, await viewerFor(userId))) return res.status(404).json({ error: "Question not found" });
   const rows = await db.select().from(answers).where(eq(answers.questionId, p.id)).orderBy(answers.createdAt);
@@ -167,7 +167,7 @@ router.post("/questions/:questionId/answers/:answerId/accept", async (req, res) 
 });
 
 router.get("/answers/:id", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const p = parsed("GetAnswerParams", req.params, res); if (!p) return;
   const row = await visibleAnswer(p.id, await viewerFor(userId));
   if (!row) return res.status(404).json({ error: "Answer not found" });
@@ -187,12 +187,12 @@ router.post("/answers/:id/upvote", async (req, res) => {
   return toggle(answers, p.id, userId, a, "UpvoteAnswerResponse", res, async (row) => Boolean(await visibleAnswer(row.id, await viewerFor(userId))));
 });
 
-async function parentVisible(id: number, isAnswer: boolean, userId: string) {
+async function parentVisible(id: number, isAnswer: boolean, userId?: string | null) {
   return isAnswer ? Boolean(await visibleAnswer(id, await viewerFor(userId))) : Boolean(await visibleQuestion(id, await viewerFor(userId)));
 }
 function commentRoutes(path: string, isAnswer: boolean, params: string, listResponse: string, createBody: string) {
   router.get(path, async (req, res) => {
-    const userId = authenticated(req, res); if (!userId) return;
+    const userId = getAuth(req).userId;
     const p = parsed(params, req.params, res); if (!p) return;
     if (!await parentVisible(p.id, isAnswer, userId)) return res.status(404).json({ error: "Parent not found" });
     const rows = await db.select().from(comments).where(and(eq(comments.questionOrAnswerId, p.id), eq(comments.isAnswer, isAnswer))).orderBy(comments.createdAt);
@@ -223,11 +223,11 @@ commentRoutes("/questions/:id/comments", false, "ListQuestionCommentsParams", "L
 commentRoutes("/answers/:id/comments", true, "ListAnswerCommentsParams", "ListAnswerCommentsResponse", "CreateAnswerCommentBody");
 
 router.get("/discussions", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const p = parsed("ListDiscussionsQueryParams", req.query, res); if (!p) return;
   const viewer = await viewerFor(userId);
   const rows = await db.select().from(discussions).orderBy(desc(discussions.createdAt));
-  const visible = rows.filter((row) => !row.isProCircle || row.userId === userId || viewer.isAdmin || viewer.isVerifiedProvider);
+  const visible = rows.filter((row) => !row.isProCircle || (userId && row.userId === userId) || viewer.isAdmin || viewer.isVerifiedProvider);
   return res.json(schema("ListDiscussionsResponse").parse({ items: visible.slice(p.offset, p.offset + p.limit).map(d), limit: p.limit, offset: p.offset }));
 });
 
@@ -239,7 +239,7 @@ router.post("/discussions", async (req, res) => {
 });
 
 router.get("/discussions/:id", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const p = parsed("GetDiscussionParams", req.params, res); if (!p) return;
   const row = await visibleDiscussion(p.id, await viewerFor(userId));
   if (!row) return res.status(404).json({ error: "Discussion not found" });
@@ -262,7 +262,7 @@ router.post("/discussions/:id/upvote", async (req, res) => {
 });
 
 router.get("/discussions/:id/comments", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const p = parsed("ListDiscussionCommentsParams", req.params, res); if (!p) return;
   if (!await visibleDiscussion(p.id, await viewerFor(userId))) return res.status(404).json({ error: "Discussion not found" });
   const rows = await db.select().from(discussionComments).where(eq(discussionComments.postId, p.id)).orderBy(discussionComments.createdAt);
@@ -289,11 +289,11 @@ router.post("/discussions/:id/comments", async (req, res) => {
 });
 
 router.get("/listings", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const p = parsed("ListListingsQueryParams", req.query, res); if (!p) return;
   const viewer = await viewerFor(userId);
   const rows = await db.select().from(marketplaceListings).orderBy(desc(marketplaceListings.createdAt));
-  const visible = rows.filter((row) => row.isApproved || row.userId === userId || viewer.isAdmin);
+  const visible = rows.filter((row) => row.isApproved || (userId && row.userId === userId) || viewer.isAdmin);
   return res.json(schema("ListListingsResponse").parse({ items: visible.slice(p.offset, p.offset + p.limit).map(l), limit: p.limit, offset: p.offset }));
 });
 
@@ -310,7 +310,7 @@ router.post("/listings", async (req, res) => {
 });
 
 router.get("/listings/:id", async (req, res) => {
-  const userId = authenticated(req, res); if (!userId) return;
+  const userId = getAuth(req).userId;
   const p = parsed("GetListingParams", req.params, res); if (!p) return;
   const row = await visibleListing(p.id, await viewerFor(userId));
   if (!row) return res.status(404).json({ error: "Listing not found" });

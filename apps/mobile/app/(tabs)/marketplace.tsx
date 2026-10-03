@@ -125,7 +125,7 @@ export default function MarketplaceScreen() {
   const isAdmin = currentUser?.role === 'Admin';
 
   const filteredListings = useMemo(() => {
-    let result = (listings ?? []).filter((l) => l.isApproved || isAdmin);
+    let result = (listings ?? []).filter((l) => l.isApproved || isAdmin || l.userId === currentUser?.id);
     if (activeCategory !== 'All') {
       result = result.filter((l) => l.category === activeCategory);
     }
@@ -133,7 +133,7 @@ export default function MarketplaceScreen() {
       if (a.isFeaturedBottom !== b.isFeaturedBottom) return a.isFeaturedBottom ? -1 : 1;
       return b.timestamp - a.timestamp;
     });
-  }, [listings, activeCategory, isAdmin]);
+  }, [listings, activeCategory, isAdmin, currentUser?.id]);
 
   const pendingCount = useMemo(() => (listings ?? []).filter((l) => !l.isApproved).length, [listings]);
 

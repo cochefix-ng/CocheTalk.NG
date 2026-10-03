@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
@@ -31,12 +32,28 @@ function timeAgo(ts: number): string {
 export default function DiscussionDetailScreen() {
   const colors = useColors();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { discussions, discussionComments, currentUser, upvoteDiscussion, addDiscussionComment, deleteDiscussion } = useApp();
+  const { discussions, discussionComments, currentUser, isLoading, isSyncing, upvoteDiscussion, addDiscussionComment, deleteDiscussion } = useApp();
 
   const [commentText, setCommentText] = useState('');
   const [lightboxUri, setLightboxUri] = useState<string | null>(null);
 
   const post = discussions.find((d) => d.id === Number(id));
+
+  if (!post && (isLoading || isSyncing)) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Feather name="arrow-left" size={22} color={colors.foreground} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Discussion</Text>
+        </View>
+        <View style={styles.center}>
+          <DottedCircleLoader size="large" label="Loading discussion..." labelPosition="bottom" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!post) {
     return (

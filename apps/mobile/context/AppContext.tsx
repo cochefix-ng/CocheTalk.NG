@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { emitNotificationEvent } from '@/utils/notificationEvents';
+import { getApiOrigin } from '@/lib/apiBase';
 import {
   createQuestion, deleteQuestion as deleteQuestionApi, upvoteQuestion as upvoteQuestionApi, createAnswer, deleteAnswer,
   upvoteAnswer as upvoteAnswerApi, acceptQuestionAnswer, createDiscussion as createDiscussionApi, deleteDiscussion as deleteDiscussionApi,
@@ -256,6 +257,7 @@ interface AppState {
 export interface AppContextType extends AppState {
   currentUser: User | null;
   isLoading: boolean;
+  isSyncing: boolean;
   login: (userId: string) => void;
   logout: () => void;
   register: (data: Omit<User, 'isBanned' | 'verified'>) => void;
@@ -287,33 +289,30 @@ export interface AppContextType extends AppState {
   adminToggleWhatsApp: (userId: string, enabled: boolean) => void;
   trackPageView: (page: string, startsSession?: boolean) => void;
   unreadCount: number;
+  syncCurrentUser: (userData: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+    verified?: boolean;
+    specialization?: string[];
+    phone?: string;
+    businessName?: string;
+    experience?: number;
+    location?: string;
+  }) => void;
 }
 
-// Bump version to reset stored state and include discussions
-const STORAGE_KEY = 'cochetalk_state_v5';
+// Bump version to reset stored state and ensure fresh role sync
+const STORAGE_KEY = 'cochetalk_state_v7';
 
 export function makeConvId(a: string, b: string): string {
   return [a, b].sort().join('__');
 }
 
 function createSeedState(): AppState {
-  const users = [
-    {
-      id: 'admin@cochetalk.com',
-      name: 'Chief Admin',
-      email: 'admin@cochetalk.com',
-      role: 'Admin' as UserRole,
-      verified: true,
-      phone: '+2348099999999',
-      specialization: [],
-      businessName: '',
-      experience: 0,
-      location: 'Lagos',
-      isBanned: false,
-    }
-  ];
   return {
-    users,
+    users: [],
     questions: [],
     answers: [],
     comments: [],
@@ -359,6 +358,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [state, setState] = useState<AppState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
@@ -428,7 +428,77 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, [state, save, queryClient]);
 
+  const syncCurrentUser = useCallback(
+    (userData: {
+      id: string;
+      name: string;
+      email: string;
+      role: UserRole;
+      verified?: boolean;
+      specialization?: string[];
+      phone?: string;
+      businessName?: string;
+      experience?: number;
+      location?: string;
+    }) => {
+      setState((prev) => {
+        const base = prev ?? createSeedState();
+        const existingIndex = base.users.findIndex((u) => u.id === userData.id);
+        let updatedUsers: User[];
+        if (existingIndex >= 0) {
+          const old = base.users[existingIndex];
+          const updated: User = {
+            ...old,
+            name: userData.name || old.name,
+            email: userData.email || old.email,
+            role: userData.role,
+            verified: userData.verified !== undefined ? userData.verified : old.verified,
+            specialization: userData.specialization ?? old.specialization ?? [],
+            phone: userData.phone !== undefined ? userData.phone : old.phone,
+            businessName: userData.businessName !== undefined ? userData.businessName : old.businessName,
+            experience: userData.experience !== undefined ? userData.experience : old.experience,
+            location: userData.location !== undefined ? userData.location : old.location,
+          };
+          updatedUsers = [...base.users];
+          updatedUsers[existingIndex] = updated;
+        } else {
+          updatedUsers = [
+            ...base.users,
+            {
+              id: userData.id,
+              name: userData.name,
+              email: userData.email,
+              role: userData.role,
+              phone: userData.phone ?? '',
+              specialization: userData.specialization ?? [],
+              businessName: userData.businessName ?? '',
+              experience: userData.experience ?? 0,
+              location: userData.location ?? '',
+              verified: userData.verified ?? false,
+              isBanned: false,
+            },
+          ];
+        }
+
+        const next: AppState = {
+          ...base,
+          users: updatedUsers,
+          currentUserId: userData.id,
+        };
+
+        const { questions, answers, comments, discussions, discussionComments, listings, ...localData } = next;
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(localData)).catch((err) => {
+          console.error('[AppContext] Failed to persist state to AsyncStorage.', err);
+        });
+
+        return next;
+      });
+    },
+    [],
+  );
+
   const syncBackend = useCallback(async () => {
+    setIsSyncing(true);
     try {
       const bootstrap = await getContentBootstrap();
       if (!bootstrap || typeof bootstrap !== 'object') return;
@@ -442,8 +512,93 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       setState(prev => {
         if (!prev) return prev;
+
+        const existingUserIds = new Set((prev.users ?? []).map((u) => u.id));
+        const discoveredUsers: User[] = [];
+
+        for (const l of listings ?? []) {
+          if (l.userId && !existingUserIds.has(l.userId)) {
+            existingUserIds.add(l.userId);
+            discoveredUsers.push({
+              id: l.userId,
+              name: l.userName || 'Member',
+              email: '',
+              role: (l.userRole as UserRole) || 'Car Owner',
+              verified: false,
+              phone: l.userPhone || '',
+              specialization: [],
+              businessName: '',
+              experience: 0,
+              location: l.location || '',
+              isBanned: false,
+              whatsappEnabled: !!l.userPhone,
+            });
+          }
+        }
+
+        for (const q of questions ?? []) {
+          if (q.userId && !existingUserIds.has(q.userId)) {
+            existingUserIds.add(q.userId);
+            discoveredUsers.push({
+              id: q.userId,
+              name: q.userName || 'Member',
+              email: '',
+              role: (q.userRole as UserRole) || 'Car Owner',
+              verified: q.userVerified ?? false,
+              phone: '',
+              specialization: q.userSpecialization ? [q.userSpecialization] : [],
+              businessName: '',
+              experience: 0,
+              location: '',
+              isBanned: false,
+              whatsappEnabled: false,
+            });
+          }
+        }
+
+        for (const d of discussions ?? []) {
+          if (d.userId && !existingUserIds.has(d.userId)) {
+            existingUserIds.add(d.userId);
+            discoveredUsers.push({
+              id: d.userId,
+              name: d.userName || 'Member',
+              email: '',
+              role: (d.userRole as UserRole) || 'Car Owner',
+              verified: d.userVerified ?? false,
+              phone: '',
+              specialization: d.userSpecialization ? [d.userSpecialization] : [],
+              businessName: '',
+              experience: 0,
+              location: '',
+              isBanned: false,
+              whatsappEnabled: false,
+            });
+          }
+        }
+
+        for (const a of answersArr ?? []) {
+          if (a.userId && !existingUserIds.has(a.userId)) {
+            existingUserIds.add(a.userId);
+            discoveredUsers.push({
+              id: a.userId,
+              name: a.userName || 'Member',
+              email: '',
+              role: (a.userRole as UserRole) || 'Car Owner',
+              verified: a.userVerified ?? false,
+              phone: '',
+              specialization: a.userSpecialization ? [a.userSpecialization] : [],
+              businessName: '',
+              experience: 0,
+              location: '',
+              isBanned: false,
+              whatsappEnabled: false,
+            });
+          }
+        }
+
         return {
           ...prev,
+          users: discoveredUsers.length > 0 ? [...(prev.users ?? []), ...discoveredUsers] : (prev.users ?? []),
           questions: questions ?? prev.questions ?? [],
           discussions: discussions ?? prev.discussions ?? [],
           listings: listings ?? prev.listings ?? [],
@@ -454,11 +609,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
     } catch (e) {
       console.warn('[AppContext] syncBackend warning:', e);
+    } finally {
+      setIsSyncing(false);
     }
   }, []);
 
   useEffect(() => {
-    if (state && state.currentUserId) {
+    if (state) {
       syncBackend();
     }
   }, [state?.currentUserId, syncBackend]);
@@ -518,13 +675,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (data: any) => {
       if (!state || !currentUser) return;
       try {
-        await createQuestion({
+        const created = await createQuestion({
           ...data,
           userName: currentUser.name,
           userRole: currentUser.role,
           userSpecialization: currentUser.specialization.join(', '),
           userVerified: currentUser.verified,
         });
+        if (created && (created as any).id) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              questions: [created as unknown as Question, ...(prev.questions ?? []).filter((q) => q.id !== (created as any).id)],
+            };
+          });
+        }
         syncBackend();
       } catch (e) {
         console.error(e);
@@ -537,6 +703,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deleteQuestion = useCallback(
     async (id: number) => {
       if (!state) return;
+      setState((prev) => prev ? ({ ...prev, questions: (prev.questions ?? []).filter((q) => q.id !== id) }) : prev);
       try {
         await deleteQuestionApi(id);
         syncBackend();
@@ -584,13 +751,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (questionId: number, content: string) => {
       if (!state || !currentUser) return;
       try {
-        await createAnswer(questionId, {
+        const created = await createAnswer(questionId, {
           content,
           userName: currentUser.name,
           userRole: currentUser.role,
           userSpecialization: currentUser.specialization.join(', '),
           userVerified: currentUser.verified,
         });
+        if (created && (created as any).id) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              answers: [...(prev.answers ?? []).filter((a) => a.id !== (created as any).id), created as unknown as Answer],
+            };
+          });
+        }
         syncBackend();
       } catch (e) {
         console.error(e);
@@ -650,10 +826,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (parentId: number, isAnswer: boolean, content: string) => {
       if (!state || !currentUser) return;
       try {
-        if (isAnswer) {
-          await createAnswerComment(parentId, { content, userName: currentUser.name });
-        } else {
-          await createQuestionComment(parentId, { content, userName: currentUser.name });
+        const res = isAnswer
+          ? await createAnswerComment(parentId, { content, userName: currentUser.name })
+          : await createQuestionComment(parentId, { content, userName: currentUser.name });
+        const items = (res as any)?.items;
+        if (Array.isArray(items) && items.length > 0) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              comments: [...(prev.comments ?? []), ...items],
+            };
+          });
         }
         syncBackend();
       } catch (e) {
@@ -670,13 +854,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (data: Pick<DiscussionPost, 'title' | 'content' | 'tags' | 'mediaUris' | 'isProCircle'>) => {
       if (!state || !currentUser) return;
       try {
-        await createDiscussionApi({
+        const localMedia = Array.isArray(data.mediaUris) ? data.mediaUris.filter((uri: string) => uri.startsWith('file://') || uri.startsWith('content://')) : [];
+        const uploadedMedia = await Promise.all(localMedia.map(async (uri: string) => {
+          const response = await fetch(uri);
+          const blob = await response.blob();
+          const contentType = blob.type === 'image/png' ? 'image/png' : blob.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
+          const upload = await requestUploadUrl({ name: `discuss-${Date.now()}.jpg`, size: blob.size, contentType });
+          const put = await fetch(upload.uploadURL, { method: 'PUT', headers: { 'Content-Type': contentType }, body: blob });
+          if (!put.ok) throw new Error('Media upload failed');
+          const origin = getApiOrigin();
+          return `${origin}/api/storage/objects/${upload.objectPath.replace(/^\/objects\//, '')}`;
+        }));
+        const mediaUris = [
+          ...(Array.isArray(data.mediaUris) ? data.mediaUris.filter((uri: string) => !uri.startsWith('file://') && !uri.startsWith('content://')) : []),
+          ...uploadedMedia,
+        ];
+        const created = await createDiscussionApi({
           ...data,
+          mediaUris,
           userName: currentUser.name,
           userRole: currentUser.role,
           userSpecialization: currentUser.specialization.join(', '),
           userVerified: currentUser.verified,
         });
+        if (created && (created as any).id) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              discussions: [created as unknown as DiscussionPost, ...(prev.discussions ?? []).filter((d) => d.id !== (created as any).id)],
+            };
+          });
+        }
         syncBackend();
       } catch (e) {
         console.error(e);
@@ -689,6 +898,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deleteDiscussion = useCallback(
     async (id: number) => {
       if (!state) return;
+      setState((prev) => prev ? ({ ...prev, discussions: (prev.discussions ?? []).filter((d) => d.id !== id) }) : prev);
       try {
         await deleteDiscussionApi(id);
         syncBackend();
@@ -736,7 +946,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (postId: number, content: string) => {
       if (!state || !currentUser) return;
       try {
-        await createDiscussionComment(postId, { content, userName: currentUser.name });
+        const res = await createDiscussionComment(postId, { content, userName: currentUser.name });
+        const items = (res as any)?.items;
+        if (Array.isArray(items) && items.length > 0) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              discussionComments: [...(prev.discussionComments ?? []), ...items],
+            };
+          });
+        }
         syncBackend();
       } catch (e) {
         console.error(e);
@@ -760,20 +980,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const upload = await requestUploadUrl({ name: `listing-${Date.now()}.jpg`, size: blob.size, contentType });
           const put = await fetch(upload.uploadURL, { method: 'PUT', headers: { 'Content-Type': contentType }, body: blob });
           if (!put.ok) throw new Error('Image upload failed');
-          const origin = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : '';
+          const origin = getApiOrigin();
           return `${origin}/api/storage/objects/${upload.objectPath.replace(/^\/objects\//, '')}`;
         }));
         const imageUris = [
           ...(Array.isArray(data.imageUris) ? data.imageUris.filter((uri: string) => !uri.startsWith('file://') && !uri.startsWith('content://')) : []),
           ...uploadedImages,
         ];
-        await createListingApi({
+        const created = await createListingApi({
           ...data,
           imageUris,
           userName: currentUser.name,
           userRole: currentUser.role,
           userPhone: currentUser.phone,
         });
+        if (created && (created as any).id) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              listings: [created as unknown as MarketplaceListing, ...(prev.listings ?? []).filter((l) => l.id !== (created as any).id)],
+            };
+          });
+        }
         syncBackend();
       } catch (e) {
         console.error(e);
@@ -786,6 +1015,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deleteListing = useCallback(
     async (id: number) => {
       if (!state) return;
+      setState((prev) => prev ? ({ ...prev, listings: (prev.listings ?? []).filter((l) => l.id !== id) }) : prev);
       try {
         await deleteListingApi(id);
         syncBackend();
@@ -800,12 +1030,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const approveListing = useCallback(
     async (id: number, approved: boolean) => {
       if (!state) return;
+      setState((prev) => prev ? ({
+        ...prev,
+        listings: (prev.listings ?? []).map((l) => l.id === id ? { ...l, isApproved: approved } : l),
+      }) : prev);
       try {
         await setListingApproval(id, { approved });
         syncBackend();
       } catch (e) {
         console.error(e);
-        // Explicitly surface failure instead of pretending success
         Alert.alert("Failed to approve listing (Admin authority error 403).");
       }
     },
@@ -815,12 +1048,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const featureListing = useCallback(
     async (id: number, featured: boolean) => {
       if (!state) return;
+      setState((prev) => prev ? ({
+        ...prev,
+        listings: (prev.listings ?? []).map((l) => l.id === id ? { ...l, isFeaturedBottom: featured } : l),
+      }) : prev);
       try {
         await setListingFeatured(id, { featured });
         syncBackend();
       } catch (e) {
         console.error(e);
-        // Explicitly surface failure instead of pretending success
         Alert.alert("Failed to feature listing (Admin authority error 403).");
       }
     },
@@ -1010,7 +1246,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ratings: state.ratings.filter((r) => r.providerId !== userId && r.raterId !== userId),
         discussions: (state.discussions ?? []).filter((d) => d.userId !== userId),
         discussionComments: (state.discussionComments ?? []).filter((c) => c.userId !== userId),
-        currentUserId: state.currentUserId === userId ? 'admin@cochetalk.com' : state.currentUserId,
+        currentUserId: state.currentUserId === userId ? null : state.currentUserId,
       });
     },
     [state, save],
@@ -1038,6 +1274,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       messages: Array.isArray(current.messages) ? current.messages : [],
       currentUser,
       isLoading,
+      isSyncing,
       login,
       logout,
       register,
@@ -1069,12 +1306,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       adminToggleWhatsApp,
       trackPageView,
       unreadCount,
+      syncCurrentUser,
     };
   },
   [
       state,
       currentUser,
       isLoading,
+      isSyncing,
       login,
       logout,
       register,
@@ -1106,6 +1345,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       adminToggleWhatsApp,
       trackPageView,
       unreadCount,
+      syncCurrentUser,
     ],
   );
 

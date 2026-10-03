@@ -1,54 +1,69 @@
 import { randomUUID } from "node:crypto";
+import { supabase } from "./supabase";
 
-const SIDECAR = "http://127.0.0.1:1106";
+/**
+ * Object storage backed by Supabase Storage.
+ * (Previously used Replit's object-storage sidecar on 127.0.0.1:1106, which only exists on Replit.)
+ *
+ * Objects are addressed as "/objects/<key>", where <key> is the path inside the bucket.
+ * The bucket is private; files are served through GET /api/storage/objects/*.
+ */
+const BUCKET = process.env.STORAGE_BUCKET || "listing-images";
 
 export class ObjectNotFoundError extends Error {}
 
-function privateDir() {
-  const value = process.env.PRIVATE_OBJECT_DIR;
-  if (!value) throw new Error("PRIVATE_OBJECT_DIR is not configured");
-  return value.replace(/\/+$/, "");
+let bucketReady: Promise<void> | null = null;
+
+function ensureBucket(): Promise<void> {
+  if (!bucketReady) {
+    bucketReady = (async () => {
+      const { data } = await supabase.storage.getBucket(BUCKET);
+      if (data) return;
+      const { error } = await supabase.storage.createBucket(BUCKET, {
+        public: false,
+        fileSizeLimit: "10MB",
+        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+      });
+      if (error && !/already exists/i.test(error.message)) {
+        throw new Error(`Could not create storage bucket "${BUCKET}": ${error.message}`);
+      }
+    })().catch((error) => {
+      bucketReady = null; // retry on next request
+      throw error;
+    });
+  }
+  return bucketReady;
 }
 
-function parsePath(value: string) {
-  const url = new URL(value.startsWith("http") ? value : `https://storage.googleapis.com${value}`);
-  const parts = url.pathname.split("/").filter(Boolean);
-  if (parts.length < 2) throw new ObjectNotFoundError("Invalid object path");
-  return { bucket: parts[0], object: parts.slice(1).join("/") };
-}
-
-async function sign(bucket: string, object: string, method: "GET" | "PUT" | "DELETE") {
-  const response = await fetch(`${SIDECAR}/object-storage/signed-object-url`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ bucket_name: bucket, object_name: object, method, expires_at: new Date(Date.now() + 900_000).toISOString() }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!response.ok) throw new Error(`Object storage signing failed: ${response.status}`);
-  return (await response.json() as { signed_url: string }).signed_url;
+function keyFromObjectPath(objectPath: string) {
+  if (!objectPath.startsWith("/objects/")) throw new ObjectNotFoundError("Invalid object path");
+  const key = objectPath.slice("/objects/".length);
+  if (!key || key.includes("..")) throw new ObjectNotFoundError("Invalid object path");
+  return key;
 }
 
 export class ObjectStorageService {
+  /** Returns a one-time URL the client can PUT the raw file to. */
   async getUpload() {
-    const { bucket, object } = parsePath(`${privateDir()}/uploads/${randomUUID()}`);
-    const uploadURL = await sign(bucket, object, "PUT");
-    return { uploadURL, objectPath: `/objects/${object}` };
+    await ensureBucket();
+    const key = `uploads/${randomUUID()}`;
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(key);
+    if (error || !data) throw new Error(`Object storage signing failed: ${error?.message ?? "unknown error"}`);
+    return { uploadURL: data.signedUrl, objectPath: `/objects/${key}` };
   }
 
   async getObject(objectPath: string) {
-    if (!objectPath.startsWith("/objects/")) throw new ObjectNotFoundError("Invalid object path");
-    const { bucket, object } = parsePath(`${privateDir()}/${objectPath.slice("/objects/".length)}`);
-    const signedURL = await sign(bucket, object, "GET");
-    const response = await fetch(signedURL, { signal: AbortSignal.timeout(30_000) });
+    const key = keyFromObjectPath(objectPath);
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(key, 60);
+    if (error || !data) throw new ObjectNotFoundError("Object not found");
+    const response = await fetch(data.signedUrl, { signal: AbortSignal.timeout(30_000) });
     if (!response.ok) throw new ObjectNotFoundError("Object not found");
     return response;
   }
 
   async deleteObject(objectPath: string) {
-    if (!objectPath.startsWith("/objects/")) throw new ObjectNotFoundError("Invalid object path");
-    const { bucket, object } = parsePath(`${privateDir()}/${objectPath.slice("/objects/".length)}`);
-    const signedURL = await sign(bucket, object, "DELETE");
-    const response = await fetch(signedURL, { method: "DELETE", signal: AbortSignal.timeout(30_000) });
-    if (!response.ok && response.status !== 404) throw new Error(`Object deletion failed: ${response.status}`);
+    const key = keyFromObjectPath(objectPath);
+    const { error } = await supabase.storage.from(BUCKET).remove([key]);
+    if (error) throw new Error(`Object deletion failed: ${error.message}`);
   }
 }

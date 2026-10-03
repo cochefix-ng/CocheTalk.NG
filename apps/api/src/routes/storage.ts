@@ -24,7 +24,10 @@ router.get("/storage/objects/*path", async (req, res) => {
     const raw = req.params.path;
     const objectPath = `/objects/${Array.isArray(raw) ? raw.join("/") : raw}`;
     const upstream = await storage.getObject(objectPath);
-    upstream.headers.forEach((value, key) => res.setHeader(key, value));
+    for (const key of ["content-type", "cache-control", "etag", "last-modified"]) {
+      const value = upstream.headers.get(key);
+      if (value) res.setHeader(key, value);
+    }
     if (!upstream.body) return res.end();
     const reader = upstream.body.getReader();
     res.on("close", () => void reader.cancel());

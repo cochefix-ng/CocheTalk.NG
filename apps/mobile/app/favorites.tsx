@@ -15,6 +15,7 @@ import { getListFavoritesQueryKey, listFavorites } from '@workspace/api-client-r
 
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 
 type FilterType = 'All' | 'discussion' | 'question' | 'answer' | 'listing';
 
@@ -214,7 +215,7 @@ export default function FavoritesScreen() {
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} />
+          <DottedCircleLoader size="medium" label="Loading favorites..." labelPosition="bottom" />
         </View>
       ) : isError ? (
         <View style={styles.center}>
@@ -243,8 +244,8 @@ export default function FavoritesScreen() {
           onEndReachedThreshold={0.5}
           ListFooterComponent={
             isFetchingNextPage ? (
-              <View style={{ paddingVertical: 16 }}>
-                <ActivityIndicator color={colors.primary} />
+              <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+                <DottedCircleLoader size="small" />
               </View>
             ) : null
           }

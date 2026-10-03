@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Notification as ApiNotification } from '@workspace/api-client-react';
 import { useNotifications } from '@/context/NotificationContext';
 import { useColors } from '@/hooks/useColors';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 
 function timeAgo(value: string) {
   const diff = Math.max(0, Date.now() - new Date(value).getTime());
@@ -94,8 +95,7 @@ export default function NotificationsScreen() {
 
       {isLoading && notifications.length === 0 ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} />
-          <Text style={[styles.centerText, { color: colors.mutedForeground }]}>Loading notifications…</Text>
+          <DottedCircleLoader size="medium" label="Loading notifications…" labelPosition="bottom" />
         </View>
       ) : notifications.length === 0 ? (
         <View style={styles.center}>

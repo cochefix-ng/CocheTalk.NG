@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getCategoryColor, getCategoryTextColor } from '@/constants/colors';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 import { makeConvId, useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
@@ -35,9 +36,22 @@ function timeAgo(ts: number): string {
 export default function ListingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
-  const { listings, users, currentUser } = useApp();
+  const { listings, users, currentUser, isLoading, isSyncing } = useApp();
 
   const listing = listings.find((l) => String(l.id) === id);
+
+  if (!listing && (isLoading || isSyncing)) {
+    return (
+      <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Feather name="arrow-left" size={20} color={colors.foreground} />
+        </TouchableOpacity>
+        <View style={styles.notFound}>
+          <DottedCircleLoader size="large" label="Loading listing..." labelPosition="bottom" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!listing) {
     return (
@@ -70,9 +84,19 @@ export default function ListingDetail() {
   };
 
   const handleMessage = () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      router.push('/(auth)/sign-in');
+      return;
+    }
     const convId = makeConvId(currentUser.id, listing.userId);
-    router.push(`/conversation/${encodeURIComponent(convId)}`);
+    router.push({
+      pathname: '/conversation/[id]',
+      params: {
+        id: convId,
+        partnerId: listing.userId,
+        partnerName: listing.userName || 'Seller',
+      },
+    });
   };
 
   const carSpecs = isCarSale

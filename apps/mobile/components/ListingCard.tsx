@@ -101,9 +101,19 @@ export function ListingCard({ listing, isAdmin = false, onApprove, onDelete }: P
   };
 
   const handleMessage = () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      router.push('/(auth)/sign-in');
+      return;
+    }
     const convId = makeConvId(currentUser.id, listing.userId);
-    router.push(`/conversation/${encodeURIComponent(convId)}`);
+    router.push({
+      pathname: '/conversation/[id]',
+      params: {
+        id: convId,
+        partnerId: listing.userId,
+        partnerName: listing.userName || 'Seller',
+      },
+    });
   };
 
   return (

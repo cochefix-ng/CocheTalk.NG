@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColors } from '@/hooks/useColors';
 import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 
 const QUICK_PROMPTS = [
   'My car makes a knocking sound when I accelerate',
@@ -102,7 +103,7 @@ export default function ClinicScreen() {
         >
           {isPending ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator color={colors.primaryForeground} size="small" />
+              <DottedCircleLoader size={18} color={colors.primaryForeground} />
               <Text style={[styles.diagnoseBtnText, { color: colors.primaryForeground }]}>Analysing...</Text>
             </View>
           ) : (

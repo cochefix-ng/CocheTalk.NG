@@ -1,7 +1,8 @@
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -15,8 +16,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ListingCard } from '@/components/ListingCard';
 import { QuestionCard } from '@/components/QuestionCard';
-import { makeConvId, useApp } from '@/context/AppContext';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
+import { makeConvId, useApp, type User, type UserRole } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { getApiOrigin } from '@/lib/apiBase';
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -44,13 +47,91 @@ function StarRating({ value, interactive = false, max = 5, size = 20, onSelect }
 export default function SellerProfileScreen() {
   const colors = useColors();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { users, questions, answers, listings, ratings, currentUser, addRating } = useApp();
+  const { users, questions, answers, discussions, listings, ratings, currentUser, addRating } = useApp();
 
   const [showRateModal, setShowRateModal] = useState(false);
   const [ratingValue, setRatingValue] = useState(5);
   const [ratingFeedback, setRatingFeedback] = useState('');
+  const [remoteUser, setRemoteUser] = useState<User | null>(null);
+  const [isLoadingRemote, setIsLoadingRemote] = useState(false);
 
-  const seller = users.find((u) => u.id === id);
+  const localUser = (users ?? []).find((u) => u.id === id);
+  const listingWithUser = (listings ?? []).find((l) => l.userId === id);
+  const questionWithUser = (questions ?? []).find((q) => q.userId === id);
+  const answerWithUser = (answers ?? []).find((a) => a.userId === id);
+  const discussionWithUser = (discussions ?? []).find((d) => d.userId === id);
+
+  useEffect(() => {
+    if (localUser || !id) return;
+    let isMounted = true;
+    setIsLoadingRemote(true);
+    fetch(`${getApiOrigin()}/api/users/${encodeURIComponent(id)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data) {
+          setRemoteUser({
+            id: data.id || id,
+            name: data.name || 'Member',
+            email: data.email || '',
+            role: (data.role as UserRole) || 'Car Owner',
+            verified: data.verified ?? false,
+            phone: data.phone || '',
+            specialization: Array.isArray(data.specialization) ? data.specialization : (data.specialization ? [data.specialization] : []),
+            businessName: data.businessName || '',
+            experience: data.experience || 0,
+            location: data.location || '',
+            isBanned: false,
+            whatsappEnabled: !!data.phone,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) setIsLoadingRemote(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [id, localUser]);
+
+  const seller: User | null = useMemo(() => {
+    if (localUser) return localUser;
+    if (remoteUser) return remoteUser;
+    if (listingWithUser) {
+      return {
+        id: id ?? '',
+        name: listingWithUser.userName || 'Member',
+        email: '',
+        role: (listingWithUser.userRole as UserRole) || 'Car Owner',
+        verified: false,
+        phone: listingWithUser.userPhone || '',
+        specialization: [],
+        businessName: '',
+        experience: 0,
+        location: listingWithUser.location || '',
+        isBanned: false,
+        whatsappEnabled: !!listingWithUser.userPhone,
+      };
+    }
+    const anyContent = questionWithUser || answerWithUser || discussionWithUser;
+    if (anyContent) {
+      return {
+        id: id ?? '',
+        name: anyContent.userName || 'Member',
+        email: '',
+        role: (anyContent.userRole as UserRole) || 'Car Owner',
+        verified: anyContent.userVerified ?? false,
+        phone: '',
+        specialization: anyContent.userSpecialization ? [anyContent.userSpecialization] : [],
+        businessName: '',
+        experience: 0,
+        location: '',
+        isBanned: false,
+        whatsappEnabled: false,
+      };
+    }
+    return null;
+  }, [localUser, remoteUser, listingWithUser, questionWithUser, answerWithUser, discussionWithUser, id]);
 
   const sellerListings = useMemo(
     () => (listings ?? []).filter((l) => l.userId === id && l.isApproved).sort((a, b) => b.timestamp - a.timestamp),
@@ -68,7 +149,23 @@ export default function SellerProfileScreen() {
 
   const myRating = currentUser ? sellerRatings.find((r) => r.raterId === currentUser.id) : null;
   const canRate = currentUser && currentUser.id !== id && seller?.role === 'Service Provider';
-  const canMessage = currentUser && currentUser.id !== id;
+  const canMessage = currentUser?.id !== id;
+
+  if (isLoadingRemote && !seller) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Feather name="arrow-left" size={22} color={colors.foreground} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Profile</Text>
+        </View>
+        <View style={styles.center}>
+          <DottedCircleLoader size="large" label="Loading profile..." labelPosition="bottom" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!seller) {
     return (
@@ -145,10 +242,12 @@ export default function SellerProfileScreen() {
                 <Text style={[styles.detailText, { color: colors.mutedForeground }]}>{seller.location}</Text>
               </View>
             ) : null}
-            {seller.specialization && seller.specialization.length > 0 ? (
+            {seller.specialization && (seller.specialization.length ?? 0) > 0 ? (
               <View style={styles.detailRow}>
                 <Feather name="tool" size={13} color={colors.mutedForeground} />
-                <Text style={[styles.detailText, { color: colors.mutedForeground }]}>{seller.specialization.join(', ')}</Text>
+                <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
+                  {Array.isArray(seller.specialization) ? seller.specialization.join(', ') : String(seller.specialization)}
+                </Text>
               </View>
             ) : null}
             {seller.businessName ? (
@@ -157,7 +256,7 @@ export default function SellerProfileScreen() {
                 <Text style={[styles.detailText, { color: colors.mutedForeground }]}>{seller.businessName}</Text>
               </View>
             ) : null}
-            {seller.experience > 0 ? (
+            {(seller.experience ?? 0) > 0 ? (
               <View style={styles.detailRow}>
                 <Feather name="award" size={13} color={colors.mutedForeground} />
                 <Text style={[styles.detailText, { color: colors.mutedForeground }]}>{seller.experience} years experience</Text>
@@ -170,8 +269,19 @@ export default function SellerProfileScreen() {
               <TouchableOpacity
                 style={[styles.messageBtn, { backgroundColor: colors.primary }]}
                 onPress={() => {
-                  const convId = makeConvId(currentUser!.id, seller.id);
-                  router.push(`/conversation/${encodeURIComponent(convId)}`);
+                  if (!currentUser) {
+                    router.push('/(auth)/sign-in');
+                    return;
+                  }
+                  const convId = makeConvId(currentUser.id, seller.id);
+                  router.push({
+                    pathname: '/conversation/[id]',
+                    params: {
+                      id: convId,
+                      partnerId: seller.id,
+                      partnerName: seller.name,
+                    },
+                  });
                 }}
               >
                 <Feather name="message-circle" size={14} color={colors.primaryForeground} />

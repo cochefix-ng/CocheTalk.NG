@@ -13,7 +13,11 @@
     },
     "android": {
       "package": "ng.cochetalk.app",
-      "permissions": ["POST_NOTIFICATIONS"]
+      "permissions": ["POST_NOTIFICATIONS"],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#0A120E"
+      }
     },
     "web": {
       "favicon": "./assets/images/icon.png"

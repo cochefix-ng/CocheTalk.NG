@@ -22,6 +22,7 @@ import { DiscussionCard } from '@/components/DiscussionCard';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { primitives } from '@/constants/colors';
 import { QuestionCard } from '@/components/QuestionCard';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
@@ -50,7 +51,7 @@ const SORT_FILTERS = ['Latest', 'Most Answered', 'Unanswered'];
 export default function ProCircleScreen() {
   const colors = useColors();
   const handleScroll = useTabBarScrollHandler();
-  const { questions, answers, discussions, discussionComments, currentUser, askQuestion, createDiscussion } = useApp();
+  const { questions, answers, discussions, discussionComments, currentUser, isSyncing, askQuestion, createDiscussion } = useApp();
 
   // ── Modal state ───────────────────────────────────────
   const [showFabMenu, setShowFabMenu] = useState(false);
@@ -220,8 +221,11 @@ export default function ProCircleScreen() {
           <Feather name="lock" size={16} color={colors.proCircle} />
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Pro Circle</Text>
         </View>
-        <View style={[styles.proBadge, { backgroundColor: colors.proCircle + '22' }]}>
-          <Text style={[styles.proBadgeText, { color: colors.proCircleText }]}>Mechanics Only</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {isSyncing && <DottedCircleLoader size={16} color={colors.proCircle} />}
+          <View style={[styles.proBadge, { backgroundColor: colors.proCircle + '22' }]}>
+            <Text style={[styles.proBadgeText, { color: colors.proCircleText }]}>Mechanics Only</Text>
+          </View>
         </View>
       </View>
 

@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
@@ -29,7 +30,7 @@ export default function QuestionDetailScreen() {
   const colors = useColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const {
-    questions, answers, comments, currentUser,
+    questions, answers, comments, currentUser, isLoading, isSyncing,
     upvoteQuestion, answerQuestion, upvoteAnswer, acceptAnswer, addComment,
   } = useApp();
 
@@ -39,6 +40,23 @@ export default function QuestionDetailScreen() {
   const [expandedAnswerId, setExpandedAnswerId] = useState<number | null>(null);
 
   const question = questions.find((q) => q.id === Number(id));
+
+  if (!question && (isLoading || isSyncing)) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Feather name="arrow-left" size={22} color={colors.foreground} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Question</Text>
+        </View>
+        <View style={styles.center}>
+          <DottedCircleLoader size="large" label="Loading question..." labelPosition="bottom" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!question) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -160,9 +178,10 @@ export default function QuestionDetailScreen() {
               <TouchableOpacity
                 style={[styles.commentBtn, { backgroundColor: colors.muted }]}
                 onPress={() => setCommentTarget(commentTarget?.id === question.id && !commentTarget.isAnswer ? null : { id: question.id, isAnswer: false })}
+                accessibilityRole="button"
+                accessibilityLabel="Comment"
               >
                 <Feather name="message-circle" size={14} color={colors.mutedForeground} />
-                <Text style={[styles.voteCount, { color: colors.mutedForeground }]}>Comment</Text>
               </TouchableOpacity>
               <FavoriteButton contentType="question" contentId={question.id} />
             </View>
@@ -261,11 +280,10 @@ export default function QuestionDetailScreen() {
                 <TouchableOpacity
                   style={[styles.commentBtn, { backgroundColor: colors.muted }]}
                   onPress={() => setCommentTarget(commentTarget?.id === answer.id && commentTarget.isAnswer ? null : { id: answer.id, isAnswer: true })}
+                  accessibilityRole="button"
+                  accessibilityLabel="Comment"
                 >
                   <Feather name="message-circle" size={13} color={colors.mutedForeground} />
-                  <Text style={[styles.voteCount, { color: colors.mutedForeground }]}>
-                    {answerComments.length > 0 ? `${answerComments.length}` : 'Comment'}
-                  </Text>
                 </TouchableOpacity>
                 <FavoriteButton contentType="answer" contentId={answer.id} />
 
@@ -385,7 +403,7 @@ const styles = StyleSheet.create({
   voteRow: { flexDirection: 'row', gap: 6 },
   voteBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
   voteCount: { fontSize: 12, fontWeight: '600' },
-  commentBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+  commentBtn: { alignItems: 'center', justifyContent: 'center', borderRadius: 20, paddingHorizontal: 9, paddingVertical: 6, minWidth: 32, minHeight: 28 },
   commentsSection: { borderTopWidth: 1, marginTop: 10, paddingTop: 10, gap: 6 },
   comment: { borderLeftWidth: 2, paddingLeft: 8 },
   commentAuthor: { fontSize: 12, fontWeight: '700' },

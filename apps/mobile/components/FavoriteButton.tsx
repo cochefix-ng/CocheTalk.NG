@@ -47,6 +47,8 @@ export function FavoriteButton({ contentType, contentId, style }: FavoriteButton
       onPress={handlePress}
       disabled={isLoading && !isFavorited && !currentUser}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={isFavorited ? 'Saved' : 'Save'}
     >
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Feather
@@ -56,26 +58,19 @@ export function FavoriteButton({ contentType, contentId, style }: FavoriteButton
           style={isFavorited ? styles.filledIcon : undefined}
         />
       </Animated.View>
-      <Text
-        style={[
-          styles.text,
-          { color: isFavorited ? colors.primaryText : colors.mutedForeground }
-        ]}
-      >
-        {isFavorited ? 'Saved' : 'Save'}
-      </Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
     borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    minWidth: 32,
+    minHeight: 28,
   },
   text: {
     fontSize: 12,

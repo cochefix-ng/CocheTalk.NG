@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { supabase } from '@/lib/supabase';
 import { GoogleLogo } from '@/components/GoogleLogo';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -362,7 +363,7 @@ export default function SignUpScreen() {
                 onPress={handleVerify}
                 disabled={!code.trim() || isLoading}
               >
-                {isLoading ? <ActivityIndicator color={colors.primaryForeground} /> : <Text style={[styles.primaryButtonText, { color: code.trim() ? colors.primaryForeground : colors.mutedForeground }]}>Verify code</Text>}
+                {isLoading ? <DottedCircleLoader size={18} color={colors.primaryForeground} /> : <Text style={[styles.primaryButtonText, { color: code.trim() ? colors.primaryForeground : colors.mutedForeground }]}>Verify code</Text>}
               </Pressable>
 
               <Pressable
@@ -397,7 +398,7 @@ export default function SignUpScreen() {
               disabled={!name.trim() || !emailAddress.trim() || !password || isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color={colors.primaryForeground} />
+                <DottedCircleLoader size={18} color={colors.primaryForeground} />
               ) : (
                 <Text
                   style={[

@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 import { DiscussionCard } from '@/components/DiscussionCard';
 import { QuestionCard } from '@/components/QuestionCard';
 import { useApp } from '@/context/AppContext';
@@ -161,7 +162,7 @@ export default function ForumScreen() {
   const {
     questions, answers, discussions, discussionComments,
     currentUser, askQuestion, createDiscussion,
-    cmsConfig, isLoading, listings,
+    cmsConfig, isLoading, isSyncing, listings,
   } = useApp();
 
   const featuredAds = useMemo(
@@ -201,29 +202,30 @@ export default function ForumScreen() {
   const [dCustomTag, setDCustomTag] = useState('');
   const [dMedia, setDMedia] = useState<string[]>([]);
 
-  // ── Derived feed ──────────────────────────────────────
-  const publicQuestions = useMemo(
-    () => (questions ?? []).filter((q) => !q.isPrivateEcosystem),
-    [questions],
+  const isPrivileged = currentUser?.role === 'Admin' || (currentUser?.role === 'Service Provider' && currentUser?.verified);
+
+  const visibleQuestions = useMemo(
+    () => (questions ?? []).filter((q) => !q.isPrivateEcosystem || q.userId === currentUser?.id || isPrivileged),
+    [questions, currentUser?.id, isPrivileged],
   );
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
-    publicQuestions.forEach((q) =>
+    visibleQuestions.forEach((q) =>
       (q?.tags ?? '').split(',').forEach((t) => { const trimmed = t.trim(); if (trimmed) tagSet.add(trimmed); }),
     );
     (discussions ?? []).forEach((d) =>
       (d?.tags ?? '').split(',').forEach((t) => { const trimmed = t.trim(); if (trimmed) tagSet.add(trimmed); }),
     );
     return Array.from(tagSet).slice(0, 18);
-  }, [publicQuestions, discussions]);
+  }, [visibleQuestions, discussions]);
 
   type FeedItem =
     | { kind: 'question'; data: (typeof questions)[number] }
     | { kind: 'discussion'; data: (typeof discussions)[number] };
 
   const feedItems = useMemo((): FeedItem[] => {
-    let qItems: FeedItem[] = publicQuestions
+    let qItems: FeedItem[] = visibleQuestions
       .filter((q) => {
         if (searchQuery) {
           const lq = searchQuery.toLowerCase();
@@ -235,7 +237,7 @@ export default function ForumScreen() {
       .map((q) => ({ kind: 'question' as const, data: q }));
 
     let dItems: FeedItem[] = (discussions ?? [])
-      .filter((d) => !d.isProCircle) // exclude Pro Circle-only discussions from public feed
+      .filter((d) => !d.isProCircle || d.userId === currentUser?.id || isPrivileged)
       .filter((d) => {
         if (searchQuery) {
           const lq = searchQuery.toLowerCase();
@@ -282,7 +284,7 @@ export default function ForumScreen() {
     }
 
     return combined;
-  }, [publicQuestions, discussions, answers, discussionComments, searchQuery, activeSortFilter, activeTypeFilter, activeTag]);
+  }, [visibleQuestions, discussions, answers, discussionComments, searchQuery, activeSortFilter, activeTypeFilter, activeTag, currentUser?.id, isPrivileged]);
 
   // ── Q form helpers ────────────────────────────────────
   const resetQForm = () => {
@@ -362,7 +364,7 @@ export default function ForumScreen() {
   if (isLoading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} size="large" />
+        <DottedCircleLoader size="large" label="Loading CocheTalk..." labelPosition="bottom" />
       </View>
     );
   }
@@ -380,6 +382,9 @@ export default function ForumScreen() {
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>CocheTalk</Text>
         </View>
         <View style={styles.headerRight}>
+          {isSyncing && (
+            <DottedCircleLoader size={16} color={colors.primary} style={{ marginRight: 6 }} />
+          )}
           <TouchableOpacity onPress={() => setShowSearch((v) => !v)} style={styles.iconBtn}>
             <Feather name={showSearch ? 'x' : 'search'} size={20} color={colors.foreground} />
           </TouchableOpacity>

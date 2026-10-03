@@ -8,6 +8,7 @@
     "dev:tunnel": "pnpm exec expo start --go --tunnel",
     "dev:clear": "pnpm exec expo start --go --clear",
     "build": "node scripts/build.js",
+    "build:apk": "npx eas-cli build -p android --profile preview",
     "serve": "node server/serve.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

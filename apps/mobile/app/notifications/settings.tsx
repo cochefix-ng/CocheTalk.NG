@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NotificationPreferencesUpdate } from '@workspace/api-client-react';
 import { useNotifications } from '@/context/NotificationContext';
 import { useColors } from '@/hooks/useColors';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 
 const categories: Array<{
   key: keyof NotificationPreferencesUpdate;
@@ -68,7 +69,7 @@ export default function NotificationSettingsScreen() {
 
         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Notification categories</Text>
         {isLoading && !preferences ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
+          <DottedCircleLoader size="medium" style={{ marginVertical: 24 }} centered label="Loading preferences..." labelPosition="bottom" />
         ) : (
           categories.map((category) => {
             const globalSetting = globalSettingFor(category.type);

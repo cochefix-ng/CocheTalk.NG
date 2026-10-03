@@ -8,6 +8,7 @@ import type { Conversation } from '@/context/AppContext';
 import { makeConvId, useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarScrollHandler } from '@/hooks/useTabBarVisibility';
+import { DottedCircleLoader } from '@/components/DottedCircleLoader';
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -24,7 +25,7 @@ function timeAgo(ts: number): string {
 export default function MessagesScreen() {
   const colors = useColors();
   const handleScroll = useTabBarScrollHandler();
-  const { currentUser, conversations, users } = useApp();
+  const { currentUser, conversations, users, isSyncing } = useApp();
 
   const myConversations = (conversations ?? [])
     .filter((c) => currentUser && c.participantIds.includes(currentUser.id))
@@ -33,19 +34,42 @@ export default function MessagesScreen() {
   function getPartner(conv: Conversation) {
     if (!currentUser) return { id: '', name: 'Unknown' };
     const partnerId = conv.participantIds.find((id) => id !== currentUser.id) ?? '';
-    const partnerName = conv.participantNames[conv.participantIds.indexOf(partnerId)] ?? 'Unknown';
     const partnerUser = users.find((u) => u.id === partnerId);
+    const partnerName =
+      conv.participantNames?.[conv.participantIds.indexOf(partnerId)] ||
+      partnerUser?.name ||
+      'Unknown';
     return { id: partnerId, name: partnerName, user: partnerUser };
   }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Feather name="message-circle" size={18} color={colors.primary} />
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Messages</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+          <Feather name="message-circle" size={18} color={colors.primary} />
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Messages</Text>
+        </View>
+        {isSyncing && <DottedCircleLoader size={16} color={colors.primary} />}
       </View>
 
-      {myConversations.length === 0 ? (
+      {!currentUser ? (
+        <View style={styles.empty}>
+          <View style={[styles.emptyIcon, { backgroundColor: colors.primary + '18' }]}>
+            <Feather name="lock" size={32} color={colors.primary} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sign In to View Messages</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>
+            Sign in to start conversations with car sellers, mechanics, and other members.
+          </Text>
+          <TouchableOpacity
+            style={[styles.signInBtn, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/(auth)/sign-in')}
+          >
+            <Feather name="log-in" size={16} color={colors.primaryForeground} />
+            <Text style={[styles.signInBtnText, { color: colors.primaryForeground }]}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      ) : myConversations.length === 0 ? (
         <View style={styles.empty}>
           <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
             <Feather name="message-circle" size={32} color={colors.mutedForeground} />
@@ -69,7 +93,16 @@ export default function MessagesScreen() {
               <TouchableOpacity
                 key={conv.id}
                 style={[styles.convRow, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => router.push(`/conversation/${encodeURIComponent(conv.id)}`)}
+                onPress={() =>
+                  router.push({
+                    pathname: '/conversation/[id]',
+                    params: {
+                      id: encodeURIComponent(conv.id),
+                      partnerId: partner.id,
+                      partnerName: partner.name,
+                    },
+                  })
+                }
                 activeOpacity={0.7}
               >
                 <View style={[styles.avatar, { backgroundColor: colors.primary + '33' }]}>
@@ -143,4 +176,6 @@ const styles = StyleSheet.create({
   emptyIcon: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   emptyTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
   emptySubtitle: { fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  signInBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 10, marginTop: 8 },
+  signInBtnText: { fontSize: 14, fontWeight: '600' },
 });
