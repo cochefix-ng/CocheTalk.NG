@@ -13,7 +13,9 @@
     },
     "android": {
       "package": "ng.cochetalk.app",
-      "permissions": ["POST_NOTIFICATIONS"],
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#0A120E"
@@ -39,6 +41,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "141efc79-8a9e-49e7-8341-244a38439226"
+      }
     }
   }
 }

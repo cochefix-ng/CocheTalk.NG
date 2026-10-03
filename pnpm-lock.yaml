@@ -102,37 +102,15 @@ importers:
 
   apps/mobile:
     dependencies:
-      expo-file-system:
-        specifier: ^57.0.6
-        version: 57.0.6(expo@57.0.21)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))
-      expo-notifications:
-        specifier: ~57.0.17
-        version: 57.0.17(expo@57.0.21)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)
-      expo-sharing:
-        specifier: ^57.0.18
-        version: 57.0.18(expo@57.0.21)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)
-    devDependencies:
-      '@babel/core':
-        specifier: ^7.25.2
-        version: 7.29.0(supports-color@8.1.1)
       '@expo-google-fonts/inter':
         specifier: ^0.4.0
         version: 0.4.2
-      '@expo/cli':
-        specifier: 54.0.23
-        version: 54.0.23(bufferutil@4.1.0)(expo-router@57.0.20)(expo@57.0.21)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
-      '@expo/ngrok':
-        specifier: ^4.1.0
-        version: 4.1.3
       '@expo/vector-icons':
         specifier: ^15.0.3
         version: 15.1.1(expo-font@57.0.3)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)
       '@react-native-async-storage/async-storage':
         specifier: 2.2.0
         version: 2.2.0(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))
-      '@react-native/metro-config':
-        specifier: 0.86.3
-        version: 0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1)
       '@react-navigation/bottom-tabs':
         specifier: 7.16.2
         version: 7.16.2(abc68cbc43beec55e1c2f8160f4b42c7)
@@ -145,21 +123,12 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.100.9(react@19.2.3)
-      '@types/react':
-        specifier: ~19.2.14
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ~19.2.3
-        version: 19.2.3(@types/react@19.2.14)
       '@ungap/structured-clone':
         specifier: ^1.3.0
         version: 1.3.1
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../packages/api-client-react
-      babel-plugin-react-compiler:
-        specifier: ^19.0.0-beta-e993439-20250117
-        version: 19.0.0-beta-ebf51a3-20250411
       expo:
         specifier: ~57.0.21
         version: 57.0.21(82ae94bb38918a7761ae660a6ebe76f3)
@@ -175,6 +144,9 @@ importers:
       expo-crypto:
         specifier: ~57.0.2
         version: 57.0.2(expo@57.0.21)
+      expo-file-system:
+        specifier: ^57.0.6
+        version: 57.0.6(expo@57.0.21)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))
       expo-font:
         specifier: ~57.0.3
         version: 57.0.3(expo@57.0.21)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)
@@ -199,12 +171,18 @@ importers:
       expo-location:
         specifier: ~57.0.16
         version: 57.0.16(expo@57.0.21)(supports-color@8.1.1)(typescript@6.0.3)
+      expo-notifications:
+        specifier: ~57.0.17
+        version: 57.0.17(expo@57.0.21)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)
       expo-router:
         specifier: ~57.0.20
         version: 57.0.20(a5a01fbf7e58fcecf0c01dbec28d91bb)
       expo-secure-store:
         specifier: ~57.0.3
         version: 57.0.3(expo@57.0.21)
+      expo-sharing:
+        specifier: ^57.0.18
+        version: 57.0.18(expo@57.0.21)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)
       expo-splash-screen:
         specifier: ~57.0.8
         version: 57.0.8(expo@57.0.21)(supports-color@8.1.1)(typescript@6.0.3)
@@ -253,15 +231,37 @@ importers:
       react-native-worklets:
         specifier: 0.10.1
         version: 0.10.1(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)
-      typescript:
-        specifier: ~6.0.3
-        version: 6.0.3
       zod:
         specifier: 'catalog:'
         version: 3.25.76
       zod-validation-error:
         specifier: ^3.4.0
         version: 3.5.4(zod@3.25.76)
+    devDependencies:
+      '@babel/core':
+        specifier: ^7.25.2
+        version: 7.29.0(supports-color@8.1.1)
+      '@expo/cli':
+        specifier: 54.0.23
+        version: 54.0.23(bufferutil@4.1.0)(expo-router@57.0.20)(expo@57.0.21)(react-native@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
+      '@expo/ngrok':
+        specifier: ^4.1.0
+        version: 4.1.3
+      '@react-native/metro-config':
+        specifier: 0.86.3
+        version: 0.86.3(@babel/core@7.29.0(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1)
+      '@types/react':
+        specifier: ~19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ~19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      babel-plugin-react-compiler:
+        specifier: ^19.0.0-beta-e993439-20250117
+        version: 19.0.0-beta-ebf51a3-20250411
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
 
   packages/api-client-react:
     dependencies:
