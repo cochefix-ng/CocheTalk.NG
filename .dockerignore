@@ -1,0 +1,7 @@
+node_modules
+.git
+.agents
+apps/mobile
+dist
+.env.local
+.env

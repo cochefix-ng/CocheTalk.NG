@@ -8,6 +8,8 @@
     "dev:app:tunnel": "pnpm --filter @workspace/cochetalk run dev:tunnel",
     "dev:app:clear": "pnpm --filter @workspace/cochetalk run dev:clear",
     "build:apk": "pnpm --filter @workspace/cochetalk run build:apk",
+    "build:api": "pnpm --filter @workspace/api-server run build",
+    "start:api": "node apps/api/dist/index.mjs",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./apps/**\" --if-present run typecheck"

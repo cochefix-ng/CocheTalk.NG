@@ -27,22 +27,21 @@ app.use(
   }),
 );
 
+const rawOrigins = process.env.CORS_ALLOWED_ORIGINS ?? "*";
 const allowedOrigins = new Set(
-  (process.env.CORS_ALLOWED_ORIGINS ?? "")
+  rawOrigins
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean),
 );
 
-if (process.env.NODE_ENV === "production" && allowedOrigins.size === 0) {
-  throw new Error("CORS_ALLOWED_ORIGINS must be configured in production");
-}
-
 app.use(
   cors({
     credentials: true,
     origin(origin, callback) {
-      if (!origin || allowedOrigins.size === 0 || allowedOrigins.has(origin)) return callback(null, true);
+      if (!origin || allowedOrigins.size === 0 || allowedOrigins.has("*") || allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
       return callback(new Error("Origin not allowed"));
     },
   }),
@@ -51,6 +50,9 @@ app.use(
 app.use(express.json({ limit: "256kb" }));
 app.use(express.urlencoded({ extended: true, limit: "256kb" }));
 app.use(authMiddleware);
+
+app.get("/", (_req, res) => res.json({ status: "ok", service: "CocheTalk API" }));
+app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
 
 app.use("/api", router);
 
