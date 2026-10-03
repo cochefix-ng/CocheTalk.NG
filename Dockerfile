@@ -3,15 +3,13 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@9
 
-# Copy root workspace configurations
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY packages ./packages
-COPY apps/api ./apps/api
+# Copy all project files so pnpm can resolve monorepo workspace references
+COPY . .
 
-# Install dependencies and build API bundle
-RUN pnpm install --frozen-lockfile
+# Install only dependencies required by the api-server and build the bundle
+RUN pnpm install --filter @workspace/api-server... --no-frozen-lockfile
 RUN pnpm --filter @workspace/api-server run build
 
 # Production runner stage
